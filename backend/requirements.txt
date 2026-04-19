@@ -25,7 +25,7 @@ python-dotenv==1.0.0
 # Data Validation
 pydantic==2.7.4
 pydantic-settings==2.3.4
-email-validator==2.1.0
+email-validator==2.2.0
 
 # Semantic Caching & Embeddings
 numpy==1.26.3
