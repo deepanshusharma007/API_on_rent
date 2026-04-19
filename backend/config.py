@@ -89,12 +89,12 @@ class Settings(BaseSettings):
     class Config:
         import os
         from pathlib import Path
-        # Get project root (parent of backend directory)
         backend_dir = Path(__file__).parent
         project_root = backend_dir.parent
         env_file = str(project_root / ".env")
         case_sensitive = True
-        extra = "ignore"  # Ignore extra fields from .env
+        extra = "ignore"
+        protected_namespaces = ()
     
     def get_openai_keys(self) -> List[str]:
         """Parse comma-separated OpenAI keys."""
