@@ -112,6 +112,7 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://api-on-rent.pages.dev",
     # Add your Cloudflare Pages URL once deployed, e.g.:
     # "https://your-project.pages.dev",
     # "https://yourdomain.com",
