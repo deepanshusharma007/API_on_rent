@@ -40,16 +40,20 @@ def _cashfree_headers() -> dict:
 
 def _verify_cashfree_webhook(payload: bytes, timestamp: str, signature: str) -> bool:
     """Verify Cashfree webhook HMAC-SHA256 signature."""
-    secret = settings.CASHFREE_CLIENT_SECRET or settings.CASHFREE_WEBHOOK_SECRET
+    secret = settings.CASHFREE_WEBHOOK_SECRET or settings.CASHFREE_CLIENT_SECRET
     if not secret:
         logger.warning("No Cashfree secret configured — skipping webhook verification")
         return True
 
+    # Cashfree signs: timestamp + rawBody
     message = timestamp + payload.decode("utf-8")
     expected = base64.b64encode(
         hmac.new(secret.encode(), message.encode(), hashlib.sha256).digest()
     ).decode()
-    return hmac.compare_digest(expected, signature)
+
+    # Cashfree may send comma-separated list of signatures
+    received_sigs = [s.strip() for s in signature.split(",")]
+    return any(hmac.compare_digest(expected, sig) for sig in received_sigs)
 
 
 def _make_order_id(plan_id: int, user_id: int, provider: str = "openai") -> str:
@@ -172,9 +176,13 @@ async def cashfree_webhook(
     signature = request.headers.get("x-webhook-signature", "")
 
     # Verify webhook signature
+    logger.info(f"Webhook headers — timestamp: {timestamp!r}, signature: {signature!r}")
     if timestamp and signature:
         if not _verify_cashfree_webhook(payload, timestamp, signature):
+            logger.error(f"Webhook signature mismatch — ts={timestamp} sig={signature}")
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    elif not timestamp and not signature:
+        logger.warning("Webhook received with no signature headers — accepting (check Cashfree settings)")
 
     try:
         event = request.app.state  # unused, parse from payload
