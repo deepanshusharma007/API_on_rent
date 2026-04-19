@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.cashfree.com)",
+      "WebFetch(domain:docs.cashfree.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm run:*)",
+      "Bash(npx vite:*)",
+      "Bash(node -e ':*)",
+      "Bash(python tests/test_core_flow.py)",
+      "Bash(python -c \"import sys; sys.stdout.reconfigure\\(encoding='utf-8'\\)\")",
+      "Bash(python -c \"print\\('\\\\u2192'\\)\")",
+      "Bash(python -c ':*)",
+      "Bash(grep -E \"\\\\.\\(md|txt\\)$\")",
+      "Bash(dir \"C:\\\\Users\\\\deepa\\\\OneDrive\\\\Desktop\\\\All_Folders\\\\projects\\\\API_on_rent\" /b /a)",
+      "Bash(npx symdex:*)",
+      "mcp__lean-ctx__ctx_shell",
+      "mcp__lean-ctx__ctx_search",
+      "mcp__lean-ctx__ctx_read"
+    ]
+  }
+}

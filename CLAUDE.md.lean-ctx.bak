@@ -1,0 +1,471 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
+## Memory — Start of Every Session
+
+Before doing any work, check for relevant context from previous sessions:
+
+1. Use the `mem-search` tool to search for related bugs, decisions, or patterns
+2. Check `MEMORY.md` in the project root for the index of accumulated knowledge
+3. If the task touches a previous bug or architectural decision, use `get_observations` to fetch full details before proposing changes
+
+This prevents re-introducing fixed bugs and re-litigating settled architectural decisions.
+
+---
+
+## Commands
+
+### Backend
+```bash
+# Start dev server (from project root)
+uvicorn backend.main:app --reload --port 8000
+
+# Install dependencies
+pip install -r backend/requirements.txt
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev        # starts Vite on http://localhost:5173
+npm run build      # production build (use to verify no compile errors)
+```
+
+### Tests
+```bash
+# Run the full core API flow test suite (requires backend running on :8000)
+python tests/test_core_flow.py
+
+# Run with a real provider key to test live proxy
+TEST_OPENAI_KEY=sk-... python tests/test_core_flow.py
+```
+
+---
+
+## Critical Patterns
+
+### DB Migrations (SQLite)
+`Base.metadata.create_all()` does NOT alter existing tables. Any new column added to a model **must** also be added to the migration list in `backend/main.py` lifespan startup:
+```python
+for col, col_type, tbl in [
+    ("model_id", "VARCHAR(100)", "plans"),
+    ("duration_label", "VARCHAR(50)", "plans"),
+    ("model_name", "VARCHAR(100)", "provider_keys"),
+    ("cashfree_order_id", "VARCHAR(200)", "transactions"),
+]:
+    try:
+        conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN {col} {col_type}"))
+        conn.commit()
+    except Exception:
+        pass  # already exists
+```
+
+### Auth Store — User Role
+`authStore.js` calls `authAPI.getMe()` immediately after login to populate `user.role`. Role-gated UI (e.g. Admin navbar link) uses `user?.role === 'admin'`. Never check role from the JWT directly on the frontend.
+
+### Active Providers Endpoint
+`GET /api/active-providers` is public and feeds model visibility in Marketplace and Playground. Query full ORM objects, not just the column:
+```python
+keys = db.query(ProviderKey).filter(ProviderKey.is_active == True).all()
+providers = list({k.provider.value if hasattr(k.provider, 'value') else k.provider for k in keys})
+```
+
+### Buy Flow — Single Entry Point
+**Only `/marketplace` triggers a purchase.** All other pages (Landing, Pricing, Dashboard) link to `/marketplace` — never embed checkout or plan-selection UI elsewhere.
+
+### Windows / Terminal
+All string literals in Python scripts must use ASCII only — no Unicode arrows (`→`), checkmarks (`✓`), or box-drawing characters. The terminal encoding is `cp1252`. Add at script top:
+```python
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+```
+
+---
+
+<!-- code-review-graph MCP tools -->
+## MCP Tools: code-review-graph
+
+**IMPORTANT: This project has a knowledge graph. ALWAYS use the
+code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
+the codebase.** The graph is faster, cheaper (fewer tokens), and gives
+you structural context (callers, dependents, test coverage) that file
+scanning cannot.
+
+### When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
+
+### Key Tools
+
+| Tool | Use when |
+|------|----------|
+| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
+| `get_review_context` | Need source snippets for review — token-efficient |
+| `get_impact_radius` | Understanding blast radius of a change |
+| `get_affected_flows` | Finding which execution paths are impacted |
+| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
+| `semantic_search_nodes` | Finding functions/classes by name or keyword |
+| `get_architecture_overview` | Understanding high-level codebase structure |
+| `refactor_tool` | Planning renames, finding dead code |
+
+### Workflow
+
+1. The graph auto-updates on file changes (via hooks).
+2. Use `detect_changes` for code review.
+3. Use `get_affected_flows` to understand impact.
+4. Use `query_graph` pattern="tests_for" to check coverage.
+
+---
+
+# AIRent — Project System Design Reference
+
+> **Read this before touching any code.** Single source of truth for architecture,
+> data model, business logic, and conventions.
+
+---
+
+## 1. What Is AIRent?
+
+AIRent is a **SaaS marketplace** where users rent time-limited virtual API keys to
+access top AI models (OpenAI, Anthropic, Google Gemini) without needing their own
+provider accounts. Owner: **Deepanshu Sharma** (sole developer).
+
+**Core concept:** User pays once → gets a virtual key → key works for N
+minutes/hours/day and up to T tokens → key auto-expires → user can buy again.
+
+---
+
+## 2. Project Structure
+
+```
+API_on_rent/
+├── backend/                    FastAPI application
+│   ├── api/
+│   │   ├── admin.py            Admin-only endpoints (plans, users, keys, analytics)
+│   │   ├── auth.py             JWT register/login/me
+│   │   ├── dependencies.py     get_current_user, get_current_admin
+│   │   ├── marketplace.py      Public plan list, active rentals, active-providers
+│   │   ├── payment.py          Cashfree checkout + webhook
+│   │   ├── proxy.py            OpenAI-compatible proxy /v1/chat/completions
+│   │   ├── schemas.py          Pydantic request/response models
+│   │   ├── status.py           Provider health endpoint
+│   │   └── websocket.py        /ws/usage/{rental_id} real-time usage stream
+│   ├── database/
+│   │   ├── connection.py       SQLAlchemy engine + get_db
+│   │   ├── models.py           ORM models (see §4)
+│   │   └── redis_manager.py    Redis helpers
+│   ├── services/
+│   │   ├── capacity_manager.py Provider budget / overbooking logic
+│   │   ├── email_service.py    SMTP email (key delivery, invoices)
+│   │   ├── prompt_filter.py    Regex PII mask + Gemini Flash AI pre-scan
+│   │   ├── spending_monitor.py Background worker — suspends over-budget rentals
+│   │   └── virtual_key_service.py Create / validate / expire virtual keys
+│   ├── config.py               Pydantic Settings (env vars)
+│   ├── main.py                 FastAPI app, router mounts, CORS
+│   └── requirements.txt
+│
+├── frontend/                   React + Vite + Tailwind CSS
+│   ├── src/
+│   │   ├── api/client.js       Axios instance + all API helpers
+│   │   ├── components/
+│   │   │   ├── CountdownTimer.jsx   Per-second rental countdown
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Navbar.jsx           Fixed top nav, scroll-aware glass
+│   │   │   ├── PolicyLayout.jsx     Shared layout for policy pages
+│   │   │   └── TokenProgressBar.jsx Colour-coded token usage bar
+│   │   ├── lib/motion.js        Shared Framer Motion variants
+│   │   ├── pages/
+│   │   │   ├── AdminPanel.jsx   6-tab admin dashboard
+│   │   │   ├── Dashboard.jsx    User rental manager + WebSocket
+│   │   │   ├── Marketplace.jsx  ★ Main buying flow (model → duration → pay)
+│   │   │   ├── Playground.jsx   Live API tester
+│   │   │   ├── Login.jsx / Register.jsx
+│   │   │   ├── StatusPage.jsx   Provider health monitor
+│   │   │   └── [FAQ, Pricing, AboutUs, ContactUs, policy pages]
+│   │   ├── store/authStore.js   Zustand auth + JWT
+│   │   ├── App.jsx             All 17 React Router v6 routes
+│   │   └── index.css           Design tokens, blob/animation classes
+│   └── index.html              Cashfree JS SDK CDN script tag
+└── CLAUDE.md                   ← you are here
+```
+
+---
+
+## 3. Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | SQLite / Postgres connection string |
+| `REDIS_URL` | Redis (cache + rate limiting) |
+| `SECRET_KEY` | JWT signing |
+| `CASHFREE_CLIENT_ID/SECRET` | Payment gateway credentials |
+| `CASHFREE_ENVIRONMENT` | `sandbox` or `production` |
+| `CASHFREE_WEBHOOK_SECRET` | Webhook HMAC-SHA256 verification |
+| `SMTP_HOST/PORT/USER/PASSWORD` | Transactional email |
+| `ADMIN_NOTIFICATION_EMAIL` | Where spending alerts go |
+| `VITE_API_URL` | Frontend → backend base URL |
+| `VITE_CASHFREE_ENV` | `sandbox` or `production` |
+
+---
+
+## 4. Database Models
+
+### Enums
+```
+UserRole:      USER | ADMIN
+RentalStatus:  ACTIVE | EXPIRED | PAUSED | SUSPENDED
+ProviderType:  openai | gemini | anthropic
+```
+
+### Plan (core table)
+```
+price (USD float)               one-time charge
+duration_minutes (int)          rental window length
+token_cap (int)                 hard token ceiling (pre-calculated per model)
+rpm_limit (int)                 requests per minute
+drain_rate_multiplier (float)   ≈1.0 for all new plans (kept for legacy)
+model_id (str, nullable)  ★     "gpt-4o-mini" / null = universal plan
+duration_label (str, nullable)★ "1 hour" (display string shown in UI)
+is_active (bool)
+```
+
+> **Rule:** Create one Plan per `model_id × duration_minutes` combination.
+> Token cap should already account for the model's cost (see §7 formula).
+
+### Rental
+```
+virtual_key (str, unique)       the vk_xxx key delivered to user
+status (RentalStatus)
+tokens_used, tokens_remaining
+requests_made
+ip_address                      IP-pinned after first use
+started_at, expires_at
+cashfree_order_id               payment reference
+```
+
+### ProviderKey
+```
+provider (ProviderType)
+api_key (str, hashed at rest)
+is_active (bool)
+usage_count, last_used_at
+```
+
+> `GET /api/active-providers` uses this table to tell the frontend which
+> models are currently available to users.
+
+---
+
+## 5. API Routes Summary
+
+### Public (no auth)
+| Path | Purpose |
+|---|---|
+| `POST /auth/register` | Create account |
+| `POST /auth/login` | Get JWT |
+| `GET /api/plans` | List active plans (includes model_id, duration_label) |
+| `GET /api/active-providers` | Which provider enums have ≥1 active key |
+| `GET /status/` | Provider health |
+| `POST /api/webhooks/cashfree` | Payment webhook (HMAC verified) |
+
+### Authenticated user
+| Path | Purpose |
+|---|---|
+| `POST /api/checkout/session` | Create Cashfree order → `payment_session_id` |
+| `GET /api/checkout/verify/{order_id}` | Verify payment |
+| `GET /api/rentals/active` | Live rentals |
+| `GET /api/rentals/history` | Past rentals |
+| `GET /api/invoice/{rental_id}/html` | HTML receipt |
+| `WS /ws/usage/{rental_id}` | Real-time token/expiry events |
+| `POST /v1/chat/completions` | OpenAI-compatible proxy |
+
+### Admin (`/admin/*`)
+Plans, Users, ProviderKeys, Stats, Analytics, Alerts, CSV export — all behind `role=ADMIN`.
+
+---
+
+## 6. Marketplace Buying Flow
+
+```
+/marketplace
+    │
+    ├─ 1. GET /api/active-providers  → filter MODEL_CATALOGUE
+    ├─ 2. GET /api/plans             → flat list with model_id + duration_minutes
+    │
+    ▼
+Step 1 — Pick model   (only shows models whose providerKey is active)
+Step 2 — Pick duration (button disabled if no plan exists for that combo)
+Step 3 — Review card  (token cap, RPM, price)  →  "Rent Now"
+    │
+    ├─ POST /api/checkout/session → { payment_session_id }
+    ├─ Cashfree JS SDK opens payment sheet
+    ├─ On success → redirect /dashboard?payment=success&order_id=xxx
+    └─ Webhook creates Rental + emails virtual key
+```
+
+**matchPlan logic (Marketplace.jsx):**
+1. Exact match: `plan.model_id === selectedModel && plan.duration_minutes === dur.minutes`
+2. Fallback: universal plan (`plan.model_id === null`) with matching duration
+
+---
+
+## 7. Token Cap Formula
+
+```
+BASE_TOKENS = { 15min: 20K, 1hr: 80K, 6hr: 400K, 24hr: 1.2M }
+
+drain_rate per model:
+  gemini-1.5-flash          →  1×
+  gpt-4o-mini               →  3×
+  gemini-1.5-pro            →  5×
+  claude-3-5-sonnet-20241022 → 8×
+  gpt-4o                    → 10×
+
+token_cap = BASE_TOKENS[duration] / drain_rate
+```
+AdminPanel PlansTab auto-fills this when you pick a model + duration.
+
+---
+
+## 8. Payment Flow (Cashfree)
+
+```
+order_id convention:  order_{plan_id}_{user_id}_{unix_timestamp}
+
+1. POST /api/checkout/session
+   → create Cashfree order via REST API
+   → return { payment_session_id }
+
+2. Frontend: window.Cashfree({ mode }).checkout({ paymentSessionId })
+   → Cashfree redirects to /dashboard?payment=success&order_id=xxx
+
+3. POST /api/webhooks/cashfree  (PAYMENT_SUCCESS_WEBHOOK)
+   → verify HMAC-SHA256(timestamp + raw_body, CASHFREE_WEBHOOK_SECRET)
+   → _parse_order_id(order_id) → plan_id, user_id
+   → create Rental, send email with virtual key
+```
+
+---
+
+## 9. Proxy Flow
+
+```
+POST /v1/chat/completions  (Authorization: Bearer vk_xxx)
+  → validate virtual key (Redis → DB)
+  → check rental: ACTIVE + tokens_remaining > 0 + not expired
+  → IP-pin check
+  → regex PII filter (email, phone, SSN, card numbers)
+  → Gemini Flash AI safety pre-scan
+  → Redis semantic cache lookup
+  → forward to provider via LiteLLM
+  → deduct tokens, log to UsageLog
+  → return / stream response
+```
+
+---
+
+## 10. Frontend Design System
+
+### Colours
+| Role | Value |
+|---|---|
+| Background | `#07070f` |
+| Primary gradient | `from-violet-600 to-fuchsia-600` |
+| Success | `emerald-400` |
+| Warning | `amber-400` |
+| Danger | `rose-400` |
+| Subtle border | `border-white/[0.08]` |
+| Hover border | `border-white/[0.16]` |
+
+### CSS utilities (index.css)
+- `.glass-card` — `bg-white/[0.03] backdrop-blur-xl`
+- `.gradient-text` — violet→fuchsia gradient text
+- `.grid-pattern` — subtle background grid overlay
+- `.blob-1/2/3` — animated ambient colour blobs
+- `.shimmer-text` — animated shimmer effect
+
+### Motion (src/lib/motion.js)
+```js
+fadeUp, fadeIn, fadeLeft, fadeRight   // entrance animations
+staggerContainer(delay)               // stagger children
+scaleIn                               // scale + fade entrance
+viewport = { once: true, amount: 0.2 }
+```
+
+### Component conventions
+- All authenticated pages: `<Navbar />` + `<Footer />`
+- Auth pages: standalone with blob bg + grid-pattern overlay
+- Policy pages: `<PolicyPage>`, `<PolicyHero>`, `<PolicySection>` (PolicyLayout.jsx)
+- Buttons: `whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}`
+- Step indicators: numbered violet circles with title + subtitle
+
+---
+
+## 11. Model Catalogue Reference
+
+| model_id | Vendor | providerKey | Drain | RPM |
+|---|---|---|---|---|
+| `gemini-1.5-flash` | Google | `gemini` | 1× | 60 |
+| `gpt-4o-mini` | OpenAI | `openai` | 3× | 40 |
+| `gemini-1.5-pro` | Google | `gemini` | 5× | 30 |
+| `claude-3-5-sonnet-20241022` | Anthropic | `anthropic` | 8× | 20 |
+| `gpt-4o` | OpenAI | `openai` | 10× | 20 |
+
+---
+
+## 12. Checklists
+
+### Adding a new AI model
+- [ ] `backend/database/models.py` — add to `ProviderType` if new provider
+- [ ] `frontend/src/pages/Marketplace.jsx` — add to `MODEL_CATALOGUE`
+- [ ] `frontend/src/pages/Playground.jsx` — add to `ALL_MODELS`
+- [ ] `frontend/src/pages/AdminPanel.jsx` — add to `MODEL_OPTIONS` in PlansTab
+- [ ] Admin: add ProviderKey for the provider
+- [ ] Admin: create plans (model × each duration)
+
+### Adding a new duration option
+- [ ] `frontend/src/pages/Marketplace.jsx` — add to `DURATIONS`
+- [ ] `frontend/src/pages/AdminPanel.jsx` — add to `DURATION_PRESETS` with `suggestPrice` and entry in `BASE_TOKENS`
+- [ ] Admin: create plans for each model × this duration
+
+### Adding a new page
+- [ ] Create `frontend/src/pages/NewPage.jsx`
+- [ ] Add route in `frontend/src/App.jsx`
+- [ ] Add link in `Navbar.jsx` if top-level
+
+---
+
+## 13. Key Files Quick Reference
+
+| Task | File |
+|---|---|
+| Change plan prices / tokens | AdminPanel Plans tab |
+| Add / remove provider keys | AdminPanel API Keys tab |
+| Modify proxy / safety filter | `backend/api/proxy.py` |
+| Change payment flow | `backend/api/payment.py` |
+| Email templates | `backend/services/email_service.py` |
+| Spending limit logic | `backend/workers/spending_monitor.py` |
+| Shared motion variants | `frontend/src/lib/motion.js` |
+| Shared policy layout | `frontend/src/components/PolicyLayout.jsx` |
+| All API calls (frontend) | `frontend/src/api/client.js` |
+| Auth state (Zustand) | `frontend/src/store/authStore.js` |
+| Global CSS design tokens | `frontend/src/index.css` |
+
+---
+
+## 14. Contact & Ownership
+
+- **Owner / developer:** Deepanshu Sharma
+- **Email:** deepanshu2210sharma@gmail.com
+- **Phone:** +91 91317 70985
+- **GitHub:** https://github.com/deepanshusharma007

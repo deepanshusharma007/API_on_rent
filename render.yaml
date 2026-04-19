@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: api-on-rent-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: BACKEND_URL
+        sync: false   # e.g. https://api-on-rent-backend.onrender.com
+      - key: FRONTEND_URL
+        sync: false   # e.g. https://your-project.pages.dev
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CASHFREE_CLIENT_ID
+        sync: false
+      - key: CASHFREE_CLIENT_SECRET
+        sync: false
+      - key: CASHFREE_ENVIRONMENT
+        value: production
+      - key: CASHFREE_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: ADMIN_NOTIFICATION_EMAIL
+        sync: false
+      - key: USE_FAKE_REDIS
+        value: "false"
+      - key: PRE_REQUEST_COST_CHECK
+        value: "true"
+      - key: PII_MASKING_ENABLED
+        value: "true"
+      - key: SEMANTIC_CACHE_ENABLED
+        value: "true"

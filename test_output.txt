@@ -1,0 +1,17 @@
+﻿============================================================
+TESTING API CALL THROUGH PROXY
+============================================================
+
+Virtual Key: vk_vvfGJuw6Cs25rMkE4kdpiGP5GhQKZMVh
+Model: gpt-3.5-turbo
+Prompt: Say hello in 5 words
+
+Making request...
+
+Status Code: 401
+ERROR: 401
+
+Response:
+{"detail":"Invalid or expired virtual key"}
+
+============================================================
