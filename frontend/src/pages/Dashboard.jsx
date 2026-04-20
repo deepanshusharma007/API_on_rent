@@ -28,11 +28,11 @@ function StatChip({ icon: Icon, label, value, color = 'violet' }) {
     amber:   'text-amber-400 bg-amber-500/10 border-amber-500/20',
   };
   return (
-    <div className={`flex flex-col gap-1 p-4 rounded-2xl border ${colors[color]}`}>
+    <div className={`flex flex-col gap-1 p-3 rounded-lg border ${colors[color]}`}>
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider opacity-70">
         <Icon className="w-3.5 h-3.5" />{label}
       </div>
-      <div className="text-xl font-black text-white">{value}</div>
+      <div className="text-lg font-black text-white">{value}</div>
     </div>
   );
 }
@@ -41,12 +41,12 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
   return (
     <motion.div
       variants={scaleIn}
-      className={`glass-card rounded-2xl p-6 border transition-all ${
-        isHistory ? 'border-white/[0.04] opacity-70' : 'border-white/[0.08] hover:border-violet-500/30'
+      className={`bg-[#111] rounded-lg p-5 border transition-all ${
+        isHistory ? 'border-white/[0.06] opacity-70' : 'border-white/[0.08] hover:border-white/[0.14]'
       }`}
     >
       {/* Status + Plan */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${rental.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-gray-600'}`} />
           <span className={`text-xs font-semibold uppercase tracking-wider ${rental.status === 'active' ? 'text-emerald-400' : 'text-gray-500'}`}>
@@ -54,24 +54,24 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
           </span>
         </div>
         {rental.plan_name && (
-          <span className="text-xs text-gray-600 glass-card border border-white/[0.06] px-2.5 py-1 rounded-full">
+          <span className="text-xs text-gray-600 bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded">
             {rental.plan_name}
           </span>
         )}
       </div>
 
       {/* Virtual Key */}
-      <div className="mb-5">
+      <div className="mb-4">
         <label className="block text-xs text-gray-600 mb-2 uppercase tracking-wider font-medium">Virtual API Key</label>
         <div className="flex items-center gap-2">
-          <div className="flex-1 px-4 py-2.5 rounded-xl bg-black/30 border border-white/[0.06] font-mono text-xs text-gray-300 overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="flex-1 px-3 py-2 rounded-lg bg-black/40 border border-white/[0.06] font-mono text-xs text-gray-300 overflow-hidden text-ellipsis whitespace-nowrap">
             {rental.virtual_key}
           </div>
           <motion.button
-            whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={() => !isHistory && onCopy(rental.virtual_key)}
             disabled={isHistory}
-            className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 transition-all disabled:opacity-30"
+            className="p-2 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 transition-all disabled:opacity-30"
           >
             <Copy className="w-4 h-4" />
           </motion.button>
@@ -79,7 +79,7 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         {isHistory ? (
           <StatChip icon={Clock}     label="Expired"   value={new Date(rental.expires_at).toLocaleDateString()} color="sky" />
         ) : (
@@ -98,7 +98,7 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
       </div>
 
       {/* Progress */}
-      <div className="mb-5">
+      <div className="mb-4">
         <TokenProgressBar
           used={rental.tokens_used}
           remaining={rental.tokens_remaining}
@@ -212,23 +212,21 @@ export default function Dashboard() {
   const currentRentals = activeTab === 'active' ? activeRentals : historyRentals;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#07070f]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-36 pb-10 px-5 overflow-hidden">
-        <div className="blob-2 top-[-60px] left-1/2 -translate-x-1/2 opacity-30" />
-        <div className="absolute inset-0 grid-pattern opacity-15" />
+      <section className="pt-32 pb-6 px-5">
         <motion.div
           variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="relative max-w-5xl mx-auto"
+          className="max-w-5xl mx-auto"
         >
           {/* Payment success */}
           <AnimatePresence>
             {paymentSuccess && (
               <motion.div
-                initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="mb-6 flex items-center gap-3 px-5 py-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25"
+                initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="mb-5 flex items-center gap-3 px-4 py-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25"
               >
                 <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
@@ -241,35 +239,31 @@ export default function Dashboard() {
 
           <motion.div variants={fadeUp} className="flex items-end justify-between flex-wrap gap-4">
             <div>
-              <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-2">Dashboard</p>
-              <h1 className="text-4xl md:text-5xl font-black text-white mb-1">My Rentals</h1>
-              <p className="text-gray-500">Manage and monitor your AI API rentals</p>
+              <p className="text-violet-400 text-xs font-semibold tracking-widest uppercase mb-2">Dashboard</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">My Rentals</h1>
+              <p className="text-gray-500 text-sm">Manage and monitor your AI API rentals</p>
             </div>
-            <div className="flex gap-3">
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                <Link to="/playground" className="flex items-center gap-2 px-5 py-2.5 glass-card border border-white/[0.08] hover:border-white/[0.16] text-gray-300 hover:text-white rounded-xl text-sm transition-all">
-                  <FlaskConical className="w-4 h-4" />Playground
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                <Link to="/marketplace" className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20">
-                  <ShoppingBag className="w-4 h-4" />Buy Plan
-                </Link>
-              </motion.div>
+            <div className="flex gap-2">
+              <Link to="/playground" className="flex items-center gap-2 px-4 py-2 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-300 hover:text-white rounded-lg text-sm transition-all">
+                <FlaskConical className="w-4 h-4" />Playground
+              </Link>
+              <Link to="/marketplace" className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-semibold transition-colors">
+                <ShoppingBag className="w-4 h-4" />Buy Plan
+              </Link>
             </div>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Tabs */}
-      <section className="px-5 pb-6">
+      <section className="px-5 pb-5">
         <div className="max-w-5xl mx-auto">
-          <div className="flex gap-1 p-1 glass-card border border-white/[0.06] rounded-2xl w-fit">
+          <div className="flex gap-1 p-1 bg-[#111] border border-white/[0.06] rounded-lg w-fit">
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-violet-500/20 text-white border border-violet-500/30'
                     : 'text-gray-500 hover:text-gray-300'
@@ -294,35 +288,33 @@ export default function Dashboard() {
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[1, 2].map(n => <div key={n} className="h-80 glass-card rounded-2xl animate-pulse border border-white/[0.04]" />)}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[1, 2].map(n => <div key={n} className="h-72 bg-[#111] rounded-lg animate-pulse border border-white/[0.04]" />)}
               </motion.div>
             ) : currentRentals.length === 0 ? (
-              <motion.div key="empty" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-center py-24">
-                <div className="w-20 h-20 rounded-3xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-5">
-                  <Sparkles className="w-9 h-9 text-violet-400" />
+              <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="text-center py-20">
+                <div className="w-16 h-16 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-violet-400" />
                 </div>
-                <h3 className="text-white font-bold text-xl mb-2">
+                <h3 className="text-white font-bold text-lg mb-2">
                   {activeTab === 'active' ? 'No active rentals' : 'No rental history'}
                 </h3>
                 <p className="text-gray-600 mb-6 text-sm">
                   {activeTab === 'active' ? 'Purchase a plan to get your virtual API key instantly.' : 'Your past rentals will appear here.'}
                 </p>
                 {activeTab === 'active' && (
-                  <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                    <Link to="/marketplace"
-                      className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25">
-                      <ShoppingBag className="w-4 h-4" />Browse Plans
-                    </Link>
-                  </motion.div>
+                  <Link to="/marketplace"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors">
+                    <ShoppingBag className="w-4 h-4" />Browse Plans
+                  </Link>
                 )}
               </motion.div>
             ) : (
               <motion.div
                 key={activeTab}
                 variants={staggerContainer(0.07)} initial="hidden" animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-5"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
                 {currentRentals.map(rental => (
                   <RentalCard

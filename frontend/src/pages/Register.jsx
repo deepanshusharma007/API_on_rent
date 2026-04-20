@@ -7,7 +7,7 @@ import useAuthStore from '../store/authStore';
 import { fadeUp, staggerContainer } from '../lib/motion';
 
 const inputClass =
-  'w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.06] transition-all text-sm';
+  'w-full px-4 py-3 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-all text-sm';
 
 const PERKS = [
   'Instant API key — delivered in seconds',
@@ -40,24 +40,20 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#07070f] relative overflow-hidden">
-      <div className="blob-1 top-[-80px] right-[-80px] opacity-40" />
-      <div className="blob-3 bottom-[-100px] left-[-60px] opacity-30" />
-      <div className="absolute inset-0 grid-pattern opacity-15" />
-
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#0a0a0a]">
       <motion.div
         variants={staggerContainer(0.1)} initial="hidden" animate="show"
-        className="relative w-full max-w-md"
+        className="w-full max-w-md"
       >
         {/* Brand */}
         <motion.div variants={fadeUp} className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-black text-white">AIRent</span>
+            <span className="text-xl font-bold text-white">AIRent</span>
           </Link>
-          <h1 className="text-3xl font-black text-white mb-2">Create your account</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>
           <p className="text-gray-500 text-sm">Start renting AI in under 60 seconds</p>
         </motion.div>
 
@@ -65,14 +61,14 @@ export default function Register() {
         <motion.div variants={fadeUp} className="flex flex-col gap-2 mb-6">
           {PERKS.map(p => (
             <div key={p} className="flex items-center gap-2.5 text-sm text-gray-500">
-              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
               {p}
             </div>
           ))}
         </motion.div>
 
         {/* Card */}
-        <motion.div variants={fadeUp} className="glass-card border border-white/[0.08] rounded-3xl p-8">
+        <motion.div variants={fadeUp} className="bg-[#111] border border-white/[0.08] rounded-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Email</label>
@@ -107,8 +103,8 @@ export default function Register() {
 
             <motion.button
               type="submit" disabled={loading}
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2.5 shadow-lg shadow-violet-500/25 mt-2"
+              whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2.5 mt-2"
             >
               {loading
                 ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

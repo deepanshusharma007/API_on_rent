@@ -60,13 +60,12 @@ const FAQ_DATA = [
   },
 ];
 
-function AccordionItem({ q, a, i }) {
+function AccordionItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <motion.div
-      initial={false}
-      className={`rounded-xl border transition-all duration-200 overflow-hidden ${
-        open ? 'bg-white/[0.05] border-violet-500/30' : 'glass-card border-white/[0.06] hover:border-white/[0.12]'
+    <div
+      className={`rounded-lg border transition-all duration-200 overflow-hidden ${
+        open ? 'bg-[#1a1a1a] border-violet-500/30' : 'bg-[#111] border-white/[0.06] hover:border-white/[0.12]'
       }`}
     >
       <button
@@ -74,7 +73,7 @@ function AccordionItem({ q, a, i }) {
         className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
       >
         <span className={`text-sm font-medium transition-colors ${open ? 'text-white' : 'text-gray-300'}`}>{q}</span>
-        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }}>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className={`w-4 h-4 shrink-0 transition-colors ${open ? 'text-violet-400' : 'text-gray-600'}`} />
         </motion.div>
       </button>
@@ -85,15 +84,15 @@ function AccordionItem({ q, a, i }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <p className="px-5 pb-5 text-gray-400 text-sm leading-relaxed border-t border-white/[0.04] pt-3">
+            <p className="px-5 pb-5 text-gray-400 text-sm leading-relaxed border-t border-white/[0.06] pt-3">
               {a}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
@@ -116,24 +115,22 @@ export default function FAQ() {
     .filter(cat => cat.items.length > 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#07070f]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-36 pb-14 px-5 text-center overflow-hidden">
-        <div className="blob-2 top-[-60px] left-1/2 -translate-x-1/2 opacity-50" />
-        <div className="absolute inset-0 grid-pattern opacity-20" />
+      <section className="pt-32 pb-12 px-5 text-center">
         <motion.div
           variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="relative max-w-2xl mx-auto"
+          className="max-w-2xl mx-auto"
         >
-          <motion.div variants={fadeUp} className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-6">
-            <HelpCircle className="w-7 h-7 text-violet-400" />
+          <motion.div variants={fadeUp} className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-5">
+            <HelpCircle className="w-6 h-6 text-violet-400" />
           </motion.div>
-          <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl font-black text-white mb-4 leading-tight">
-            Frequently Asked <span className="gradient-text">Questions</span>
+          <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-white mb-3 leading-tight">
+            Frequently Asked <span className="text-violet-400">Questions</span>
           </motion.h1>
-          <motion.p variants={fadeUp} className="text-gray-400 text-lg mb-8">
+          <motion.p variants={fadeUp} className="text-gray-400 text-base mb-7">
             Can't find the answer?{' '}
             <Link to="/contact" className="text-violet-400 hover:text-violet-300 underline underline-offset-4 transition-colors">
               Contact me directly →
@@ -142,16 +139,16 @@ export default function FAQ() {
 
           {/* Search bar */}
           <motion.div variants={fadeUp} className="relative max-w-md mx-auto">
-            <Search className="w-4 h-4 text-gray-600 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-gray-600 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search questions..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-all text-sm"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors text-xs">
+              <button onClick={() => setSearch('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors text-xs">
                 Clear
               </button>
             )}
@@ -160,7 +157,7 @@ export default function FAQ() {
       </section>
 
       {/* Category tabs */}
-      <section className="px-5 pb-8">
+      <section className="px-5 pb-6">
         <motion.div
           variants={staggerContainer(0.05)} initial="hidden" animate="show"
           className="max-w-4xl mx-auto flex gap-2 flex-wrap justify-center"
@@ -172,11 +169,10 @@ export default function FAQ() {
                 key={cat}
                 variants={fadeUp}
                 onClick={() => setActiveCategory(cat)}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   activeCategory === cat
-                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-lg shadow-violet-500/10'
-                    : 'glass-card border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                    : 'bg-[#111] border border-white/[0.08] text-gray-400 hover:text-white hover:border-white/[0.14]'
                 }`}
               >
                 {emojiItem ? `${emojiItem.emoji} ` : ''}{cat}
@@ -188,10 +184,10 @@ export default function FAQ() {
 
       {/* FAQ content */}
       <section className="px-5 pb-16 flex-1">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-7">
           {filtered.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-              <HelpCircle className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+              <HelpCircle className="w-10 h-10 text-gray-700 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">No results for "{search}"</p>
               <p className="text-gray-600 text-sm mt-2">
                 Try a different term or{' '}
@@ -204,15 +200,15 @@ export default function FAQ() {
                 key={cat.category}
                 variants={staggerContainer(0.06)} initial="hidden" whileInView="show" viewport={viewport}
               >
-                <motion.div variants={fadeUp} className="flex items-center gap-3 mb-4">
-                  <span className="text-xl">{cat.emoji}</span>
+                <motion.div variants={fadeUp} className="flex items-center gap-3 mb-3">
+                  <span className="text-lg">{cat.emoji}</span>
                   <h2 className="text-xs uppercase tracking-widest text-gray-500 font-semibold">{cat.category}</h2>
-                  <div className="flex-1 h-px bg-white/[0.05]" />
+                  <div className="flex-1 h-px bg-white/[0.06]" />
                 </motion.div>
-                <motion.div variants={staggerContainer(0.05)} className="space-y-2.5">
-                  {cat.items.map((item, i) => (
+                <motion.div variants={staggerContainer(0.05)} className="space-y-2">
+                  {cat.items.map((item) => (
                     <motion.div key={item.q} variants={fadeUp}>
-                      <AccordionItem q={item.q} a={item.a} i={i} />
+                      <AccordionItem q={item.q} a={item.a} />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -223,24 +219,19 @@ export default function FAQ() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 px-5">
+      <section className="py-14 px-5">
         <motion.div
           variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-          className="max-w-xl mx-auto text-center p-10 rounded-3xl glass-card border border-violet-500/20 relative overflow-hidden"
+          className="max-w-md mx-auto text-center p-8 rounded-lg bg-[#111] border border-white/[0.08]"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 to-fuchsia-600/5" />
-          <div className="relative">
-            <h3 className="text-white text-xl font-black mb-2">Still have questions?</h3>
-            <p className="text-gray-500 mb-6 text-sm">I typically respond within 24 hours.</p>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                to="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold rounded-xl hover:from-violet-500 hover:to-fuchsia-500 transition-all shadow-lg shadow-violet-500/25 text-sm"
-              >
-                Contact Me
-              </Link>
-            </motion.div>
-          </div>
+          <h3 className="text-white text-lg font-bold mb-2">Still have questions?</h3>
+          <p className="text-gray-500 mb-5 text-sm">I typically respond within 24 hours.</p>
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors text-sm"
+          >
+            Contact Me
+          </Link>
         </motion.div>
       </section>
 

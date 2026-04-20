@@ -32,22 +32,22 @@ const STAT_COLORS = {
 function StatCard({ icon: Icon, label, value, color = 'violet', sub }) {
   const c = STAT_COLORS[color];
   return (
-    <motion.div variants={scaleIn} className={`p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] ring-1 ${c.ring}`}>
+    <motion.div variants={scaleIn} className={`p-5 rounded-lg bg-[#111] border border-white/[0.08]`}>
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-xl ${c.bg} flex items-center justify-center`}>
+        <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center`}>
           <Icon className={`w-4 h-4 ${c.icon}`} />
         </div>
         <span className="text-gray-500 text-sm">{label}</span>
       </div>
-      <div className="text-3xl font-black text-white mb-1">{value}</div>
+      <div className="text-2xl font-black text-white mb-1">{value}</div>
       {sub && <div className="text-xs text-gray-600">{sub}</div>}
     </motion.div>
   );
 }
 
-const tableHead = 'text-left px-5 py-3.5 text-xs text-gray-600 font-semibold uppercase tracking-wider border-b border-white/[0.05]';
-const tableCell = 'px-5 py-4 text-sm border-b border-white/[0.03]';
-const inputCls  = 'w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/40 text-sm transition-all';
+const tableHead = 'text-left px-4 py-3 text-xs text-gray-600 font-semibold uppercase tracking-wider border-b border-white/[0.06]';
+const tableCell = 'px-4 py-3.5 text-sm border-b border-white/[0.06]';
+const inputCls  = 'w-full px-3 py-2.5 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm transition-all';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -96,7 +96,7 @@ export default function AdminPanel() {
       </motion.div>
       {analytics && (
         <motion.div variants={fadeUp} initial="hidden" animate="show"
-          className="glass-card border border-white/[0.06] rounded-2xl p-6">
+          className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
           <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">Last 24 h Performance</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
@@ -123,7 +123,7 @@ export default function AdminPanel() {
       catch (e) { toast.error(e.message); }
     };
     return (
-      <div className="glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+      <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
         <table className="w-full">
           <thead><tr>
             {['ID', 'Email', 'Role', 'Status', 'Rentals', 'Actions'].map(h => <th key={h} className={tableHead}>{h}</th>)}
@@ -222,7 +222,7 @@ export default function AdminPanel() {
       </div>
 
       {/* Tip */}
-      <div className="glass-card border border-violet-500/10 bg-violet-500/5 rounded-xl p-4 text-xs text-gray-500 leading-relaxed">
+      <div className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-4 text-xs text-gray-500 leading-relaxed">
         <span className="text-violet-400 font-semibold">How plans work:</span> Each plan gives the user a virtual key valid for the chosen duration.
         The key works with <strong className="text-gray-300">all active AI providers</strong> (OpenAI, Gemini, Anthropic).
         Expensive models consume tokens faster via their drain rate — no separate plans needed per model.
@@ -232,7 +232,7 @@ export default function AdminPanel() {
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
-            className="glass-card border border-violet-500/20 bg-violet-500/5 rounded-2xl p-6 space-y-5">
+            className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-5 space-y-5">
             <p className="text-xs text-violet-400 uppercase tracking-widest font-semibold">Create a new rental plan</p>
 
             {/* Duration picker */}
@@ -244,7 +244,7 @@ export default function AdminPanel() {
                     className={`p-3 rounded-xl border text-left transition-all ${
                       form.duration_minutes === d.minutes
                         ? 'bg-violet-500/15 border-violet-500/40 ring-1 ring-violet-500/30 text-white'
-                        : 'glass-card border-white/[0.06] hover:border-white/[0.14] text-gray-400'
+                        : 'bg-[#111] border-white/[0.08] hover:border-white/[0.14] text-gray-400'
                     }`}>
                     <div className="text-lg mb-1">{d.emoji}</div>
                     <div className="text-xs font-bold">{d.label}</div>
@@ -281,7 +281,7 @@ export default function AdminPanel() {
             </div>
 
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleCreate}
-              className="px-7 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-violet-500/20">
+              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-semibold transition-colors">
               Create Plan
             </motion.button>
           </motion.div>
@@ -290,13 +290,13 @@ export default function AdminPanel() {
 
       {/* ── Active plans ── */}
       {plans.length === 0 ? (
-        <div className="glass-card border border-white/[0.06] rounded-2xl py-16 text-center">
+        <div className="bg-[#111] border border-white/[0.08] rounded-lg py-16 text-center">
           <Package className="w-10 h-10 text-gray-700 mx-auto mb-3" />
           <p className="text-gray-600 text-sm">No plans yet. Create one above.</p>
           <p className="text-gray-700 text-xs mt-1">Tip: create one plan per duration (15 min, 30 min, 1 hour, 1 day).</p>
         </div>
       ) : (
-        <div className="glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+        <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
           <table className="w-full">
             <thead><tr>
               {['Duration', 'Name', 'Price', 'Tokens', 'RPM', 'Status', ''].map((h, i) => (
@@ -418,16 +418,16 @@ export default function AdminPanel() {
               const isLive       = activeCount > 0;
               return (
                 <motion.div key={p.id} variants={scaleIn}
-                  className={`glass-card rounded-2xl p-4 border transition-all ${
-                    isLive ? `${p.border} ${p.bg}` : 'border-rose-500/20 bg-rose-500/5'
+                  className={`rounded-lg p-4 border transition-all ${
+                    isLive ? `${p.border} ${p.bg}` : 'border-red-500/20 bg-red-500/5'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className={`font-bold text-sm ${isLive ? p.color : 'text-rose-400'}`}>{p.label}</span>
                     <div className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border ${
-                      isLive ? `${p.bg} ${p.border} ${p.color}` : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                      isLive ? `${p.bg} ${p.border} ${p.color}` : 'bg-red-500/10 border-red-500/20 text-red-400'
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-current animate-pulse' : 'bg-rose-400'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-current animate-pulse' : 'bg-red-400'}`} />
                       {isLive ? `${activeCount} key${activeCount > 1 ? 's' : ''} active` : 'No keys — hidden'}
                     </div>
                   </div>
@@ -451,7 +451,7 @@ export default function AdminPanel() {
         <AnimatePresence>
           {showForm && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className="glass-card border border-violet-500/20 bg-violet-500/5 rounded-2xl p-6 space-y-4">
+              className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-5 space-y-4">
               <p className="text-xs text-violet-400 uppercase tracking-widest font-semibold">Add Provider API Key</p>
 
               {/* Provider selector */}
@@ -463,7 +463,7 @@ export default function AdminPanel() {
                       className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
                         form.provider === p.id
                           ? `${p.bg} ${p.border} ${p.color}`
-                          : 'glass-card border-white/[0.06] text-gray-500 hover:text-gray-300'
+                          : 'bg-[#111] border-white/[0.08] text-gray-500 hover:text-gray-300'
                       }`}>
                       {p.label}
                     </button>
@@ -483,7 +483,7 @@ export default function AdminPanel() {
                   } value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })}
                     className={inputCls + ' font-mono flex-1'} />
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleAdd}
-                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-semibold whitespace-nowrap shadow-lg shadow-violet-500/20">
+                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
                     Add Key
                   </motion.button>
                 </div>
@@ -494,12 +494,12 @@ export default function AdminPanel() {
 
         {/* ── Keys table ── */}
         {keys.length === 0 ? (
-          <div className="glass-card border border-white/[0.06] rounded-2xl py-16 text-center">
+          <div className="bg-[#111] border border-white/[0.08] rounded-lg py-16 text-center">
             <Key className="w-10 h-10 text-gray-700 mx-auto mb-3" />
             <p className="text-gray-600 text-sm">No provider keys yet. Add one above to enable AI models.</p>
           </div>
         ) : (
-          <div className="glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
             <table className="w-full">
               <thead><tr>
                 {['Provider', 'Key (masked)', 'Usage', 'Status', 'Actions'].map((h, i) => (
@@ -639,7 +639,7 @@ export default function AdminPanel() {
             sub={`${(analytics.tokens_saved_by_cache / 1000).toFixed(1)}K saved by cache`} />
         </motion.div>
         {analytics.per_model?.length > 0 && (
-          <div className="glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
             <div className="px-5 py-4 border-b border-white/[0.05]">
               <h3 className="text-white font-bold text-sm">Per-Model Breakdown</h3>
             </div>
@@ -668,7 +668,7 @@ export default function AdminPanel() {
 
   // ── ALERTS ──
   const AlertsTab = () => (
-    <div className="glass-card border border-white/[0.06] rounded-2xl overflow-hidden">
+    <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
       {alerts.length === 0 ? (
         <div className="py-20 text-center">
           <Shield className="w-10 h-10 text-gray-700 mx-auto mb-3" />
@@ -703,40 +703,38 @@ export default function AdminPanel() {
   const ActiveTab = TAB_MAP[activeTab];
 
   if (loading) return (
-    <div className="min-h-screen bg-[#07070f] flex items-center justify-center">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#07070f]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       <Navbar />
 
       {/* Header */}
-      <section className="relative pt-36 pb-8 px-5 overflow-hidden">
-        <div className="blob-3 top-0 right-0 opacity-25" />
-        <div className="absolute inset-0 grid-pattern opacity-15" />
+      <section className="pt-32 pb-6 px-5">
         <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="relative max-w-6xl mx-auto flex items-end justify-between flex-wrap gap-4">
+          className="max-w-6xl mx-auto flex items-end justify-between flex-wrap gap-4">
           <motion.div variants={fadeUp}>
-            <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-2">Admin</p>
-            <h1 className="text-4xl font-black text-white mb-1">Control Panel</h1>
+            <p className="text-violet-400 text-xs font-semibold tracking-widest uppercase mb-2">Admin</p>
+            <h1 className="text-3xl font-bold text-white mb-1">Control Panel</h1>
             <p className="text-gray-500 text-sm">Platform management & analytics</p>
           </motion.div>
-          <motion.button variants={fadeUp} onClick={loadData} whileHover={{ scale: 1.04 }}
-            className="flex items-center gap-2 px-4 py-2.5 glass-card border border-white/[0.08] hover:border-white/[0.16] text-gray-400 hover:text-white rounded-xl text-sm transition-all">
+          <motion.button variants={fadeUp} onClick={loadData} whileHover={{ scale: 1.02 }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg text-sm transition-all">
             <RefreshCw className="w-4 h-4" />Refresh
           </motion.button>
         </motion.div>
       </section>
 
       {/* Tabs */}
-      <section className="px-5 pb-6">
+      <section className="px-5 pb-5">
         <div className="max-w-6xl mx-auto overflow-x-auto">
-          <div className="flex gap-1.5 p-1.5 glass-card border border-white/[0.06] rounded-2xl w-fit min-w-full sm:min-w-0">
+          <div className="flex gap-1 p-1 bg-[#111] border border-white/[0.06] rounded-lg w-fit min-w-full sm:min-w-0">
             {TABS.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-violet-500/20 text-white border border-violet-500/30'
                     : 'text-gray-500 hover:text-gray-300'

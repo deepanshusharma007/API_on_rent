@@ -9,7 +9,7 @@ import Footer from '../components/Footer';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer } from '../lib/motion';
 import { buildDynamicCatalogue, getProviderMeta } from '../lib/providerMeta.jsx';
 
-const inputClass = 'w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500/50 focus:bg-white/[0.06] transition-all text-sm font-mono';
+const inputClass = 'w-full px-3 py-2.5 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-all text-sm font-mono';
 
 export default function Playground() {
   const [virtualKey, setVirtualKey] = useState('');
@@ -20,7 +20,7 @@ export default function Playground() {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [responseTime, setResponseTime] = useState(null);
-  const [allModels, setAllModels] = useState([]); // built from API data
+  const [allModels, setAllModels] = useState([]);
 
   useEffect(() => {
     Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
@@ -96,23 +96,21 @@ export default function Playground() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#07070f]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-36 pb-10 px-5 overflow-hidden">
-        <div className="blob-3 top-[-60px] right-0 opacity-30" />
-        <div className="absolute inset-0 grid-pattern opacity-15" />
+      <section className="pt-32 pb-8 px-5">
         <motion.div
           variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="relative max-w-6xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
-          <motion.div variants={fadeUp} className="mb-8">
-            <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-2">API Playground</p>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
-              Test your <span className="gradient-text">Virtual Key</span>
+          <motion.div variants={fadeUp} className="mb-6">
+            <p className="text-violet-400 text-xs font-semibold tracking-widest uppercase mb-2">API Playground</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              Test your <span className="text-violet-400">Virtual Key</span>
             </h1>
-            <p className="text-gray-500">Send live requests across all AI models and inspect responses in real time.</p>
+            <p className="text-gray-500 text-sm">Send live requests across all AI models and inspect responses in real time.</p>
           </motion.div>
         </motion.div>
       </section>
@@ -121,13 +119,13 @@ export default function Playground() {
       <section className="px-5 pb-16 flex-1">
         <motion.div
           variants={staggerContainer(0.12)} initial="hidden" animate="show"
-          className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-5"
+          className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4"
         >
           {/* ── LEFT: Request Panel ── */}
           <motion.div variants={fadeLeft} className="space-y-4">
             {/* API Key */}
-            <div className="glass-card border border-white/[0.08] rounded-2xl p-6">
-              <label className="block text-xs text-gray-500 mb-2.5 font-semibold uppercase tracking-wider">Virtual API Key</label>
+            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
+              <label className="block text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Virtual API Key</label>
               <input
                 type="text"
                 value={virtualKey}
@@ -138,9 +136,9 @@ export default function Playground() {
             </div>
 
             {/* Model Selector */}
-            <div className="glass-card border border-white/[0.08] rounded-2xl p-6">
+            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
               <label className="block text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wider">Model</label>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {MODELS.length === 0 && (
                   <p className="text-gray-600 text-sm py-4 text-center">No models available — admin hasn't added any provider keys yet.</p>
                 )}
@@ -150,17 +148,17 @@ export default function Playground() {
                     <button
                       key={m.id}
                       onClick={() => setModel(m.id)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all ${
                         model === m.id
                           ? `${provMeta.bg} ${provMeta.border}`
-                          : 'bg-white/[0.02] border-white/[0.04] hover:border-white/[0.10]'
+                          : 'bg-[#1a1a1a] border-white/[0.06] hover:border-white/[0.12]'
                       }`}
                     >
                       <div className="text-left">
                         <div className={`font-medium text-sm ${model === m.id ? m.color : 'text-gray-300'}`}>{m.label}</div>
                         <div className="text-gray-600 text-xs">{provMeta.name || m.providerKey}</div>
                       </div>
-                      <span className="text-xl">{m.emoji}</span>
+                      <span className="text-lg">{m.emoji}</span>
                     </button>
                   );
                 })}
@@ -168,8 +166,8 @@ export default function Playground() {
             </div>
 
             {/* Prompt */}
-            <div className="glass-card border border-white/[0.08] rounded-2xl p-6">
-              <label className="block text-xs text-gray-500 mb-2.5 font-semibold uppercase tracking-wider">Prompt</label>
+            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
+              <label className="block text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Prompt</label>
               <textarea
                 value={prompt}
                 onChange={e => setPrompt(e.target.value)}
@@ -184,7 +182,7 @@ export default function Playground() {
                     type="number"
                     value={maxTokens}
                     onChange={e => setMaxTokens(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-violet-500/40"
+                    className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-violet-500"
                   />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer pt-5">
@@ -204,17 +202,17 @@ export default function Playground() {
               <motion.button
                 onClick={sendRequest}
                 disabled={loading}
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                className="flex-1 flex items-center justify-center gap-2.5 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all disabled:opacity-60 shadow-lg shadow-violet-500/25"
+                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-60"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-4 h-4" />}
                 {loading ? 'Sending...' : 'Send Request'}
               </motion.button>
               <motion.button
                 onClick={generateCurl}
-                whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 title="Copy as cURL"
-                className="px-4 py-3.5 glass-card border border-white/[0.08] hover:border-white/[0.16] text-gray-400 hover:text-white rounded-xl transition-all"
+                className="px-4 py-3 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg transition-all"
               >
                 <Code2 className="w-5 h-5" />
               </motion.button>
@@ -222,7 +220,7 @@ export default function Playground() {
           </motion.div>
 
           {/* ── RIGHT: Response Panel ── */}
-          <motion.div variants={fadeRight} className="glass-card border border-white/[0.08] rounded-2xl p-6 flex flex-col">
+          <motion.div variants={fadeRight} className="bg-[#111] border border-white/[0.08] rounded-lg p-5 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-violet-400" />
@@ -243,7 +241,7 @@ export default function Playground() {
                 {!response && !loading && (
                   <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="h-full flex flex-col items-center justify-center text-center py-12">
-                    <Zap className="w-10 h-10 text-gray-800 mb-3" />
+                    <Zap className="w-8 h-8 text-gray-800 mb-3" />
                     <p className="text-gray-600 text-sm">Send a request to see the response</p>
                   </motion.div>
                 )}
@@ -257,16 +255,16 @@ export default function Playground() {
 
                 {response?.error && (
                   <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                    <p className="text-rose-300 text-sm font-mono">{response.error}</p>
+                    className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p className="text-red-300 text-sm font-mono">{response.error}</p>
                   </motion.div>
                 )}
 
                 {response?.content && (
                   <motion.div key="content" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                     className="space-y-4">
-                    <div className="p-4 rounded-xl bg-black/30 border border-white/[0.04] max-h-[360px] overflow-y-auto">
-                      <pre className="text-emerald-300 text-sm whitespace-pre-wrap font-mono leading-relaxed">
+                    <div className="p-4 rounded-lg bg-black/40 border border-white/[0.06] max-h-[360px] overflow-y-auto">
+                      <pre className="text-emerald-400 text-sm whitespace-pre-wrap font-mono leading-relaxed">
                         {response.content}
                         {response.streaming && <span className="animate-pulse text-violet-400">▌</span>}
                       </pre>
@@ -279,7 +277,7 @@ export default function Playground() {
                           { label: 'Output', val: response.usage.completion_tokens },
                           { label: 'Total',  val: response.usage.total_tokens },
                         ].map(({ label, val }) => (
-                          <div key={label} className="text-center p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                          <div key={label} className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
                             <div className="text-xs text-gray-600 mb-1">{label}</div>
                             <div className="text-white font-bold text-sm">{val}</div>
                           </div>
@@ -288,13 +286,13 @@ export default function Playground() {
                     )}
 
                     {response.model && (
-                      <p className="text-xs text-gray-700">Model: <span className="text-gray-500">{response.model}</span></p>
+                      <p className="text-xs text-gray-700">Model: <span className="text-gray-500 font-mono">{response.model}</span></p>
                     )}
 
                     <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
                       onClick={() => { navigator.clipboard.writeText(response.content); toast.success('Copied!'); }}
-                      className="flex items-center gap-2 px-4 py-2.5 glass-card border border-white/[0.08] hover:border-white/[0.16] text-gray-400 hover:text-white rounded-xl text-sm transition-all"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg text-sm transition-all"
                     >
                       <Copy className="w-4 h-4" />Copy Response
                     </motion.button>
