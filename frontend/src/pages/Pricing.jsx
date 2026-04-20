@@ -151,10 +151,10 @@ export default function Pricing() {
           >
             {plans.length === 0
               ? [
-                  { label: '15 min', emoji: '⚡', price: '~$0.99', tokens: '50K', desc: 'Quick test' },
-                  { label: '30 min', emoji: '🕐', price: '~$1.99', tokens: '100K', desc: 'Short session' },
-                  { label: '1 hour', emoji: '🌙', price: '~$3.99', tokens: '200K', desc: 'Work session', popular: true },
-                  { label: '1 day',  emoji: '☀️', price: '~$24.99', tokens: '2M',  desc: 'Full day access' },
+                  { label: '15 min', emoji: '⚡', price: '~₹49', tokens: '20K', desc: 'Quick test' },
+                  { label: '30 min', emoji: '🕐', price: '~₹89', tokens: '40K', desc: 'Short session' },
+                  { label: '1 hour', emoji: '🌙', price: '~₹149', tokens: '80K', desc: 'Work session', popular: true },
+                  { label: '1 day',  emoji: '☀️', price: '~₹499', tokens: '1.2M',  desc: 'Full day access' },
                 ].map(tier => (
                   <motion.div key={tier.label} variants={scaleIn} whileHover={{ y: -6 }}
                     className="relative p-7 rounded-2xl border glass-card border-violet-500/20 flex flex-col">
@@ -191,7 +191,7 @@ export default function Pricing() {
                       <div className="text-3xl mb-3">{emoji}</div>
                       <div className="text-white font-black text-xl mb-1">{plan.duration_label || `${plan.duration_minutes} min`}</div>
                       <div className="text-gray-500 text-xs mb-4">{desc}</div>
-                      <div className="text-3xl font-black text-white mb-0.5">${plan.price}</div>
+                      <div className="text-3xl font-black text-white mb-0.5">₹{plan.price}</div>
                       <div className="text-gray-600 text-xs mb-5">one-time · {plan.token_cap >= 1_000_000 ? `${(plan.token_cap/1_000_000).toFixed(1)}M` : `${(plan.token_cap/1000).toFixed(0)}K`} tokens</div>
                       <div className="flex-1" />
                       <div className={`text-xs flex items-center gap-1.5 font-medium ${popular ? 'text-violet-400' : 'text-gray-500'}`}>

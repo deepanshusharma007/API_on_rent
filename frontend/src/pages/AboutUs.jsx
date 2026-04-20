@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, viewport } from '../lib/motion';
 
 const STATS = [
-  { value: '$0',  label: 'Hidden fees',        color: 'from-emerald-500 to-teal-500' },
+  { value: '₹0',  label: 'Hidden fees',        color: 'from-emerald-500 to-teal-500' },
   { value: '3',   label: 'AI providers',        color: 'from-sky-500 to-blue-500' },
   { value: '99.9%',label: 'Uptime target',      color: 'from-violet-500 to-purple-500' },
   { value: '∞',  label: 'Passion for devs',    color: 'from-pink-500 to-rose-500' },

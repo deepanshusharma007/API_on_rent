@@ -92,7 +92,7 @@ export default function AdminPanel() {
         <StatCard icon={Users}       label="Total Users"     value={stats?.total_users  || 0}                          color="sky" />
         <StatCard icon={Activity}    label="Active Rentals"  value={stats?.active_rentals || 0}                         color="emerald" />
         <StatCard icon={Package}     label="Total Rentals"   value={stats?.total_rentals || 0}                          color="violet" />
-        <StatCard icon={DollarSign}  label="Revenue"         value={`$${(stats?.total_revenue || 0).toFixed(2)}`}       color="amber" />
+        <StatCard icon={DollarSign}  label="Revenue"         value={`₹${(stats?.total_revenue || 0).toFixed(2)}`}       color="amber" />
       </motion.div>
       {analytics && (
         <motion.div variants={fadeUp} initial="hidden" animate="show"
