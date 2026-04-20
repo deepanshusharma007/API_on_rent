@@ -49,7 +49,7 @@ export default function TermsOfService() {
             rental window. There are no subscriptions or automatic renewals.
           </p>
           <p>
-            Prices are displayed in <Highlight>USD</Highlight> and are subject to change without notice.
+            Prices are displayed in <Highlight>INR</Highlight> and are subject to change without notice.
             Payments are processed by Cashfree Payments; I never handle or store your payment credentials.
           </p>
           <p>

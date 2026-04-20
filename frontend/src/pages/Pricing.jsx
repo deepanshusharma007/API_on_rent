@@ -102,7 +102,7 @@ export default function Pricing() {
             </motion.div>
           </motion.div>
           <motion.p variants={fadeUp} className="text-gray-700 text-xs mt-5">
-            Powered by Cashfree · All major payment methods · Prices in USD
+            Powered by Cashfree · All major payment methods · Prices in INR
           </motion.p>
         </motion.div>
       </section>

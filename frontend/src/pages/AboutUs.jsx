@@ -16,7 +16,7 @@ const VALUES = [
   { icon: Zap,    color: 'text-yellow-400', bg: 'from-yellow-500/15 to-yellow-500/5', border: 'border-yellow-500/20',  title: 'Speed over everything',  desc: "Your API key should be in your hands before you finish your coffee. The entire activation flow takes under 10 seconds." },
   { icon: Shield, color: 'text-emerald-400',bg: 'from-emerald-500/15 to-emerald-500/5',border:'border-emerald-500/20', title: 'Security first',           desc: "Keys are time-limited, IP-pinned, and PII-masked. Prompts are never stored and never will be." },
   { icon: Heart,  color: 'text-pink-400',   bg: 'from-pink-500/15 to-pink-500/5',     border: 'border-pink-500/20',   title: 'Built for developers',    desc: "Every feature — from the OpenAI-compatible endpoint to semantic cache — was designed by a developer for developers." },
-  { icon: Globe,  color: 'text-sky-400',    bg: 'from-sky-500/15 to-sky-500/5',       border: 'border-sky-500/20',    title: 'Made for builders',       desc: "Pay in USD. No forex fees, no enterprise lock-in. Just build what you want, when you want." },
+  { icon: Globe,  color: 'text-sky-400',    bg: 'from-sky-500/15 to-sky-500/5',       border: 'border-sky-500/20',    title: 'Made for builders',       desc: "Pay in INR. No forex fees, no enterprise lock-in. Just build what you want, when you want." },
 ];
 
 const STACK = ['FastAPI', 'React', 'PostgreSQL', 'Redis', 'LiteLLM', 'Docker', 'Framer Motion', 'Tailwind CSS'];

@@ -100,9 +100,9 @@ export default function AdminPanel() {
           <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">Last 24 h Performance</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Revenue',       val: `$${analytics.revenue_usd?.toFixed(2)}`,       color: 'text-emerald-400' },
-              { label: 'Provider Cost', val: `$${analytics.provider_cost_usd?.toFixed(2)}`, color: 'text-rose-400' },
-              { label: 'Profit',        val: `$${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? 'text-emerald-400' : 'text-rose-400' },
+              { label: 'Revenue',       val: `₹${analytics.revenue_usd?.toFixed(2)}`,       color: 'text-emerald-400' },
+              { label: 'Provider Cost', val: `₹${analytics.provider_cost_usd?.toFixed(2)}`, color: 'text-rose-400' },
+              { label: 'Profit',        val: `₹${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? 'text-emerald-400' : 'text-rose-400' },
               { label: 'Cache Hit',     val: `${analytics.cache_hit_rate?.toFixed(1)}%`,     color: 'text-violet-400' },
             ].map(({ label, val, color }) => (
               <div key={label} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
@@ -260,7 +260,7 @@ export default function AdminPanel() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { key: 'name',      label: 'Plan Name',   type: 'text' },
-                  { key: 'price',     label: 'Price (USD)', type: 'number', step: 0.01 },
+                  { key: 'price',     label: 'Price (INR)', type: 'number', step: 0.01 },
                   { key: 'token_cap', label: 'Token Cap',   type: 'number' },
                   { key: 'rpm_limit', label: 'RPM Limit',   type: 'number' },
                 ].map(f => (
@@ -627,8 +627,8 @@ export default function AdminPanel() {
         </div>
         <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
           className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={DollarSign}  label="Revenue (24h)"    value={`$${analytics.revenue_usd?.toFixed(2)}`}      color="emerald" />
-          <StatCard icon={Zap}         label="Provider Cost"    value={`$${analytics.provider_cost_usd?.toFixed(2)}`} color="rose" />
+          <StatCard icon={DollarSign}  label="Revenue (24h)"    value={`₹${analytics.revenue_usd?.toFixed(2)}`}      color="emerald" />
+          <StatCard icon={Zap}         label="Provider Cost"    value={`₹${analytics.provider_cost_usd?.toFixed(2)}`} color="rose" />
           <StatCard icon={TrendingUp}  label="Profit Margin"    value={`${analytics.profit_margin_pct?.toFixed(1)}%`} color="violet" />
         </motion.div>
         <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
@@ -655,7 +655,7 @@ export default function AdminPanel() {
                     <td className={tableCell + ' text-white'}>{m.model}</td>
                     <td className={tableCell + ' text-gray-400 text-right'}>{m.requests}</td>
                     <td className={tableCell + ' text-gray-400 text-right'}>{(m.tokens / 1000).toFixed(1)}K</td>
-                    <td className={tableCell + ' text-gray-400 text-right'}>${m.cost_usd.toFixed(4)}</td>
+                    <td className={tableCell + ' text-gray-400 text-right'}>₹{m.cost_usd.toFixed(4)}</td>
                   </tr>
                 ))}
               </tbody>
