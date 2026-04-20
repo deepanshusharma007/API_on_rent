@@ -223,7 +223,7 @@ export default function Marketplace() {
                               </div>
                               <div className="text-gray-500 text-xs mt-1">{formatTokens(plan.token_cap)} tokens</div>
                               <div className={`text-2xl font-black mt-3 ${isSelected ? 'text-violet-300' : 'text-white'}`}>
-                                ${plan.price}
+                                ₹{plan.price}
                               </div>
                             </motion.button>
                           );
@@ -304,7 +304,7 @@ export default function Marketplace() {
                               {/* Right: price + CTA */}
                               <div className="md:w-48 flex flex-col items-center md:items-end gap-4">
                                 <div className="text-right">
-                                  <div className="text-5xl font-black text-white">${selectedPlan.price}</div>
+                                  <div className="text-5xl font-black text-white">₹{selectedPlan.price}</div>
                                   <div className="text-gray-500 text-sm">one-time</div>
                                 </div>
                                 <motion.button

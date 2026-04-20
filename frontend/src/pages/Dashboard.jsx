@@ -163,7 +163,7 @@ export default function Dashboard() {
         } else if (data.type === 'rental_expired') {
           handleRentalExpire(rentalId);
         } else if (data.type === 'spending_alert') {
-          toast.error(`Spending alert: $${data.amount_usd.toFixed(2)} in ${data.window_minutes} min`);
+          toast.error(`Spending alert: ₹${data.amount_usd.toFixed(2)} in ${data.window_minutes} min`);
         }
       } catch {}
     };

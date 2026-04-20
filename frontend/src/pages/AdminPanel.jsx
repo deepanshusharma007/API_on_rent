@@ -277,7 +277,7 @@ export default function AdminPanel() {
             {/* Preview */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border bg-violet-500/10 border-violet-500/30 text-violet-300">
               <strong>{form.name || 'Unnamed plan'}</strong>
-              <span className="opacity-60">· ${form.price} · {form.token_cap >= 1_000_000 ? `${(form.token_cap/1_000_000).toFixed(1)}M` : `${(form.token_cap/1000).toFixed(0)}K`} tokens · {form.duration_label}</span>
+              <span className="opacity-60">· ₹{form.price} · {form.token_cap >= 1_000_000 ? `${(form.token_cap/1_000_000).toFixed(1)}M` : `${(form.token_cap/1000).toFixed(0)}K`} tokens · {form.duration_label}</span>
             </div>
 
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleCreate}
@@ -311,7 +311,7 @@ export default function AdminPanel() {
                   </td>
                   <td className={tableCell + ' text-gray-400 text-xs'}>{plan.name}</td>
                   <td className={tableCell}>
-                    <span className="text-emerald-400 font-bold">${plan.price}</span>
+                    <span className="text-emerald-400 font-bold">₹{plan.price}</span>
                   </td>
                   <td className={tableCell + ' text-gray-500 text-xs'}>
                     {plan.token_cap >= 1_000_000 ? `${(plan.token_cap/1_000_000).toFixed(1)}M` : `${(plan.token_cap/1000).toFixed(0)}K`}
@@ -683,7 +683,7 @@ export default function AdminPanel() {
             {alerts.map(alert => (
               <tr key={alert.id} className="hover:bg-white/[0.02]">
                 <td className={tableCell + ' text-white'}>{alert.user_email}</td>
-                <td className={tableCell + ' text-rose-400 font-bold'}>${alert.amount_usd.toFixed(2)}</td>
+                <td className={tableCell + ' text-rose-400 font-bold'}>₹{alert.amount_usd.toFixed(2)}</td>
                 <td className={tableCell + ' text-gray-500'}>{alert.window_minutes} min</td>
                 <td className={tableCell}>
                   <span className={`px-2 py-0.5 rounded-full text-xs border ${alert.was_suspended ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
