@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Copy, Check, BookOpen, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { fadeUp, fadeIn, staggerContainer, viewport } from "../lib/motion.jsx";
 
 const BASE_URL = "https://api-on-rent-backend.onrender.com";
 
@@ -202,42 +200,25 @@ export default function ApiDocs() {
       <Navbar />
 
       {/* Section 1: Hero */}
-      <section className="pt-32 pb-16 px-5 md:px-8 text-center relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/10 rounded-full blur-3xl" />
-        </div>
-        <motion.div
-          variants={staggerContainer(0.12, 0.1)}
-          initial="hidden"
-          animate="show"
-          className="relative max-w-3xl mx-auto"
-        >
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-400 text-sm font-medium mb-6"
-          >
+      <section className="pt-32 pb-16 px-5 md:px-8 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded border border-violet-500/30 bg-violet-500/10 text-violet-400 text-sm font-medium mb-6">
             <BookOpen className="w-4 h-4" />
             Developer Reference
-          </motion.div>
-          <motion.h1
-            variants={fadeUp}
-            className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-4"
-          >
-            API{" "}
-            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-              Reference
-            </span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-lg text-gray-400">
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-4">
+            API <span className="text-violet-400">Reference</span>
+          </h1>
+          <p className="text-lg text-gray-400">
             OpenAI-compatible endpoint. Drop in your virtual key and start building.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
       </section>
 
       <div className="max-w-4xl mx-auto px-5 md:px-8 pb-24 space-y-14">
 
         {/* Section 2: Authentication */}
-        <motion.section variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+        <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
               <Key className="w-4 h-4 text-violet-400" />
@@ -268,10 +249,10 @@ export default function ApiDocs() {
               <Link to="/dashboard" className="text-violet-400 hover:underline">Dashboard</Link>.
             </p>
           </div>
-        </motion.section>
+        </section>
 
         {/* Section 3: Chat Completions */}
-        <motion.section variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+        <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
               <Code2 className="w-4 h-4 text-violet-400" />
@@ -294,15 +275,15 @@ export default function ApiDocs() {
             {/* Provider tabs */}
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Provider</p>
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 {PROVIDERS.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => { setActiveProvider(p.id); setActiveLang("Python"); }}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
                       activeProvider === p.id
-                        ? "bg-violet-600 text-white"
-                        : "bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1]"
+                        ? "bg-violet-600 border-violet-600 text-white"
+                        : "bg-[#1a1a1a] border-white/[0.08] text-gray-400 hover:text-white hover:border-white/[0.2]"
                     }`}
                   >
                     {p.label}
@@ -350,10 +331,10 @@ export default function ApiDocs() {
 
             <CodeBlock code={snippets[activeLang]} />
           </div>
-        </motion.section>
+        </section>
 
         {/* Section 4: REST Endpoints */}
-        <motion.section variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+        <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
               <Globe className="w-4 h-4 text-violet-400" />
@@ -439,10 +420,10 @@ export default function ApiDocs() {
               <EndpointRow method="GET" path="/status/" description="Full system status including database and Redis" />
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* Section 5: Supported Models */}
-        <motion.section variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+        <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
               <Table2 className="w-4 h-4 text-violet-400" />
@@ -481,10 +462,10 @@ export default function ApiDocs() {
               </tbody>
             </table>
           </div>
-        </motion.section>
+        </section>
 
         {/* Section 6: Error Reference */}
-        <motion.section variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+        <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-lg bg-rose-600/20 flex items-center justify-center border border-rose-500/20">
               <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -513,11 +494,11 @@ export default function ApiDocs() {
               </tbody>
             </table>
           </div>
-        </motion.section>
+        </section>
 
         {/* Section 7: CTA */}
-        <motion.section variants={fadeIn} initial="hidden" whileInView="show" viewport={viewport}>
-          <div className="bg-gradient-to-br from-violet-600/20 to-fuchsia-600/10 border border-violet-500/20 rounded-lg p-10 text-center">
+        <section>
+          <div className="bg-[#111] border border-violet-500/20 rounded-lg p-10 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">Ready to build?</h2>
             <p className="text-gray-400 mb-7 max-w-md mx-auto">
               Purchase a plan on the marketplace, get your virtual key instantly, and start making API calls in minutes.
@@ -530,7 +511,7 @@ export default function ApiDocs() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-        </motion.section>
+        </section>
 
       </div>
 
