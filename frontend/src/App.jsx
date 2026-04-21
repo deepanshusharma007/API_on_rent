@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -20,6 +20,7 @@ import Pricing from './pages/Pricing';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import RefundPolicy from './pages/RefundPolicy';
+import ApiDocs from './pages/ApiDocs';
 
 import useAuthStore from './store/authStore';
 
@@ -30,16 +31,24 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  // Keep Render backend alive (free tier sleeps after 15min inactivity)
+  useEffect(() => {
+    const ping = () => fetch('https://api-on-rent-backend.onrender.com/health').catch(() => {});
+    ping(); // immediate ping on load
+    const id = setInterval(ping, 14 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-[#0a0a0a]">
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: '#1e1b4b',
+              background: '#111',
               color: '#e2e8f0',
-              border: '1px solid rgba(139,92,246,0.3)',
+              border: '1px solid rgba(255,255,255,0.08)',
             },
           }}
         />
@@ -54,6 +63,7 @@ function App() {
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/status" element={<StatusPage />} />
+          <Route path="/docs" element={<ApiDocs />} />
 
           {/* ── Auth ── */}
           <Route path="/login" element={<Login />} />
