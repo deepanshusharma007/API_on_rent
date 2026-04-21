@@ -5,7 +5,7 @@ from datetime import datetime
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", summary="Health check", description="Returns the current health status of the API service. Useful for uptime monitoring.")
 async def health_check():
     """Public health check endpoint."""
     return {
@@ -15,7 +15,7 @@ async def health_check():
     }
 
 
-@router.get("/")
+@router.get("/", summary="Service status", description="Returns overall service status including provider health, circuit breaker states, and available endpoints.")
 async def status_page():
     """Public status page with service information."""
     # Mock provider data - in production, this would check actual provider health
@@ -55,7 +55,7 @@ async def status_page():
     }
 
 
-@router.get("/providers")
+@router.get("/providers", summary="Provider status", description="Returns real-time status and estimated latency for each supported AI provider (OpenAI, Anthropic, Google).")
 async def provider_status():
     """Get status of AI providers."""
     return {

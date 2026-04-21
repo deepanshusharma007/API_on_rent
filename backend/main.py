@@ -102,10 +102,48 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="AI API Rental SaaS",
-    description="Rent OpenAI, Gemini, and Claude API access by the minute or day",
+    title="AIRent — AI API Rental",
+    description="""
+## Rent AI API access by the minute or day
+
+AIRent gives you an **OpenAI-compatible virtual key** that works with GPT-4o, Gemini, and Claude — no long-term contracts, no setup fees.
+
+### How it works
+1. **Register** → create an account
+2. **Buy a plan** → choose a provider + duration, pay with Cashfree
+3. **Get your virtual key** → use it like a normal OpenAI API key
+4. **Build** → point any OpenAI-compatible SDK at our endpoint
+
+### Base URL
+```
+https://api-on-rent-backend.onrender.com
+```
+
+### Authentication
+Most endpoints require a **JWT Bearer token** (from `/auth/login`).
+The proxy endpoint `/v1/chat/completions` uses your **virtual key** (`vk_...`) as the Bearer token.
+
+### Supported Models
+| Model | Provider | Drain Rate |
+|---|---|---|
+| `gpt-4o-mini` | OpenAI | 3× |
+| `gpt-4o` | OpenAI | 10× |
+| `gemini-1.5-flash` | Google | 1× |
+| `gemini-1.5-pro` | Google | 5× |
+| `claude-3-5-sonnet-20241022` | Anthropic | 8× |
+""",
     version="1.0.0",
-    lifespan=lifespan
+    contact={"name": "AIRent Support", "url": "https://api-on-rent.pages.dev/contact"},
+    license_info={"name": "Proprietary"},
+    lifespan=lifespan,
+    openapi_tags=[
+        {"name": "Authentication", "description": "Register, login, and get user info."},
+        {"name": "Marketplace", "description": "Browse plans, providers, and manage your rentals."},
+        {"name": "Payment", "description": "Create Cashfree checkout sessions and handle webhooks."},
+        {"name": "Proxy", "description": "OpenAI-compatible chat completions endpoint — use your virtual key here."},
+        {"name": "Status", "description": "System health and provider status."},
+        {"name": "Admin", "description": "Admin-only endpoints for managing users, plans, and analytics."},
+    ],
 )
 
 # CORS middleware

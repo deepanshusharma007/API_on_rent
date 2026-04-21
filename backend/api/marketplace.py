@@ -15,7 +15,7 @@ from backend.services.capacity_manager import CapacityManager
 router = APIRouter()
 
 
-@router.get("/active-providers")
+@router.get("/active-providers", summary="List active providers", description="Returns providers that have at least one active API key configured. Only these providers are available for rental. Public endpoint — no auth required.")
 def get_active_providers(db: Session = Depends(get_db)):
     """Return which providers currently have at least one active key.
     Public endpoint — no auth required, no key data exposed."""
@@ -24,14 +24,14 @@ def get_active_providers(db: Session = Depends(get_db)):
     return {"providers": providers}
 
 
-@router.get("/plans", response_model=List[PlanResponse])
+@router.get("/plans", response_model=List[PlanResponse], summary="List rental plans", description="Returns all active rental plans with duration, token cap, rate limit, and price. Public endpoint — no auth required.")
 def list_plans(db: Session = Depends(get_db)):
     """List all active rental plans. Public endpoint."""
     plans = db.query(Plan).filter(Plan.is_active == True).all()
     return plans
 
 
-@router.post("/rentals/purchase", response_model=RentalResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/rentals/purchase", response_model=RentalResponse, status_code=status.HTTP_201_CREATED, summary="Direct purchase (legacy)", description="Purchase a rental plan directly without a payment gateway. Use POST /api/checkout/session for the Cashfree-based checkout flow instead.")
 async def purchase_rental(
     purchase_data: RentalPurchase,
     current_user: User = Depends(get_current_user),
@@ -90,7 +90,7 @@ async def purchase_rental(
     return response
 
 
-@router.get("/rentals/active")
+@router.get("/rentals/active", summary="My active rentals", description="Returns all active rentals for the authenticated user, including virtual key, tokens remaining, and expiry time.")
 async def get_active_rentals(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -144,7 +144,7 @@ async def get_active_rentals(
     return response_data
 
 
-@router.get("/rentals/history", response_model=List[RentalResponse])
+@router.get("/rentals/history", response_model=List[RentalResponse], summary="Rental history", description="Returns the authenticated user's past (expired) rentals in reverse chronological order.")
 async def get_rental_history(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -168,7 +168,7 @@ async def get_rental_history(
     return response_list
 
 
-@router.get("/rentals/{rental_id}/usage", response_model=UsageStats)
+@router.get("/rentals/{rental_id}/usage", response_model=UsageStats, summary="Rental usage stats", description="Returns token usage, cache hit rate, and time remaining for a specific rental belonging to the authenticated user.")
 async def get_usage_stats(
     rental_id: int,
     current_user: User = Depends(get_current_user),

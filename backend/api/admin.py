@@ -54,7 +54,7 @@ class CapacityConfig(BaseModel):
 
 # ==================== User Management ====================
 
-@router.get("/users")
+@router.get("/users", summary="List all users", description="Returns all registered users with account status and rental count. Admin only.")
 def list_users(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -77,7 +77,7 @@ def list_users(
     }
 
 
-@router.post("/users/{user_id}/suspend")
+@router.post("/users/{user_id}/suspend", summary="Suspend user", description="Deactivates a user account and suspends all their active rentals. Admin only.")
 def suspend_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
@@ -104,7 +104,7 @@ def suspend_user(
     return {"message": f"User {user.email} suspended", "rentals_suspended": len(active_rentals)}
 
 
-@router.post("/users/{user_id}/activate")
+@router.post("/users/{user_id}/activate", summary="Activate user", description="Reactivates a previously suspended user account. Admin only.")
 def activate_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
@@ -122,7 +122,7 @@ def activate_user(
 
 # ==================== Credit Injection ====================
 
-@router.post("/users/{user_id}/credit")
+@router.post("/users/{user_id}/credit", summary="Inject credits", description="Add tokens to a user's most recent active rental. Use for support compensation or manual top-ups. Admin only.")
 async def inject_credits(
     user_id: int,
     injection: CreditInjection,
@@ -170,7 +170,7 @@ async def inject_credits(
 
 # ==================== Plan Management ====================
 
-@router.get("/plans", response_model=List[PlanResponse])
+@router.get("/plans", response_model=List[PlanResponse], summary="List all plans (admin)", description="Returns all plans including inactive ones. Admin only.")
 def list_all_plans(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -422,7 +422,7 @@ async def suspend_rental(
 
 # ==================== Analytics ====================
 
-@router.get("/stats")
+@router.get("/stats", summary="Platform statistics", description="Returns high-level platform metrics: total users, active rentals, total revenue. Admin only.")
 def get_platform_stats(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -442,7 +442,7 @@ def get_platform_stats(
     }
 
 
-@router.get("/analytics")
+@router.get("/analytics", summary="Profit analytics", description="Revenue vs provider cost breakdown for the given time window (default 24h). Includes per-model and per-plan stats, cache hit rate. Admin only.")
 def get_profit_analytics(
     hours: int = 24,
     admin: User = Depends(get_current_admin),
@@ -537,7 +537,7 @@ def get_profit_analytics(
 
 # ==================== Spending Alerts ====================
 
-@router.get("/spending-alerts")
+@router.get("/spending-alerts", summary="Spending alerts", description="Returns the 50 most recent spending alerts triggered by the anomaly detection worker. Admin only.")
 def get_spending_alerts(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -566,7 +566,7 @@ def get_spending_alerts(
 
 # ==================== Capacity Management ====================
 
-@router.get("/capacity")
+@router.get("/capacity", summary="Capacity dashboard", description="Returns current token and RPM capacity utilization across all providers. Admin only.")
 async def get_capacity_dashboard(
     admin: User = Depends(get_current_admin),
     redis_manager: RedisManager = Depends(get_redis_manager)
@@ -680,7 +680,7 @@ async def refund_transaction(
 
 # ==================== User Impersonation ====================
 
-@router.get("/impersonate/{user_id}")
+@router.get("/impersonate/{user_id}", summary="Impersonate user", description="View the platform as a specific user — returns their rentals, transactions, and usage summary. Read-only. Admin only.")
 def impersonate_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
@@ -736,7 +736,7 @@ def impersonate_user(
 
 # ==================== CSV Export ====================
 
-@router.get("/export/csv")
+@router.get("/export/csv", summary="Export analytics CSV", description="Downloads usage log data as a CSV file for the given time window (default 24h). Admin only.")
 def export_analytics_csv(
     hours: int = 24,
     admin: User = Depends(get_current_admin),

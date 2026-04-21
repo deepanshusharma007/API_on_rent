@@ -53,7 +53,34 @@ async def verify_virtual_key(
     return rental_data
 
 
-@router.post("/chat/completions")
+@router.post(
+    "/chat/completions",
+    summary="Chat completions (OpenAI-compatible)",
+    description="""
+Send chat completion requests using your virtual key.
+
+**Authentication:** Use your virtual key as the Bearer token:
+```
+Authorization: Bearer vk_your_key_here
+```
+
+**Supported models:**
+- `gpt-4o-mini`, `gpt-4o` (OpenAI)
+- `gemini-1.5-flash`, `gemini-1.5-pro` (Google)
+- `claude-3-5-sonnet-20241022` (Anthropic)
+
+**Example request body:**
+```json
+{
+  "model": "gpt-4o-mini",
+  "messages": [{"role": "user", "content": "Hello!"}],
+  "max_tokens": 500
+}
+```
+
+The response follows the OpenAI response format exactly. Streaming (`stream: true`) is supported.
+""",
+)
 async def chat_completions(
     request: Request,
     rental_data: dict = Depends(verify_virtual_key),
@@ -348,7 +375,7 @@ async def chat_completions(
     )
 
 
-@router.get("/models")
+@router.get("/models", summary="List available models", description="Returns the list of AI models available for use, in OpenAI-compatible format. Mirrors the `/v1/models` endpoint convention.")
 async def list_models(db: Session = Depends(get_db)):
     """List available models from active plans (OpenAI-compatible)."""
     from backend.database.models import Plan

@@ -89,7 +89,7 @@ class CheckoutResponse(BaseModel):
     cf_order_id: str
 
 
-@router.post("/checkout/session", response_model=CheckoutResponse)
+@router.post("/checkout/session", response_model=CheckoutResponse, summary="Create payment session", description="Creates a Cashfree payment order. Returns `payment_session_id` which is used with the Cashfree JS SDK to open the payment modal. Body: `{plan_id, provider, customer_phone}`.")
 async def create_checkout_session(
     request: CheckoutRequest,
     current_user: User = Depends(get_current_user),
@@ -164,7 +164,7 @@ async def create_checkout_session(
         )
 
 
-@router.post("/webhooks/cashfree")
+@router.post("/webhooks/cashfree", include_in_schema=False, summary="Cashfree webhook", description="Internal webhook called by Cashfree after payment. Creates the rental and sends the virtual key by email. Do not call this directly.")
 async def cashfree_webhook(
     request: Request,
     db: Session = Depends(get_db),
@@ -273,7 +273,7 @@ async def cashfree_webhook(
 
 # ==================== ORDER STATUS VERIFICATION ====================
 
-@router.get("/checkout/verify/{order_id}")
+@router.get("/checkout/verify/{order_id}", summary="Verify order status", description="Verify Cashfree order payment status. Call this after the user is redirected back from Cashfree to confirm payment success before showing a confirmation screen.")
 async def verify_order_status(
     order_id: str,
     current_user: User = Depends(get_current_user),
@@ -316,7 +316,7 @@ class InvoiceResponse(BaseModel):
     status: str
 
 
-@router.get("/invoice/{rental_id}", response_model=InvoiceResponse)
+@router.get("/invoice/{rental_id}", response_model=InvoiceResponse, summary="Get invoice", description="Returns invoice data for a completed rental. Includes plan name, amount paid, token cap, and duration.")
 async def get_invoice(
     rental_id: int,
     current_user: User = Depends(get_current_user),
@@ -352,7 +352,7 @@ async def get_invoice(
     )
 
 
-@router.get("/invoice/{rental_id}/html")
+@router.get("/invoice/{rental_id}/html", summary="Get HTML invoice", description="Returns a printable HTML receipt for a rental purchase. Suitable for download or printing.")
 async def get_invoice_html(
     rental_id: int,
     current_user: User = Depends(get_current_user),
