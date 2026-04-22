@@ -97,3 +97,9 @@ test_virtual_key.py
 final_test.py
 quick_test.py
 test_real_redis.py
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
