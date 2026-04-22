@@ -91,7 +91,7 @@ async def logout(current_user: User = Depends(get_current_user), redis_manager: 
 
 
 @router.get("/me", response_model=UserResponse, summary="Get current user", description="Returns the authenticated user's profile. Requires `Authorization: Bearer <jwt_token>`.")
-def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(current_user: User = Depends(get_current_user)):
     """Get current user information."""
     return current_user
 

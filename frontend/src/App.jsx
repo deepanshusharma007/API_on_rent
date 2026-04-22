@@ -39,6 +39,27 @@ function App() {
     return () => clearInterval(id);
   }, []);
 
+  // Session validity check — detects if user was kicked by another device login
+  // Polls /auth/me every 30s; a 401 triggers auto-logout via the axios interceptor
+  useEffect(() => {
+    const checkSession = () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      fetch('https://api-on-rent-backend.onrender.com/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => {
+        if (res.status === 401) {
+          // axios interceptor won't fire here (plain fetch), handle manually
+          localStorage.removeItem('auth_token');
+          sessionStorage.setItem('auth_notice', 'You were logged out because your account was accessed from another device.');
+          window.location.href = '/login';
+        }
+      }).catch(() => {});
+    };
+    const id = setInterval(checkSession, 30 * 1000); // every 30 seconds
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-[#0a0a0a]">

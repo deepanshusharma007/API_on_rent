@@ -62,7 +62,7 @@ async def get_current_user(
     return user
 
 
-def get_current_admin(
+async def get_current_admin(
     current_user: User = Depends(get_current_user)
 ) -> User:
     """Verify user has admin role."""
