@@ -1,4 +1,5 @@
 """Authentication utilities for JWT and password hashing."""
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -23,17 +24,18 @@ def get_password_hash(password: str) -> str:
 hash_password = get_password_hash
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token."""
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, session_id: Optional[str] = None) -> tuple[str, str]:
+    """Create a JWT access token. Returns (token, session_id)."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(hours=settings.JWT_EXPIRATION_HOURS)
-    
-    to_encode.update({"exp": expire})
+
+    sid = session_id or str(uuid.uuid4())
+    to_encode.update({"exp": expire, "sid": sid})
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, sid
 
 
 def decode_access_token(token: str) -> Optional[dict]:

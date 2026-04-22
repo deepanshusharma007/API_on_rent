@@ -60,6 +60,24 @@ class RedisManager:
         key = f"balance:{rental_id}"
         return await self.redis.decrby(key, tokens)
     
+    # ==================== Single-Device Session Management ====================
+
+    async def set_user_session(self, user_id: int, session_id: str, ttl_seconds: int = 86400):
+        """Store the active session ID for a user. Overwrites any previous session (forces logout on old device)."""
+        key = f"session:{user_id}"
+        await self.redis.setex(key, ttl_seconds, session_id)
+
+    async def get_user_session(self, user_id: int) -> Optional[str]:
+        """Get the current active session ID for a user."""
+        key = f"session:{user_id}"
+        data = await self.redis.get(key)
+        return data.decode() if isinstance(data, bytes) else data
+
+    async def delete_user_session(self, user_id: int):
+        """Delete the active session (logout)."""
+        key = f"session:{user_id}"
+        await self.redis.delete(key)
+
     # ==================== Rate Limiting (RPM) ====================
     
     async def check_rate_limit(self, rental_id: int, rpm_limit: int) -> bool:

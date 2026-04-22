@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
@@ -16,6 +16,15 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+
+  // Show notice if user was auto-logged out due to session conflict
+  useEffect(() => {
+    const notice = sessionStorage.getItem('auth_notice');
+    if (notice) {
+      sessionStorage.removeItem('auth_notice');
+      toast.error(notice, { duration: 6000 });
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

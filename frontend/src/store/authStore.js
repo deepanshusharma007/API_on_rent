@@ -50,7 +50,9 @@ const useAuthStore = create(
                 }
             },
 
-            logout: () => {
+            logout: async () => {
+                // Tell backend to delete the Redis session (best-effort)
+                try { await authAPI.logout(); } catch (_) {}
                 localStorage.removeItem('auth_token');
                 set({
                     user: null,

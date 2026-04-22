@@ -6,6 +6,7 @@ from backend.database.models import User, UserRole
 from backend.api.schemas import UserRegister, UserLogin, Token, UserResponse
 from backend.services.auth_utils import verify_password, hash_password, create_access_token
 from backend.api.dependencies import get_current_user
+from backend.database.redis_manager import get_redis_manager, RedisManager
 
 router = APIRouter()
 
@@ -49,9 +50,9 @@ def register(user_data: UserRegister, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login", response_model=Token, summary="Login", description="Authenticate with email and password. Returns a JWT access token valid for 24 hours.")
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    """Login and get JWT token."""
+@router.post("/login", response_model=Token, summary="Login", description="Authenticate with email and password. Returns a JWT access token valid for 24 hours. Logging in from a new device automatically invalidates any existing session.")
+async def login(credentials: UserLogin, db: Session = Depends(get_db), redis_manager: RedisManager = Depends(get_redis_manager)):
+    """Login and get JWT token. Enforces single active session per user via Redis."""
     user = db.query(User).filter(User.email == credentials.email).first()
     if not user:
         raise HTTPException(
@@ -71,11 +72,22 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="User account is inactive"
         )
 
-    access_token = create_access_token(
+    access_token, session_id = create_access_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role.value}
     )
 
+    # Store session in Redis — overwrites any previous session (kicks old device)
+    from backend.config import settings
+    await redis_manager.set_user_session(user.id, session_id, ttl_seconds=settings.JWT_EXPIRATION_HOURS * 3600)
+
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout", summary="Logout", description="Invalidate the current session. The token will be rejected on all devices immediately.")
+async def logout(current_user: User = Depends(get_current_user), redis_manager: RedisManager = Depends(get_redis_manager)):
+    """Logout — delete session from Redis so the JWT is immediately invalidated."""
+    await redis_manager.delete_user_session(current_user.id)
+    return {"message": "Logged out successfully"}
 
 
 @router.get("/me", response_model=UserResponse, summary="Get current user", description="Returns the authenticated user's profile. Requires `Authorization: Bearer <jwt_token>`.")
@@ -84,10 +96,12 @@ def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.post("/refresh", response_model=Token, summary="Refresh token", description="Issue a fresh JWT token using the current valid token. Useful before expiry.")
-def refresh_token(current_user: User = Depends(get_current_user)):
-    """Refresh JWT token."""
-    access_token = create_access_token(
+@router.post("/refresh", response_model=Token, summary="Refresh token", description="Issue a fresh JWT token using the current valid token. Rotates the session ID — old token is immediately invalidated.")
+async def refresh_token(current_user: User = Depends(get_current_user), redis_manager: RedisManager = Depends(get_redis_manager)):
+    """Refresh JWT token — rotates session ID so old token is invalidated."""
+    access_token, session_id = create_access_token(
         data={"sub": str(current_user.id), "email": current_user.email, "role": current_user.role.value}
     )
+    from backend.config import settings
+    await redis_manager.set_user_session(current_user.id, session_id, ttl_seconds=settings.JWT_EXPIRATION_HOURS * 3600)
     return {"access_token": access_token, "token_type": "bearer"}

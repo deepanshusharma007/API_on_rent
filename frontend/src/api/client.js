@@ -20,13 +20,19 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
-// Handle 401 responses (expired tokens)
+// Handle 401 responses — clears session and redirects to login
+// This also handles the single-device kick: when another device logs in,
+// the next API call returns 401 with "Session expired" detail.
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token expired or invalid
+            const detail = error.response?.data?.detail || '';
             localStorage.removeItem('auth_token');
+            // Show kicked-out message if it was a session conflict
+            if (detail.includes('another device')) {
+                sessionStorage.setItem('auth_notice', 'You were logged out because your account was accessed from another device.');
+            }
             window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -40,6 +46,9 @@ export const authAPI = {
 
     login: (email, password) =>
         apiClient.post('/auth/login', { email, password }),
+
+    logout: () =>
+        apiClient.post('/auth/logout'),
 
     getMe: () =>
         apiClient.get('/auth/me'),

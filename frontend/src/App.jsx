@@ -35,7 +35,7 @@ function App() {
   useEffect(() => {
     const ping = () => fetch('https://api-on-rent-backend.onrender.com/health').catch(() => {});
     ping(); // immediate ping on load
-    const id = setInterval(ping, 14 * 60 * 1000);
+    const id = setInterval(ping, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
