@@ -23,6 +23,7 @@ import RefundPolicy from './pages/RefundPolicy';
 import ApiDocs from './pages/ApiDocs';
 
 import useAuthStore from './store/authStore';
+import AnnouncementBanner from './components/AnnouncementBanner';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -63,6 +64,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-[#0a0a0a]">
+        <AnnouncementBanner />
         <Toaster
           position="top-right"
           toastOptions={{

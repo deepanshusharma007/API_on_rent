@@ -38,6 +38,15 @@
   }
 }
 
+/* ── Announcement banner marquee ── */
+@keyframes marquee-banner-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-banner {
+  animation: marquee-banner-scroll 22s linear infinite;
+}
+
 /* ── Marquee / infinite scroll ── */
 @keyframes marquee-scroll {
   0%   { transform: translateX(0); }
