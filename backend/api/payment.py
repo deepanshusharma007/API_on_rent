@@ -1,4 +1,5 @@
 """Cashfree payment integration endpoints."""
+import asyncio
 import hmac
 import hashlib
 import base64
@@ -97,7 +98,10 @@ async def create_checkout_session(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Create a Cashfree payment order and return payment_session_id for checkout."""
-    plan = db.query(Plan).filter(Plan.id == request.plan_id, Plan.is_active == True).first()
+    loop = asyncio.get_event_loop()
+    plan = await loop.run_in_executor(
+        None, lambda: db.query(Plan).filter(Plan.id == request.plan_id, Plan.is_active == True).first()
+    )
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
@@ -215,28 +219,36 @@ async def cashfree_webhook(
         logger.error(f"Failed to parse order_id '{order_id}': {e}")
         return {"status": "error", "message": "Malformed order_id"}
 
-    # Idempotency: skip if already processed
-    existing = db.query(Transaction).filter(
-        Transaction.cashfree_order_id == order_id
-    ).first()
-    if existing:
+    loop = asyncio.get_event_loop()
+
+    # Idempotency check + plan fetch in one thread
+    def _check_and_fetch():
+        existing = db.query(Transaction).filter(Transaction.cashfree_order_id == order_id).first()
+        if existing:
+            return "duplicate", None
+        plan = db.query(Plan).filter(Plan.id == plan_id).first()
+        return "ok", plan
+
+    check_result, plan = await loop.run_in_executor(None, _check_and_fetch)
+    if check_result == "duplicate":
         logger.info(f"Duplicate webhook for order {order_id}, skipping")
         return {"status": "already_processed"}
-
-    plan = db.query(Plan).filter(Plan.id == plan_id).first()
     if not plan:
         logger.error(f"Plan {plan_id} not found for webhook order {order_id}")
         return {"status": "error", "message": "Plan not found"}
 
     # Create transaction record
-    transaction = Transaction(
-        user_id=user_id,
-        amount=plan.price,
-        description=f"Cashfree payment: {plan.name}",
-        cashfree_order_id=order_id,
-    )
-    db.add(transaction)
-    db.commit()
+    def _record_transaction():
+        transaction = Transaction(
+            user_id=user_id,
+            amount=plan.price,
+            description=f"Cashfree payment: {plan.name}",
+            cashfree_order_id=order_id,
+        )
+        db.add(transaction)
+        db.commit()
+
+    await loop.run_in_executor(None, _record_transaction)
 
     # Create rental
     try:
@@ -248,7 +260,9 @@ async def cashfree_webhook(
         # Send activation email (non-blocking, best-effort)
         try:
             from backend.services.email_service import email_service
-            user = db.query(User).filter(User.id == user_id).first()
+            user = await loop.run_in_executor(
+                None, lambda: db.query(User).filter(User.id == user_id).first()
+            )
             if user:
                 email_service.send_rental_activated(
                     email=user.email,
@@ -324,14 +338,21 @@ async def get_invoice(
 ):
     """Generate a JSON invoice/receipt for a rental purchase."""
     from backend.database.models import Rental
-    rental = db.query(Rental).filter(
-        Rental.id == rental_id,
-        Rental.user_id == current_user.id
-    ).first()
+    loop = asyncio.get_event_loop()
+
+    def _fetch_rental_plan():
+        rental = db.query(Rental).filter(
+            Rental.id == rental_id,
+            Rental.user_id == current_user.id
+        ).first()
+        if not rental:
+            return None, None
+        plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
+        return rental, plan
+
+    rental, plan = await loop.run_in_executor(None, _fetch_rental_plan)
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
-
-    plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
@@ -362,14 +383,21 @@ async def get_invoice_html(
     from backend.database.models import Rental
     from fastapi.responses import HTMLResponse
 
-    rental = db.query(Rental).filter(
-        Rental.id == rental_id,
-        Rental.user_id == current_user.id
-    ).first()
+    loop = asyncio.get_event_loop()
+
+    def _fetch_html_data():
+        rental = db.query(Rental).filter(
+            Rental.id == rental_id,
+            Rental.user_id == current_user.id
+        ).first()
+        if not rental:
+            return None, None
+        plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
+        return rental, plan
+
+    rental, plan = await loop.run_in_executor(None, _fetch_html_data)
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
-
-    plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 

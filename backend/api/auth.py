@@ -1,4 +1,6 @@
 """Authentication API endpoints."""
+import asyncio
+from functools import partial
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
@@ -12,26 +14,37 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="Create account", description="Register a new user account. Returns user info (no token — call /auth/login next).")
-def register(user_data: UserRegister, db: Session = Depends(get_db)):
+async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user."""
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    loop = asyncio.get_event_loop()
+
+    existing_user = await loop.run_in_executor(
+        None, lambda: db.query(User).filter(User.email == user_data.email).first()
+    )
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
 
-    hashed_password = hash_password(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        hashed_password=hashed_password,
-        role=UserRole.USER,
-        is_active=True
+    # hash_password is CPU-bound (bcrypt) — offload to thread pool
+    hashed_password = await loop.run_in_executor(
+        None, partial(hash_password, user_data.password)
     )
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    def _create_user():
+        new_user = User(
+            email=user_data.email,
+            hashed_password=hashed_password,
+            role=UserRole.USER,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+
+    new_user = await loop.run_in_executor(None, _create_user)
 
     # Create Stripe customer (best-effort — don't block registration)
     try:
@@ -60,7 +73,12 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db), redis_man
             detail="Incorrect email or password"
         )
 
-    if not verify_password(credentials.password, user.hashed_password):
+    # bcrypt is CPU-bound (~100ms) — run in thread pool to avoid blocking the event loop
+    loop = asyncio.get_event_loop()
+    password_ok = await loop.run_in_executor(
+        None, partial(verify_password, credentials.password, user.hashed_password)
+    )
+    if not password_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"

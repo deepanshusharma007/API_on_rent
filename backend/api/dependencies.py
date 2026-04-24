@@ -1,4 +1,5 @@
 """Shared API dependencies for authentication and authorization."""
+import asyncio
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -46,7 +47,10 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    loop = asyncio.get_event_loop()
+    user = await loop.run_in_executor(
+        None, lambda: db.query(User).filter(User.id == int(user_id)).first()
+    )
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

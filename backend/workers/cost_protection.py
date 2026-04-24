@@ -97,23 +97,26 @@ class CostProtectionWorker:
         except Exception as e:
             logger.debug(f"Redis alert store failed: {e}")
 
-        # 2. Store in DB via SpendingAlert
+        # 2. Store in DB via SpendingAlert (offloaded to thread pool)
         try:
             from backend.database.connection import SessionLocal
             from backend.database.models import SpendingAlert
-            db = SessionLocal()
-            try:
-                alert = SpendingAlert(
-                    user_id=0,  # System-level alert
-                    amount_usd=spent,
-                    window_minutes=60,
-                    was_suspended=level == "critical",
-                    description=message
-                )
-                db.add(alert)
-                db.commit()
-            finally:
-                db.close()
+
+            def _store_alert():
+                db = SessionLocal()
+                try:
+                    alert = SpendingAlert(
+                        user_id=0,  # System-level alert
+                        amount_usd=spent,
+                        window_minutes=60,
+                        was_suspended=level == "critical",
+                    )
+                    db.add(alert)
+                    db.commit()
+                finally:
+                    db.close()
+
+            await asyncio.get_event_loop().run_in_executor(None, _store_alert)
         except Exception as e:
             logger.debug(f"DB alert store failed: {e}")
 

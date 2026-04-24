@@ -67,73 +67,91 @@ class SpendingMonitor:
 
     async def check_all_users(self):
         """Check spending for all active users."""
-        db = SessionLocal()
+        loop = asyncio.get_event_loop()
+
+        # Fetch all active user IDs + their User objects in one thread
+        def _fetch_users():
+            db = SessionLocal()
+            try:
+                rows = db.query(Rental.user_id).filter(
+                    Rental.status == RentalStatus.ACTIVE
+                ).distinct().all()
+                if not rows:
+                    return db, []
+                user_ids = [r[0] for r in rows]
+                users = db.query(User).filter(User.id.in_(user_ids)).all()
+                return db, users
+            except Exception:
+                db.close()
+                raise
+
+        db, users = await loop.run_in_executor(None, _fetch_users)
+        if not users:
+            db.close()
+            return
+
         try:
-            # Get users with active rentals
-            active_user_ids = db.query(Rental.user_id).filter(
-                Rental.status == RentalStatus.ACTIVE
-            ).distinct().all()
-
-            for (user_id,) in active_user_ids:
-                user = db.query(User).filter(User.id == user_id).first()
-                if user:
-                    await self.check_user_spending(db, user)
-
+            for user in users:
+                await self.check_user_spending(db, user)
         finally:
             db.close()
 
     async def check_user_spending(self, db: Session, user: User):
         """Check spending for a specific user."""
+        loop = asyncio.get_event_loop()
         window_start = datetime.utcnow() - timedelta(minutes=MONITORING_WINDOW_MINUTES)
 
-        # Get usage costs through rental relationship
-        total_spent = db.query(func.sum(UsageLog.cost_usd)).join(
-            Rental, Rental.id == UsageLog.rental_id
-        ).filter(
-            Rental.user_id == user.id,
-            UsageLog.created_at >= window_start
-        ).scalar() or 0.0
+        # Run all DB work in thread pool
+        def _check_and_suspend():
+            total_spent = db.query(func.sum(UsageLog.cost_usd)).join(
+                Rental, Rental.id == UsageLog.rental_id
+            ).filter(
+                Rental.user_id == user.id,
+                UsageLog.created_at >= window_start
+            ).scalar() or 0.0
 
-        if total_spent > SPENDING_THRESHOLD:
-            logger.warning(
-                f"⚠️  User {user.email} exceeded spending threshold: "
-                f"${total_spent:.2f} in {MONITORING_WINDOW_MINUTES} minutes"
-            )
+            if total_spent <= SPENDING_THRESHOLD:
+                return total_spent, False, 0
 
-            # Check if already alerted recently
             existing_alert = db.query(SpendingAlert).filter(
                 SpendingAlert.user_id == user.id,
                 SpendingAlert.created_at >= window_start
             ).first()
 
-            if not existing_alert:
-                alert = SpendingAlert(
-                    user_id=user.id,
-                    amount_usd=total_spent,
-                    window_minutes=MONITORING_WINDOW_MINUTES,
-                    was_suspended=True
-                )
-                db.add(alert)
+            if existing_alert:
+                return total_spent, False, 0
 
-                # Auto-suspend user's active rentals
-                active_rentals = db.query(Rental).filter(
-                    Rental.user_id == user.id,
-                    Rental.status == RentalStatus.ACTIVE
-                ).all()
+            alert = SpendingAlert(
+                user_id=user.id,
+                amount_usd=total_spent,
+                window_minutes=MONITORING_WINDOW_MINUTES,
+                was_suspended=True
+            )
+            db.add(alert)
 
-                for rental in active_rentals:
-                    rental.status = RentalStatus.SUSPENDED
-                    logger.info(f"🔒 Suspended rental ID: {rental.id}")
+            active_rentals = db.query(Rental).filter(
+                Rental.user_id == user.id,
+                Rental.status == RentalStatus.ACTIVE
+            ).all()
+            for rental in active_rentals:
+                rental.status = RentalStatus.SUSPENDED
+                logger.info(f"🔒 Suspended rental ID: {rental.id}")
 
-                db.commit()
+            db.commit()
+            return total_spent, True, len(active_rentals)
 
-                logger.info(
-                    f"🚨 Created spending alert for user {user.email} "
-                    f"and suspended {len(active_rentals)} rental(s)"
-                )
+        total_spent, did_suspend, suspended_count = await loop.run_in_executor(None, _check_and_suspend)
 
-                # Notify admin via email
-                await _notify_admin(user.email, total_spent, len(active_rentals))
+        if did_suspend:
+            logger.warning(
+                f"⚠️  User {user.email} exceeded spending threshold: "
+                f"${total_spent:.2f} in {MONITORING_WINDOW_MINUTES} minutes"
+            )
+            logger.info(
+                f"🚨 Created spending alert for user {user.email} "
+                f"and suspended {suspended_count} rental(s)"
+            )
+            await _notify_admin(user.email, total_spent, suspended_count)
 
 
 # Global instance

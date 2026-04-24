@@ -81,21 +81,17 @@ class RedisManager:
     # ==================== Rate Limiting (RPM) ====================
     
     async def check_rate_limit(self, rental_id: int, rpm_limit: int) -> bool:
-        """Check if request is within RPM limit. Returns True if allowed."""
+        """Check if request is within RPM limit. Returns True if allowed.
+
+        Uses atomic INCR + EXPIRE pipeline to avoid check-then-set race conditions.
+        """
         key = f"rpm:{rental_id}"
-        current = await self.redis.get(key)
-        
-        if current is None:
-            # First request in this minute
-            await self.redis.setex(key, 60, 1)
-            return True
-        
-        current_count = int(current)
-        if current_count >= rpm_limit:
-            return False
-        
-        await self.redis.incr(key)
-        return True
+        pipe = self.redis.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, 60)
+        results = await pipe.execute()
+        current_count = results[0]
+        return current_count <= rpm_limit
     
     # ==================== IP Pinning ====================
     
@@ -158,22 +154,35 @@ class RedisManager:
         await self.redis.set(key, json.dumps(embedding))
     
     async def get_all_prompt_embeddings(self) -> Dict[str, List[float]]:
-        """Get all stored prompt embeddings for similarity comparison."""
+        """Get all stored prompt embeddings for similarity comparison.
+
+        Uses a pipeline batch GET instead of one round-trip per key.
+        """
         pattern = "embedding:*"
-        embeddings = {}
-        
+        all_keys = []
+
         cursor = 0
         while True:
             cursor, keys = await self.redis.scan(cursor, match=pattern, count=100)
-            for key in keys:
-                data = await self.redis.get(key)
-                if data:
-                    prompt_hash = key.decode('utf-8').replace('embedding:', '')
-                    embeddings[prompt_hash] = json.loads(data)
-            
+            all_keys.extend(keys)
             if cursor == 0:
                 break
-        
+
+        if not all_keys:
+            return {}
+
+        # Batch fetch all values in a single pipeline round-trip
+        pipe = self.redis.pipeline()
+        for key in all_keys:
+            pipe.get(key)
+        values = await pipe.execute()
+
+        embeddings = {}
+        for key, data in zip(all_keys, values):
+            if data:
+                prompt_hash = (key.decode('utf-8') if isinstance(key, bytes) else key).replace('embedding:', '')
+                embeddings[prompt_hash] = json.loads(data)
+
         return embeddings
     
     # ==================== Spending Tracking ====================

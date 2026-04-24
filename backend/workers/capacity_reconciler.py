@@ -34,45 +34,51 @@ class CapacityReconciler:
 
     async def reconcile(self):
         """Sync Redis capacity counters with actual DB state."""
-        db = SessionLocal()
-        try:
-            # Calculate actual reserved tokens and RPM from active rentals
-            active_reservations = db.query(
-                func.sum(Plan.token_cap).label("total_tokens"),
-                func.sum(Plan.rpm_limit).label("total_rpm"),
-                func.count(Rental.id).label("count"),
-            ).join(Plan, Rental.plan_id == Plan.id).filter(
-                Rental.status == RentalStatus.ACTIVE
-            ).first()
+        loop = asyncio.get_event_loop()
 
-            actual_tokens = int(active_reservations.total_tokens or 0)
-            actual_rpm = int(active_reservations.total_rpm or 0)
-            rental_count = int(active_reservations.count or 0)
-
-            # Update Redis to match actual state
+        # Run DB aggregation in thread pool
+        def _db_aggregate():
+            db = SessionLocal()
             try:
-                from backend.database.redis_manager import get_redis_manager
-                redis_mgr = get_redis_manager()
+                row = db.query(
+                    func.sum(Plan.token_cap).label("total_tokens"),
+                    func.sum(Plan.rpm_limit).label("total_rpm"),
+                    func.count(Rental.id).label("count"),
+                ).join(Plan, Rental.plan_id == Plan.id).filter(
+                    Rental.status == RentalStatus.ACTIVE
+                ).first()
+                return int(row.total_tokens or 0), int(row.total_rpm or 0), int(row.count or 0)
+            finally:
+                db.close()
 
-                current_tokens = int(await redis_mgr.redis.get("capacity:tokens:reserved") or 0)
-                current_rpm = int(await redis_mgr.redis.get("capacity:rpm:reserved") or 0)
+        actual_tokens, actual_rpm, rental_count = await loop.run_in_executor(None, _db_aggregate)
 
-                if current_tokens != actual_tokens or current_rpm != actual_rpm:
-                    await redis_mgr.redis.set("capacity:tokens:reserved", actual_tokens)
-                    await redis_mgr.redis.set("capacity:rpm:reserved", actual_rpm)
+        # Update Redis concurrently
+        try:
+            from backend.database.redis_manager import get_redis_manager
+            redis_mgr = get_redis_manager()
 
-                    logger.info(
-                        f"📊 Capacity reconciled: tokens {current_tokens}→{actual_tokens}, "
-                        f"RPM {current_rpm}→{actual_rpm} ({rental_count} active rentals)"
-                    )
-                else:
-                    logger.debug(f"📊 Capacity in sync: {actual_tokens} tokens, {actual_rpm} RPM")
+            current_tokens_raw, current_rpm_raw = await asyncio.gather(
+                redis_mgr.redis.get("capacity:tokens:reserved"),
+                redis_mgr.redis.get("capacity:rpm:reserved")
+            )
+            current_tokens = int(current_tokens_raw or 0)
+            current_rpm = int(current_rpm_raw or 0)
 
-            except Exception as redis_err:
-                logger.warning(f"⚠️ Redis reconciliation failed: {redis_err}")
+            if current_tokens != actual_tokens or current_rpm != actual_rpm:
+                await asyncio.gather(
+                    redis_mgr.redis.set("capacity:tokens:reserved", actual_tokens),
+                    redis_mgr.redis.set("capacity:rpm:reserved", actual_rpm)
+                )
+                logger.info(
+                    f"📊 Capacity reconciled: tokens {current_tokens}→{actual_tokens}, "
+                    f"RPM {current_rpm}→{actual_rpm} ({rental_count} active rentals)"
+                )
+            else:
+                logger.debug(f"📊 Capacity in sync: {actual_tokens} tokens, {actual_rpm} RPM")
 
-        finally:
-            db.close()
+        except Exception as redis_err:
+            logger.warning(f"⚠️ Redis reconciliation failed: {redis_err}")
 
 
 # Global instance

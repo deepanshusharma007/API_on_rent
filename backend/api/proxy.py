@@ -205,17 +205,19 @@ async def chat_completions(
         credits = int(tokens_used * drain_rate)
         await redis_manager.deduct_tokens(rental_id, credits)
 
-        usage_log = UsageLog(
-            rental_id=rental_id,
-            model=model,
-            tokens_used=tokens_used,
-            credits_consumed=credits,
-            cost_usd=0.0,
-            was_cached=True
-        )
-        db.add(usage_log)
-        db.commit()
+        def _log_cache_hit():
+            usage_log = UsageLog(
+                rental_id=rental_id,
+                model=model,
+                tokens_used=tokens_used,
+                credits_consumed=credits,
+                cost_usd=0.0,
+                was_cached=True
+            )
+            db.add(usage_log)
+            db.commit()
 
+        await asyncio.get_event_loop().run_in_executor(None, _log_cache_hit)
         return cached_response
 
     # ==================== CIRCUIT BREAKER & FALLBACK ====================
@@ -246,8 +248,10 @@ async def chat_completions(
         provider = fallback["provider"]
         fallback_model = fallback["model"]
 
-        # Try DB key rotation first, fall back to env keys
-        api_key = key_rotation.get_next_key(provider)
+        # Try DB key rotation first (offloaded — sync DB query + commit)
+        api_key = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: key_rotation.get_next_key(provider)
+        )
         if not api_key:
             keys = env_keys.get(provider, [])
             if not keys:
@@ -293,16 +297,19 @@ async def chat_completions(
                             credits = int(total_tokens * drain_rate)
                             await redis_manager.deduct_tokens(rental_id, credits)
 
-                            usage_log = UsageLog(
-                                rental_id=rental_id,
-                                model=fallback_model,
-                                tokens_used=total_tokens,
-                                credits_consumed=credits,
-                                cost_usd=cost_estimate.get("total_cost_usd", 0.0),
-                                was_cached=False
-                            )
-                            db.add(usage_log)
-                            db.commit()
+                            def _log_stream(_total_tokens=total_tokens, _credits=credits, _model=fallback_model):
+                                usage_log = UsageLog(
+                                    rental_id=rental_id,
+                                    model=_model,
+                                    tokens_used=_total_tokens,
+                                    credits_consumed=_credits,
+                                    cost_usd=cost_estimate.get("total_cost_usd", 0.0),
+                                    was_cached=False
+                                )
+                                db.add(usage_log)
+                                db.commit()
+
+                            await asyncio.get_event_loop().run_in_executor(None, _log_stream)
 
                     except Exception as e:
                         await circuit_breaker.record_failure(provider, str(e))
@@ -338,24 +345,24 @@ async def chat_completions(
 
                 await redis_manager.deduct_tokens(rental_id, credits)
 
-                # Update rental stats
-                rental = db.query(Rental).filter(Rental.id == rental_id).first()
-                if rental:
-                    rental.tokens_used += tokens_used
-                    rental.requests_made += 1
+                # Update rental stats and log usage — offloaded to thread pool
+                def _persist_usage(_tokens=tokens_used, _credits=credits, _model=fallback_model):
+                    rental = db.query(Rental).filter(Rental.id == rental_id).first()
+                    if rental:
+                        rental.tokens_used += _tokens
+                        rental.requests_made += 1
+                    usage_log = UsageLog(
+                        rental_id=rental_id,
+                        model=_model,
+                        tokens_used=_tokens,
+                        credits_consumed=_credits,
+                        cost_usd=cost_estimate.get("total_cost_usd", 0.0),
+                        was_cached=False
+                    )
+                    db.add(usage_log)
                     db.commit()
 
-                # Log usage
-                usage_log = UsageLog(
-                    rental_id=rental_id,
-                    model=fallback_model,
-                    tokens_used=tokens_used,
-                    credits_consumed=credits,
-                    cost_usd=cost_estimate.get("total_cost_usd", 0.0),
-                    was_cached=False
-                )
-                db.add(usage_log)
-                db.commit()
+                await asyncio.get_event_loop().run_in_executor(None, _persist_usage)
 
                 # Cache response
                 response_dict = response.model_dump() if hasattr(response, 'model_dump') else response.dict()
@@ -381,7 +388,9 @@ async def list_models(db: Session = Depends(get_db)):
     from backend.database.models import Plan
     from backend.services.fallback_chain import infer_provider
 
-    plans = db.query(Plan).filter(Plan.is_active == True, Plan.model_id != None).all()
+    plans = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: db.query(Plan).filter(Plan.is_active == True, Plan.model_id != None).all()
+    )
     seen = set()
     data = []
     for plan in plans:

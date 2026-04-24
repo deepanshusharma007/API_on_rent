@@ -75,7 +75,9 @@ async def rental_websocket(websocket: WebSocket, rental_id: int):
                 db = SessionLocal()
 
                 try:
-                    rental = db.query(Rental).filter(Rental.id == rental_id).first()
+                    rental = await asyncio.get_event_loop().run_in_executor(
+                        None, lambda: db.query(Rental).filter(Rental.id == rental_id).first()
+                    )
                     if not rental:
                         await websocket.send_json({
                             "type": "error",
@@ -83,16 +85,13 @@ async def rental_websocket(websocket: WebSocket, rental_id: int):
                         })
                         break
 
-                    # Get TTL from Redis
-                    ttl = 0
-                    if rental.virtual_key:
-                        ttl = await redis_mgr.get_virtual_key_ttl(rental.virtual_key)
-                        if ttl <= 0:
-                            delta = rental.expires_at - datetime.utcnow()
-                            ttl = max(0, int(delta.total_seconds()))
-
-                    # Get token balance from Redis
-                    token_balance = await redis_mgr.get_token_balance(rental_id)
+                    # Fetch TTL and token balance concurrently
+                    async def _zero(): return 0
+                    ttl_raw, token_balance = await asyncio.gather(
+                        redis_mgr.get_virtual_key_ttl(rental.virtual_key) if rental.virtual_key else _zero(),
+                        redis_mgr.get_token_balance(rental_id)
+                    )
+                    ttl = ttl_raw if ttl_raw and ttl_raw > 0 else max(0, int((rental.expires_at - datetime.utcnow()).total_seconds()))
 
                     status = rental.status.value
                     if ttl <= 0 and status == "active":
@@ -151,22 +150,32 @@ async def dashboard_websocket(websocket: WebSocket):
                 db = SessionLocal()
 
                 try:
-                    rentals = db.query(Rental).filter(
-                        Rental.user_id == user_id,
-                        Rental.status == RentalStatus.ACTIVE
-                    ).all()
+                    rentals = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: db.query(Rental).filter(
+                            Rental.user_id == user_id,
+                            Rental.status == RentalStatus.ACTIVE
+                        ).all()
+                    )
+
+                    async def _zero(): return 0
+
+                    # Fetch all TTLs and balances concurrently
+                    ttl_tasks = [
+                        redis_mgr.get_virtual_key_ttl(r.virtual_key) if r.virtual_key else _zero()
+                        for r in rentals
+                    ]
+                    balance_tasks = [redis_mgr.get_token_balance(r.id) for r in rentals]
+                    ttl_results, balance_results = await asyncio.gather(
+                        asyncio.gather(*ttl_tasks),
+                        asyncio.gather(*balance_tasks)
+                    )
 
                     updates = []
-                    for rental in rentals:
-                        ttl = 0
-                        if rental.virtual_key:
-                            ttl = await redis_mgr.get_virtual_key_ttl(rental.virtual_key)
-                            if ttl <= 0:
-                                delta = rental.expires_at - datetime.utcnow()
-                                ttl = max(0, int(delta.total_seconds()))
-
-                        token_balance = await redis_mgr.get_token_balance(rental.id)
-
+                    for rental, ttl_raw, token_balance in zip(rentals, ttl_results, balance_results):
+                        ttl = ttl_raw if ttl_raw and ttl_raw > 0 else max(
+                            0, int((rental.expires_at - datetime.utcnow()).total_seconds())
+                        )
                         updates.append({
                             "rental_id": rental.id,
                             "ttl_seconds": max(0, ttl),

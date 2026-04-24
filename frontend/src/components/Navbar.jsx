@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, Menu, X, LogIn, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Menu, X, LogIn, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 const navLinks = [
@@ -46,9 +46,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-              <Cpu className="w-4 h-4 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="AIRent"
+              className="w-9 h-9 object-contain drop-shadow-[0_0_6px_rgba(250,180,0,0.5)] group-hover:drop-shadow-[0_0_10px_rgba(250,180,0,0.7)] transition-all duration-300"
+            />
             <span className="text-white font-bold text-lg tracking-tight">
               AI<span className="text-violet-400">Rent</span>
             </span>

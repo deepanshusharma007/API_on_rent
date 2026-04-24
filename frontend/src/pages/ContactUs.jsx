@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer, scaleIn, viewport } from '../lib/motion';
+import { contactAPI } from '../api/client';
 
 const CONTACT_INFO = [
   {
@@ -56,15 +57,21 @@ export default function ContactUs() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
       toast.error('Please fill in all required fields.');
       return;
     }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    setSent(true);
-    toast.success("Message sent! I'll get back to you soon.");
+    try {
+      await contactAPI.submit(form.name, form.email, form.subject, form.message);
+      setSent(true);
+      toast.success("Message sent! We'll get back to you soon.");
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      toast.error(detail || 'Failed to send message. Please try again or email us directly.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

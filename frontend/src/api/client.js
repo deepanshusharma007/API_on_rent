@@ -93,6 +93,12 @@ export const paymentAPI = {
         apiClient.get(`/api/checkout/verify/${orderId}`),
 };
 
+// Contact API (public — no auth)
+export const contactAPI = {
+    submit: (name, email, subject, message) =>
+        apiClient.post('/api/contact', { name, email, subject, message }),
+};
+
 // Admin API
 export const adminAPI = {
     getUsers: () =>

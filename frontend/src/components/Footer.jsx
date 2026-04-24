@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Cpu, Github, Mail, Shield, ArrowUpRight } from 'lucide-react';
+import { Github, Mail, Shield, ArrowUpRight } from 'lucide-react';
 
 const footerSections = [
   {
@@ -42,9 +42,7 @@ export default function Footer() {
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-                <Cpu className="w-4 h-4 text-white" />
-              </div>
+              <img src="/logo.png" alt="AIRent" className="w-8 h-8 object-contain drop-shadow-[0_0_5px_rgba(250,180,0,0.4)]" />
               <span className="text-white font-bold text-lg">
                 AI<span className="text-violet-400">Rent</span>
               </span>

@@ -1,6 +1,7 @@
 """Admin API endpoints for platform management."""
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional
 import time
@@ -55,12 +56,15 @@ class CapacityConfig(BaseModel):
 # ==================== User Management ====================
 
 @router.get("/users", summary="List all users", description="Returns all registered users with account status and rental count. Admin only.")
-def list_users(
+async def list_users(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """List all users."""
-    users = db.query(User).all()
+    loop = asyncio.get_event_loop()
+    users = await loop.run_in_executor(
+        None, lambda: db.query(User).options(joinedload(User.rentals)).all()
+    )
     return {
         "total": len(users),
         "users": [
@@ -78,45 +82,58 @@ def list_users(
 
 
 @router.post("/users/{user_id}/suspend", summary="Suspend user", description="Deactivates a user account and suspends all their active rentals. Admin only.")
-def suspend_user(
+async def suspend_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Suspend a user account."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
+    loop = asyncio.get_event_loop()
+
+    def _suspend():
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return None, None
+        if user.role == UserRole.ADMIN:
+            return user, "admin"
+        user.is_active = False
+        active_rentals = db.query(Rental).filter(
+            Rental.user_id == user_id,
+            Rental.status == RentalStatus.ACTIVE
+        ).all()
+        for rental in active_rentals:
+            rental.status = RentalStatus.SUSPENDED
+        db.commit()
+        return user, len(active_rentals)
+
+    user, result = await loop.run_in_executor(None, _suspend)
+    if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    if user.role == UserRole.ADMIN:
+    if result == "admin":
         raise HTTPException(status_code=400, detail="Cannot suspend admin users")
-
-    user.is_active = False
-
-    # Also suspend all active rentals
-    active_rentals = db.query(Rental).filter(
-        Rental.user_id == user_id,
-        Rental.status == RentalStatus.ACTIVE
-    ).all()
-    for rental in active_rentals:
-        rental.status = RentalStatus.SUSPENDED
-
-    db.commit()
-    return {"message": f"User {user.email} suspended", "rentals_suspended": len(active_rentals)}
+    return {"message": f"User {user.email} suspended", "rentals_suspended": result}
 
 
 @router.post("/users/{user_id}/activate", summary="Activate user", description="Reactivates a previously suspended user account. Admin only.")
-def activate_user(
+async def activate_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Reactivate a suspended user account."""
-    user = db.query(User).filter(User.id == user_id).first()
+    loop = asyncio.get_event_loop()
+
+    def _activate():
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return None
+        user.is_active = True
+        db.commit()
+        return user
+
+    user = await loop.run_in_executor(None, _activate)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    user.is_active = True
-    db.commit()
     return {"message": f"User {user.email} activated"}
 
 
@@ -131,16 +148,17 @@ async def inject_credits(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Add time or tokens to a user's active rental."""
-    user = db.query(User).filter(User.id == user_id).first()
+    loop = asyncio.get_event_loop()
+
+    user, rental = await loop.run_in_executor(None, lambda: (
+        db.query(User).filter(User.id == user_id).first(),
+        db.query(Rental).filter(
+            Rental.user_id == user_id,
+            Rental.status == RentalStatus.ACTIVE
+        ).order_by(Rental.created_at.desc()).first()
+    ))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Find user's most recent active rental
-    rental = db.query(Rental).filter(
-        Rental.user_id == user_id,
-        Rental.status == RentalStatus.ACTIVE
-    ).order_by(Rental.created_at.desc()).first()
-
     if not rental:
         raise HTTPException(status_code=404, detail="No active rental found for user")
 
@@ -151,14 +169,17 @@ async def inject_credits(
     await redis_manager.set_token_balance(rental.id, new_balance)
 
     # Log as transaction
-    transaction = Transaction(
-        user_id=user_id,
-        rental_id=rental.id,
-        amount=0.0,
-        description=f"Credit injection: {injection.credits} tokens. Reason: {injection.reason}"
-    )
-    db.add(transaction)
-    db.commit()
+    def _commit_credit():
+        transaction = Transaction(
+            user_id=user_id,
+            rental_id=rental.id,
+            amount=0.0,
+            description=f"Credit injection: {injection.credits} tokens. Reason: {injection.reason}"
+        )
+        db.add(transaction)
+        db.commit()
+
+    await loop.run_in_executor(None, _commit_credit)
 
     return {
         "message": f"Injected {injection.credits} tokens to user {user.email}",
@@ -171,85 +192,104 @@ async def inject_credits(
 # ==================== Plan Management ====================
 
 @router.get("/plans", response_model=List[PlanResponse], summary="List all plans (admin)", description="Returns all plans including inactive ones. Admin only.")
-def list_all_plans(
+async def list_all_plans(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """List all plans (including inactive)."""
-    plans = db.query(Plan).all()
-    return plans
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, lambda: db.query(Plan).all())
 
 
 @router.post("/plans", response_model=PlanResponse, status_code=status.HTTP_201_CREATED)
-def create_plan(
+async def create_plan(
     plan_data: PlanCreate,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Create a new rental plan."""
-    plan = Plan(
-        name=plan_data.name,
-        description=plan_data.description,
-        price=plan_data.price,
-        duration_minutes=plan_data.duration_minutes,
-        token_cap=plan_data.token_cap,
-        rpm_limit=plan_data.rpm_limit,
-        drain_rate_multiplier=plan_data.drain_rate_multiplier,
-        model_id=plan_data.model_id,
-        duration_label=plan_data.duration_label,
-    )
-    db.add(plan)
-    db.commit()
-    db.refresh(plan)
-    return plan
+    loop = asyncio.get_event_loop()
+
+    def _create():
+        plan = Plan(
+            name=plan_data.name,
+            description=plan_data.description,
+            price=plan_data.price,
+            duration_minutes=plan_data.duration_minutes,
+            token_cap=plan_data.token_cap,
+            rpm_limit=plan_data.rpm_limit,
+            drain_rate_multiplier=plan_data.drain_rate_multiplier,
+            model_id=plan_data.model_id,
+            duration_label=plan_data.duration_label,
+        )
+        db.add(plan)
+        db.commit()
+        db.refresh(plan)
+        return plan
+
+    return await loop.run_in_executor(None, _create)
 
 
 @router.put("/plans/{plan_id}", response_model=PlanResponse)
-def update_plan(
+async def update_plan(
     plan_id: int,
     plan_data: PlanUpdate,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Update an existing plan."""
-    plan = db.query(Plan).filter(Plan.id == plan_id).first()
+    loop = asyncio.get_event_loop()
+
+    def _update():
+        plan = db.query(Plan).filter(Plan.id == plan_id).first()
+        if not plan:
+            return None
+        update_data = plan_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(plan, field, value)
+        db.commit()
+        db.refresh(plan)
+        return plan
+
+    plan = await loop.run_in_executor(None, _update)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
-
-    update_data = plan_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(plan, field, value)
-
-    db.commit()
-    db.refresh(plan)
     return plan
 
 
 @router.delete("/plans/{plan_id}")
-def delete_plan(
+async def delete_plan(
     plan_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Deactivate a plan (soft delete)."""
-    plan = db.query(Plan).filter(Plan.id == plan_id).first()
+    loop = asyncio.get_event_loop()
+
+    def _delete():
+        plan = db.query(Plan).filter(Plan.id == plan_id).first()
+        if not plan:
+            return None
+        plan.is_active = False
+        db.commit()
+        return plan
+
+    plan = await loop.run_in_executor(None, _delete)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
-
-    plan.is_active = False
-    db.commit()
     return {"message": f"Plan '{plan.name}' deactivated"}
 
 
 # ==================== Provider Key Management ====================
 
 @router.get("/provider-keys")
-def list_provider_keys(
+async def list_provider_keys(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """List all provider API keys (masked)."""
-    keys = db.query(ProviderKey).all()
+    loop = asyncio.get_event_loop()
+    keys = await loop.run_in_executor(None, lambda: db.query(ProviderKey).all())
     return {
         "total": len(keys),
         "keys": [
@@ -268,7 +308,7 @@ def list_provider_keys(
 
 
 @router.post("/provider-keys", status_code=status.HTTP_201_CREATED)
-def add_provider_key(
+async def add_provider_key(
     key_data: ProviderKeyCreate,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -282,19 +322,21 @@ def add_provider_key(
             detail=f"Invalid provider. Must be one of: {[p.value for p in ProviderType]}"
         )
 
-    # Check for duplicate
-    existing = db.query(ProviderKey).filter(ProviderKey.api_key == key_data.api_key).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="This API key already exists")
+    loop = asyncio.get_event_loop()
 
-    provider_key = ProviderKey(
-        provider=provider_enum,
-        api_key=key_data.api_key,
-        is_active=True
-    )
-    db.add(provider_key)
-    db.commit()
-    db.refresh(provider_key)
+    def _add_key():
+        existing = db.query(ProviderKey).filter(ProviderKey.api_key == key_data.api_key).first()
+        if existing:
+            return None
+        provider_key = ProviderKey(provider=provider_enum, api_key=key_data.api_key, is_active=True)
+        db.add(provider_key)
+        db.commit()
+        db.refresh(provider_key)
+        return provider_key
+
+    provider_key = await loop.run_in_executor(None, _add_key)
+    if provider_key is None:
+        raise HTTPException(status_code=400, detail="This API key already exists")
 
     return {
         "message": f"Added {provider_enum.value} API key",
@@ -304,28 +346,38 @@ def add_provider_key(
 
 
 @router.put("/provider-keys/{key_id}")
-def update_provider_key(
+async def update_provider_key(
     key_id: int,
     key_data: ProviderKeyUpdate,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Edit a provider API key's metadata (provider, model_name, active status)."""
-    key = db.query(ProviderKey).filter(ProviderKey.id == key_id).first()
-    if not key:
-        raise HTTPException(status_code=404, detail="Provider key not found")
-
+    # Validate provider value before hitting the DB
+    new_provider = None
     if key_data.provider is not None:
         try:
-            key.provider = ProviderType(key_data.provider.lower())
+            new_provider = ProviderType(key_data.provider.lower())
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid provider. Must be one of: {[p.value for p in ProviderType]}")
 
-    if key_data.is_active is not None:
-        key.is_active = key_data.is_active
+    loop = asyncio.get_event_loop()
 
-    db.commit()
-    db.refresh(key)
+    def _update():
+        key = db.query(ProviderKey).filter(ProviderKey.id == key_id).first()
+        if not key:
+            return None
+        if new_provider is not None:
+            key.provider = new_provider
+        if key_data.is_active is not None:
+            key.is_active = key_data.is_active
+        db.commit()
+        db.refresh(key)
+        return key
+
+    key = await loop.run_in_executor(None, _update)
+    if not key:
+        raise HTTPException(status_code=404, detail="Provider key not found")
     return {
         "message": "Provider key updated",
         "id": key.id,
@@ -335,30 +387,41 @@ def update_provider_key(
 
 
 @router.delete("/provider-keys/{key_id}")
-def remove_provider_key(
+async def remove_provider_key(
     key_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Remove a provider API key."""
-    key = db.query(ProviderKey).filter(ProviderKey.id == key_id).first()
-    if not key:
-        raise HTTPException(status_code=404, detail="Provider key not found")
+    loop = asyncio.get_event_loop()
 
-    db.delete(key)
-    db.commit()
-    return {"message": f"Removed {key.provider.value} API key"}
+    def _remove():
+        key = db.query(ProviderKey).filter(ProviderKey.id == key_id).first()
+        if not key:
+            return None
+        provider_val = key.provider.value
+        db.delete(key)
+        db.commit()
+        return provider_val
+
+    provider_val = await loop.run_in_executor(None, _remove)
+    if provider_val is None:
+        raise HTTPException(status_code=404, detail="Provider key not found")
+    return {"message": f"Removed {provider_val} API key"}
 
 
 # ==================== Rental Management ====================
 
 @router.get("/rentals")
-def list_all_rentals(
+async def list_all_rentals(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """List all rentals across all users."""
-    rentals = db.query(Rental).all()
+    loop = asyncio.get_event_loop()
+    rentals = await loop.run_in_executor(
+        None, lambda: db.query(Rental).options(joinedload(Rental.user), joinedload(Rental.plan)).all()
+    )
     return {
         "total": len(rentals),
         "rentals": [
@@ -388,7 +451,10 @@ async def pause_rental(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Pause an active rental."""
-    rental = db.query(Rental).filter(Rental.id == rental_id).first()
+    loop = asyncio.get_event_loop()
+    rental = await loop.run_in_executor(
+        None, lambda: db.query(Rental).filter(Rental.id == rental_id).first()
+    )
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
     if rental.status != RentalStatus.ACTIVE:
@@ -396,7 +462,7 @@ async def pause_rental(
 
     rental.status = RentalStatus.PAUSED
     await redis_manager.delete_virtual_key(rental.virtual_key)
-    db.commit()
+    await loop.run_in_executor(None, db.commit)
 
     return {"message": f"Rental {rental_id} paused", "rental_id": rental_id}
 
@@ -409,13 +475,16 @@ async def suspend_rental(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Suspend a rental."""
-    rental = db.query(Rental).filter(Rental.id == rental_id).first()
+    loop = asyncio.get_event_loop()
+    rental = await loop.run_in_executor(
+        None, lambda: db.query(Rental).filter(Rental.id == rental_id).first()
+    )
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
 
     rental.status = RentalStatus.SUSPENDED
     await redis_manager.delete_virtual_key(rental.virtual_key)
-    db.commit()
+    await loop.run_in_executor(None, db.commit)
 
     return {"message": "Rental suspended", "rental_id": rental_id}
 
@@ -423,16 +492,21 @@ async def suspend_rental(
 # ==================== Analytics ====================
 
 @router.get("/stats", summary="Platform statistics", description="Returns high-level platform metrics: total users, active rentals, total revenue. Admin only.")
-def get_platform_stats(
+async def get_platform_stats(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Get platform-wide statistics."""
-    total_users = db.query(User).count()
-    active_rentals = db.query(Rental).filter(Rental.status == RentalStatus.ACTIVE).count()
-    total_rentals = db.query(Rental).count()
-    total_revenue = db.query(func.sum(Transaction.amount)).scalar() or 0
+    loop = asyncio.get_event_loop()
 
+    def _stats():
+        total_users = db.query(User).count()
+        active_rentals = db.query(Rental).filter(Rental.status == RentalStatus.ACTIVE).count()
+        total_rentals = db.query(Rental).count()
+        total_revenue = db.query(func.sum(Transaction.amount)).scalar() or 0
+        return total_users, active_rentals, total_rentals, total_revenue
+
+    total_users, active_rentals, total_rentals, total_revenue = await loop.run_in_executor(None, _stats)
     return {
         "total_users": total_users,
         "active_rentals": active_rentals,
@@ -443,63 +517,41 @@ def get_platform_stats(
 
 
 @router.get("/analytics", summary="Profit analytics", description="Revenue vs provider cost breakdown for the given time window (default 24h). Includes per-model and per-plan stats, cache hit rate. Admin only.")
-def get_profit_analytics(
+async def get_profit_analytics(
     hours: int = 24,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Profit analytics: cost vs revenue comparison."""
+    loop = asyncio.get_event_loop()
     since = datetime.utcnow() - timedelta(hours=hours)
 
-    # Revenue: sum of transactions
-    revenue = db.query(func.sum(Transaction.amount)).filter(
-        Transaction.created_at >= since
-    ).scalar() or 0
+    def _analytics():
+        revenue = db.query(func.sum(Transaction.amount)).filter(Transaction.created_at >= since).scalar() or 0
+        provider_cost = db.query(func.sum(UsageLog.cost_usd)).filter(UsageLog.created_at >= since).scalar() or 0
+        total_tokens = db.query(func.sum(UsageLog.tokens_used)).filter(UsageLog.created_at >= since).scalar() or 0
+        cached_requests = db.query(UsageLog).filter(UsageLog.created_at >= since, UsageLog.was_cached == True).count()
+        total_requests = db.query(UsageLog).filter(UsageLog.created_at >= since).count()
+        tokens_saved = db.query(func.sum(UsageLog.tokens_used)).filter(
+            UsageLog.created_at >= since, UsageLog.was_cached == True
+        ).scalar() or 0
+        model_stats = db.query(
+            UsageLog.model,
+            func.count(UsageLog.id).label("requests"),
+            func.sum(UsageLog.tokens_used).label("tokens"),
+            func.sum(UsageLog.cost_usd).label("cost")
+        ).filter(UsageLog.created_at >= since).group_by(UsageLog.model).all()
+        plan_stats = db.query(
+            Plan.name,
+            func.count(Rental.id).label("rentals_sold"),
+            func.sum(Transaction.amount).label("revenue")
+        ).join(Rental, Rental.plan_id == Plan.id).outerjoin(
+            Transaction, Transaction.rental_id == Rental.id
+        ).filter(Rental.created_at >= since).group_by(Plan.name).all()
+        return revenue, provider_cost, total_tokens, cached_requests, total_requests, tokens_saved, model_stats, plan_stats
 
-    # Provider cost: sum of usage log costs
-    provider_cost = db.query(func.sum(UsageLog.cost_usd)).filter(
-        UsageLog.created_at >= since
-    ).scalar() or 0
-
-    # Token stats
-    total_tokens = db.query(func.sum(UsageLog.tokens_used)).filter(
-        UsageLog.created_at >= since
-    ).scalar() or 0
-
-    cached_requests = db.query(UsageLog).filter(
-        UsageLog.created_at >= since,
-        UsageLog.was_cached == True
-    ).count()
-
-    total_requests = db.query(UsageLog).filter(
-        UsageLog.created_at >= since
-    ).count()
-
-    tokens_saved = db.query(func.sum(UsageLog.tokens_used)).filter(
-        UsageLog.created_at >= since,
-        UsageLog.was_cached == True
-    ).scalar() or 0
-
-    # Per-model breakdown
-    model_stats = db.query(
-        UsageLog.model,
-        func.count(UsageLog.id).label("requests"),
-        func.sum(UsageLog.tokens_used).label("tokens"),
-        func.sum(UsageLog.cost_usd).label("cost")
-    ).filter(
-        UsageLog.created_at >= since
-    ).group_by(UsageLog.model).all()
-
-    # Per-plan profitability
-    plan_stats = db.query(
-        Plan.name,
-        func.count(Rental.id).label("rentals_sold"),
-        func.sum(Transaction.amount).label("revenue")
-    ).join(Rental, Rental.plan_id == Plan.id).outerjoin(
-        Transaction, Transaction.rental_id == Rental.id
-    ).filter(
-        Rental.created_at >= since
-    ).group_by(Plan.name).all()
+    revenue, provider_cost, total_tokens, cached_requests, total_requests, tokens_saved, model_stats, plan_stats = \
+        await loop.run_in_executor(None, _analytics)
 
     profit = float(revenue) - float(provider_cost)
     margin = (profit / float(revenue) * 100) if revenue > 0 else 0
@@ -538,14 +590,18 @@ def get_profit_analytics(
 # ==================== Spending Alerts ====================
 
 @router.get("/spending-alerts", summary="Spending alerts", description="Returns the 50 most recent spending alerts triggered by the anomaly detection worker. Admin only.")
-def get_spending_alerts(
+async def get_spending_alerts(
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """Get recent spending alerts."""
-    alerts = db.query(SpendingAlert).order_by(
-        SpendingAlert.created_at.desc()
-    ).limit(50).all()
+    loop = asyncio.get_event_loop()
+    alerts = await loop.run_in_executor(
+        None,
+        lambda: db.query(SpendingAlert).options(joinedload(SpendingAlert.user)).order_by(
+            SpendingAlert.created_at.desc()
+        ).limit(50).all()
+    )
 
     return {
         "total": len(alerts),
@@ -609,15 +665,21 @@ async def refund_transaction(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Issue a refund for a transaction. Suspends the rental if still active."""
-    transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+    loop = asyncio.get_event_loop()
+
+    def _fetch_txn_rental():
+        txn = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+        if not txn:
+            return None, None
+        rental = db.query(Rental).filter(
+            Rental.user_id == txn.user_id,
+            Rental.plan_id != None
+        ).order_by(Rental.created_at.desc()).first()
+        return txn, rental
+
+    transaction, rental = await loop.run_in_executor(None, _fetch_txn_rental)
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
-
-    # Find associated rental
-    rental = db.query(Rental).filter(
-        Rental.user_id == transaction.user_id,
-        Rental.plan_id != None
-    ).order_by(Rental.created_at.desc()).first()
 
     # Attempt Cashfree refund if order ID exists
     cashfree_refund_id = None
@@ -653,21 +715,26 @@ async def refund_transaction(
         await redis_manager.delete_virtual_key(rental.virtual_key)
 
         # Release capacity
-        plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
+        plan = await loop.run_in_executor(
+            None, lambda: db.query(Plan).filter(Plan.id == rental.plan_id).first()
+        )
         if plan:
             from backend.services.capacity_manager import CapacityManager
             capacity_mgr = CapacityManager(redis_manager)
             await capacity_mgr.release_capacity(plan.token_cap, plan.rpm_limit)
 
     # Record refund transaction
-    refund_txn = Transaction(
-        user_id=transaction.user_id,
-        amount=-transaction.amount,
-        description=f"Refund: {refund_req.reason}",
-        cashfree_order_id=cashfree_refund_id or f"refund_{transaction_id}"
-    )
-    db.add(refund_txn)
-    db.commit()
+    def _commit_refund():
+        refund_txn = Transaction(
+            user_id=transaction.user_id,
+            amount=-transaction.amount,
+            description=f"Refund: {refund_req.reason}",
+            cashfree_order_id=cashfree_refund_id or f"refund_{transaction_id}"
+        )
+        db.add(refund_txn)
+        db.commit()
+
+    await loop.run_in_executor(None, _commit_refund)
 
     return {
         "message": "Refund processed",
@@ -681,18 +748,25 @@ async def refund_transaction(
 # ==================== User Impersonation ====================
 
 @router.get("/impersonate/{user_id}", summary="Impersonate user", description="View the platform as a specific user — returns their rentals, transactions, and usage summary. Read-only. Admin only.")
-def impersonate_user(
+async def impersonate_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     """View platform as a specific user — returns their rentals, transactions, usage."""
-    user = db.query(User).filter(User.id == user_id).first()
+    loop = asyncio.get_event_loop()
+
+    def _fetch():
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return None, None, None
+        rentals = db.query(Rental).options(joinedload(Rental.plan)).filter(Rental.user_id == user_id).all()
+        transactions = db.query(Transaction).filter(Transaction.user_id == user_id).all()
+        return user, rentals, transactions
+
+    user, rentals, transactions = await loop.run_in_executor(None, _fetch)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    rentals = db.query(Rental).filter(Rental.user_id == user_id).all()
-    transactions = db.query(Transaction).filter(Transaction.user_id == user_id).all()
 
     return {
         "user": {
@@ -737,7 +811,7 @@ def impersonate_user(
 # ==================== CSV Export ====================
 
 @router.get("/export/csv", summary="Export analytics CSV", description="Downloads usage log data as a CSV file for the given time window (default 24h). Admin only.")
-def export_analytics_csv(
+async def export_analytics_csv(
     hours: int = 24,
     admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
@@ -749,8 +823,11 @@ def export_analytics_csv(
 
     since = datetime.utcnow() - timedelta(hours=hours)
 
-    # Get usage logs
-    logs = db.query(UsageLog).filter(UsageLog.created_at >= since).all()
+    loop = asyncio.get_event_loop()
+    logs = await loop.run_in_executor(
+        None,
+        lambda: db.query(UsageLog).filter(UsageLog.created_at >= since).order_by(UsageLog.created_at.desc()).limit(10000).all()
+    )
 
     output = io.StringIO()
     writer = csv.writer(output)

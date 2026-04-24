@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Mail, Lock, Eye, EyeOff, Zap, CheckCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { fadeUp, staggerContainer } from '../lib/motion';
@@ -48,9 +48,7 @@ export default function Register() {
         {/* Brand */}
         <motion.div variants={fadeUp} className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-violet-600 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="AIRent" className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(250,180,0,0.5)]" />
             <span className="text-xl font-bold text-white">AIRent</span>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>

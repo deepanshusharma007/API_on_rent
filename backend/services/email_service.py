@@ -100,6 +100,58 @@ class EmailService:
         """
         self._send(email, subject, body)
 
+    def send_contact_form(self, sender_name: str, sender_email: str, subject: str, message: str, owner_email: str):
+        """Forward a contact-form submission to the site owner."""
+        email_subject = f"[AIRent Contact] {subject or 'New message'} — from {sender_name}"
+        body = f"""
+        <html><body style="font-family: sans-serif; color: #333; max-width: 600px;">
+        <h2 style="color: #7c3aed;">New Contact Form Submission</h2>
+        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600; width: 120px;">Name</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">{sender_name}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Email</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;"><a href="mailto:{sender_email}">{sender_email}</a></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Topic</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">{subject or '(not selected)'}</td>
+            </tr>
+        </table>
+        <h3 style="color: #374151; margin-top: 20px;">Message</h3>
+        <div style="padding: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; white-space: pre-wrap; line-height: 1.6;">
+{message}
+        </div>
+        <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
+            Reply directly to this email to respond to {sender_name} at {sender_email}.
+        </p>
+        </body></html>
+        """
+        # Set reply-to so clicking Reply goes straight to the user
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = email_subject
+            msg["From"] = self.from_email
+            msg["To"] = owner_email
+            msg["Reply-To"] = sender_email
+            msg.attach(MIMEText(body, "html"))
+
+            if not self.enabled:
+                logger.info(f"[Email stub] Contact form from {sender_email}: {email_subject}")
+                return
+
+            with smtplib.SMTP(self.host, self.port) as server:
+                server.starttls()
+                server.login(self.user, self.password)
+                server.sendmail(self.from_email, owner_email, msg.as_string())
+
+            logger.info(f"Contact form email sent to {owner_email} from {sender_email}")
+        except Exception as e:
+            logger.error(f"Contact form email failed: {e}")
+            raise
+
     def send_token_low_warning(self, email: str, plan_name: str, tokens_remaining: int, pct: float):
         """Notify user when their tokens are running low (< 10%)."""
         subject = f"⚠️ Low tokens: {tokens_remaining:,} remaining"
