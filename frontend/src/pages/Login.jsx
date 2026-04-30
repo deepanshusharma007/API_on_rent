@@ -1,30 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { fadeUp, staggerContainer } from '../lib/motion';
 
-const inputClass =
-  'w-full px-4 py-3 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-all text-sm';
-
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
-
-  // Show notice if user was auto-logged out due to session conflict
-  useEffect(() => {
-    const notice = sessionStorage.getItem('auth_notice');
-    if (notice) {
-      sessionStorage.removeItem('auth_notice');
-      toast.error(notice, { duration: 6000 });
-    }
-  }, []);
+  const login    = useAuthStore(s => s.login);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,96 +20,96 @@ export default function Login() {
     const result = await login(email, password);
     if (result.success) {
       toast.success('Welcome back!');
-      navigate('/marketplace');
+      navigate('/dashboard');
     } else {
-      toast.error(result.error || 'Login failed');
+      toast.error(result.error || 'Invalid credentials');
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#0a0a0a]">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.15) 0%, transparent 70%), var(--bg-base)' }}
+    >
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.018]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)',
+          backgroundSize: '64px 64px',
+        }}
+      />
+
       <motion.div
-        variants={staggerContainer(0.1)} initial="hidden" animate="show"
-        className="w-full max-w-md"
+        variants={staggerContainer(0.08)} initial="hidden" animate="show"
+        className="w-full max-w-sm relative z-10"
       >
-        {/* Brand */}
-        <motion.div variants={fadeUp} className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/logo.png" alt="AIRent" className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(250,180,0,0.5)]" />
-            <span className="text-xl font-bold text-white">AIRent</span>
+        <motion.div variants={fadeUp} className="text-center mb-9">
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-5 group">
+            <img
+              src="/logo.png" alt="AIRent"
+              className="w-9 h-9 object-contain drop-shadow-[0_0_8px_rgba(250,180,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(250,180,0,0.7)] transition-all"
+            />
+            <span className="text-[#f0eefa] font-bold text-lg tracking-tight">AI<span className="text-violet-400">Rent</span></span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Sign in to access your AI API rentals</p>
+          <h1 className="text-2xl font-bold text-[#f0eefa] mb-1.5 tracking-tight">Welcome back</h1>
+          <p className="text-[#52505f] text-sm">Sign in to your account</p>
         </motion.div>
 
-        {/* Card */}
-        <motion.div variants={fadeUp} className="bg-[#111] border border-white/[0.08] rounded-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+        <motion.div
+          variants={fadeUp}
+          className="rounded-2xl p-7"
+          style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Email</label>
+              <label className="block text-xs font-medium text-[#8e8ca4] mb-2">Email address</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass + ' pl-11'}
-                  placeholder="you@example.com"
-                  required
-                />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52505f] pointer-events-none" />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com" required className="field pl-10" />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Password</label>
+              <label className="block text-xs font-medium text-[#8e8ca4] mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={inputClass + ' pl-11 pr-11'}
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(v => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
-                >
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52505f] pointer-events-none" />
+                <input type={showPass ? 'text' : 'password'} value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••" required className="field pl-10 pr-10" />
+                <button type="button" onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#52505f] hover:text-[#8e8ca4] transition-colors">
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
             <motion.button
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2.5 mt-2"
+              type="submit" disabled={loading}
+              whileHover={{ scale: 1.01, boxShadow: '0 0 28px rgba(124,58,237,0.4)' }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full py-3 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 mt-1 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 0 20px rgba(124,58,237,0.22)' }}
             >
               {loading
-                ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <><LogIn className="w-4 h-4" /> Sign In</>
-              }
+                ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <><span>Sign in</span><ArrowRight className="w-4 h-4" /></>}
             </motion.button>
           </form>
 
-          <p className="mt-6 text-center text-gray-500 text-sm">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-violet-400 hover:text-violet-300 font-semibold transition-colors">
-              Create one free
-            </Link>
-          </p>
+          <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-center text-[#52505f] text-sm">
+              No account yet?{' '}
+              <Link to="/register" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
+                Create one free
+              </Link>
+            </p>
+          </div>
         </motion.div>
 
-        {/* Back to home */}
-        <motion.p variants={fadeUp} className="text-center mt-6 text-xs text-gray-700">
-          <Link to="/" className="hover:text-gray-500 transition-colors">← Back to home</Link>
+        <motion.p variants={fadeUp} className="text-center mt-5 text-xs text-[#2e2c3a]">
+          <Link to="/" className="hover:text-[#52505f] transition-colors">← Back to home</Link>
         </motion.p>
       </motion.div>
     </div>
