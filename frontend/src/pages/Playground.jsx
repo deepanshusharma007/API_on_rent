@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Copy, Code2, Loader2, Terminal, Zap, AlertCircle } from 'lucide-react';
+import { Play, Copy, Code2, Loader2, Terminal, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { providersAPI, marketplaceAPI } from '../api/client';
 import Navbar from '../components/Navbar';
@@ -9,42 +8,37 @@ import Footer from '../components/Footer';
 import { fadeUp, fadeLeft, fadeRight, staggerContainer } from '../lib/motion';
 import { buildDynamicCatalogue, getProviderMeta } from '../lib/providerMeta.jsx';
 
-const inputClass = 'w-full px-3 py-2.5 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 transition-all text-sm font-mono';
-
 export default function Playground() {
-  const [virtualKey, setVirtualKey] = useState('');
-  const [model, setModel] = useState('gpt-4o-mini');
-  const [prompt, setPrompt] = useState('Hello! Can you tell me a short joke?');
-  const [maxTokens, setMaxTokens] = useState(500);
-  const [streaming, setStreaming] = useState(false);
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [responseTime, setResponseTime] = useState(null);
-  const [allModels, setAllModels] = useState([]);
+  const [virtualKey,    setVirtualKey]    = useState('');
+  const [model,         setModel]         = useState('gpt-4o-mini');
+  const [prompt,        setPrompt]        = useState('Hello! Can you tell me a short joke?');
+  const [maxTokens,     setMaxTokens]     = useState(500);
+  const [streaming,     setStreaming]     = useState(false);
+  const [response,      setResponse]      = useState(null);
+  const [loading,       setLoading]       = useState(false);
+  const [responseTime,  setResponseTime]  = useState(null);
+  const [allModels,     setAllModels]     = useState([]);
 
   useEffect(() => {
     Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
       .then(([plansRes, providersRes]) => {
         const catalogue = buildDynamicCatalogue(plansRes.data, providersRes.data.providers);
         setAllModels(catalogue);
-        if (catalogue.length > 0 && !catalogue.find(m => m.id === model)) {
-          setModel(catalogue[0].id);
-        }
+        if (catalogue.length > 0 && !catalogue.find(m => m.id === model)) setModel(catalogue[0].id);
       })
       .catch(() => setAllModels([]));
   }, []);
 
   const MODELS = allModels;
-  const selectedModel = MODELS.find(m => m.id === model) || MODELS[0];
 
   const sendRequest = async () => {
     if (!virtualKey.trim()) { toast.error('Please enter your Virtual API Key'); return; }
     setLoading(true);
     setResponse(null);
     setResponseTime(null);
-    const startTime = Date.now();
+    const startTime   = Date.now();
     const requestBody = { model, messages: [{ role: 'user', content: prompt }], max_tokens: maxTokens, stream: streaming };
-    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const base        = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
     try {
       if (streaming) {
@@ -54,7 +48,7 @@ export default function Playground() {
           body: JSON.stringify(requestBody),
         });
         if (!res.ok) { const err = await res.json(); throw new Error(err.detail || `HTTP ${res.status}`); }
-        const reader = res.body.getReader();
+        const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let fullContent = '';
         while (true) {
@@ -70,7 +64,7 @@ export default function Playground() {
         setResponseTime(Date.now() - startTime);
         setResponse({ content: fullContent, streaming: false });
       } else {
-        const res = await fetch(`${base}/v1/chat/completions`, {
+        const res  = await fetch(`${base}/v1/chat/completions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${virtualKey}` },
           body: JSON.stringify(requestBody),
@@ -95,70 +89,83 @@ export default function Playground() {
     toast.success('cURL copied!');
   };
 
+  const fieldStyle = {
+    width: '100%', padding: '10px 12px', borderRadius: '7px',
+    background: 'var(--c-raised)', border: '1px solid var(--c-border)',
+    color: 'var(--c-text)', fontSize: '0.875rem', fontFamily: 'monospace',
+    outline: 'none', boxSizing: 'border-box', transition: 'border-color 150ms',
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-32 pb-8 px-5">
-        <motion.div
-          variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="max-w-6xl mx-auto"
-        >
-          <motion.div variants={fadeUp} className="mb-6">
-            <p className="text-violet-400 text-xs font-semibold tracking-widest uppercase mb-2">API Playground</p>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Test your <span className="text-violet-400">Virtual Key</span>
+      <section style={{ paddingTop: '120px', paddingBottom: '32px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-6xl mx-auto">
+          <motion.div variants={fadeUp}>
+            <p className="eyebrow mb-3">API Playground</p>
+            <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', marginBottom: '6px' }}>
+              Test your Virtual Key
             </h1>
-            <p className="text-gray-500 text-sm">Send live requests across all AI models and inspect responses in real time.</p>
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
+              Send live requests across all AI models and inspect responses in real time.
+            </p>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Main grid */}
-      <section className="px-5 pb-16 flex-1">
+      <section style={{ padding: '0 20px 80px', flex: 1 }}>
         <motion.div
           variants={staggerContainer(0.12)} initial="hidden" animate="show"
           className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4"
         >
-          {/* ── LEFT: Request Panel ── */}
-          <motion.div variants={fadeLeft} className="space-y-4">
+          {/* LEFT: Request Panel */}
+          <motion.div variants={fadeLeft} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
             {/* API Key */}
-            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
-              <label className="block text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Virtual API Key</label>
+            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px' }}>
+              <label style={{ display: 'block', color: 'var(--c-text-3)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                Virtual API Key
+              </label>
               <input
-                type="text"
-                value={virtualKey}
-                onChange={e => setVirtualKey(e.target.value)}
+                type="text" value={virtualKey} onChange={e => setVirtualKey(e.target.value)}
                 placeholder="vk_xxxxxxxxxxxxxxxx"
-                className={inputClass}
+                style={fieldStyle}
+                onFocus={e => e.target.style.borderColor = 'var(--c-accent)'}
+                onBlur={e  => e.target.style.borderColor = 'var(--c-border)'}
               />
             </div>
 
             {/* Model Selector */}
-            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
-              <label className="block text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wider">Model</label>
-              <div className="space-y-1.5">
+            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px' }}>
+              <label style={{ display: 'block', color: 'var(--c-text-3)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+                Model
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {MODELS.length === 0 && (
-                  <p className="text-gray-600 text-sm py-4 text-center">No models available — admin hasn't added any provider keys yet.</p>
+                  <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', padding: '16px 0', textAlign: 'center' }}>
+                    No models available — admin hasn't added any provider keys yet.
+                  </p>
                 )}
                 {MODELS.map(m => {
                   const provMeta = getProviderMeta(m.providerKey);
+                  const isSelected = model === m.id;
                   return (
-                    <button
-                      key={m.id}
-                      onClick={() => setModel(m.id)}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all ${
-                        model === m.id
-                          ? `${provMeta.bg} ${provMeta.border}`
-                          : 'bg-[#1a1a1a] border-white/[0.06] hover:border-white/[0.12]'
-                      }`}
-                    >
-                      <div className="text-left">
-                        <div className={`font-medium text-sm ${model === m.id ? m.color : 'text-gray-300'}`}>{m.label}</div>
-                        <div className="text-gray-600 text-xs">{provMeta.name || m.providerKey}</div>
+                    <button key={m.id} onClick={() => setModel(m.id)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '10px 14px', borderRadius: '8px',
+                        background: isSelected ? 'var(--c-accent-bg)' : 'var(--c-raised)',
+                        border: `1px solid ${isSelected ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
+                        cursor: 'pointer', transition: 'all 150ms', textAlign: 'left',
+                      }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: isSelected ? 'var(--c-accent-hi)' : 'var(--c-text)' }}>{m.label}</div>
+                        <div style={{ color: 'var(--c-text-3)', fontSize: '0.75rem' }}>{provMeta.name || m.providerKey}</div>
                       </div>
-                      <span className="text-lg">{m.emoji}</span>
+                      <span style={{ fontSize: '1.1rem' }}>{m.emoji}</span>
                     </button>
                   );
                 })}
@@ -166,136 +173,155 @@ export default function Playground() {
             </div>
 
             {/* Prompt */}
-            <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
-              <label className="block text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wider">Prompt</label>
+            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px' }}>
+              <label style={{ display: 'block', color: 'var(--c-text-3)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                Prompt
+              </label>
               <textarea
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                rows={4}
-                className={inputClass + ' resize-none font-sans'}
+                value={prompt} onChange={e => setPrompt(e.target.value)} rows={4}
                 placeholder="Enter your prompt..."
+                style={{ ...fieldStyle, fontFamily: 'inherit', resize: 'none' }}
+                onFocus={e => e.target.style.borderColor = 'var(--c-accent)'}
+                onBlur={e  => e.target.style.borderColor = 'var(--c-border)'}
               />
-              <div className="flex items-center gap-4 mt-4">
-                <div className="flex-1">
-                  <label className="text-xs text-gray-600 mb-1 block">Max Tokens</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', color: 'var(--c-text-3)', fontSize: '0.75rem', marginBottom: '4px' }}>Max Tokens</label>
                   <input
-                    type="number"
-                    value={maxTokens}
-                    onChange={e => setMaxTokens(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-white/[0.08] text-white text-sm focus:outline-none focus:border-violet-500"
+                    type="number" value={maxTokens} onChange={e => setMaxTokens(Number(e.target.value))}
+                    style={fieldStyle}
+                    onFocus={e => e.target.style.borderColor = 'var(--c-accent)'}
+                    onBlur={e  => e.target.style.borderColor = 'var(--c-border)'}
                   />
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer pt-5">
-                  <div
-                    onClick={() => setStreaming(v => !v)}
-                    className={`w-10 h-5 rounded-full transition-all relative cursor-pointer ${streaming ? 'bg-violet-500' : 'bg-white/10'}`}
-                  >
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${streaming ? 'left-5' : 'left-0.5'}`} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '20px', cursor: 'pointer' }}
+                  onClick={() => setStreaming(v => !v)}>
+                  <div style={{
+                    width: '38px', height: '20px', borderRadius: '10px', position: 'relative',
+                    background: streaming ? 'var(--c-accent)' : 'var(--c-raised)',
+                    border: `1px solid ${streaming ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
+                    transition: 'all 200ms',
+                  }}>
+                    <div style={{
+                      position: 'absolute', top: '2px', width: '14px', height: '14px', borderRadius: '50%',
+                      background: streaming ? '#022c22' : 'var(--c-border-hi)',
+                      left: streaming ? '21px' : '2px',
+                      transition: 'left 200ms',
+                    }} />
                   </div>
-                  <span className="text-sm text-gray-400">Stream</span>
-                </label>
+                  <span style={{ fontSize: '0.825rem', color: 'var(--c-text-2)', userSelect: 'none' }}>Stream</span>
+                </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <motion.button
-                onClick={sendRequest}
-                disabled={loading}
-                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-60"
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={sendRequest} disabled={loading}
+                className="btn btn-primary"
+                style={{ flex: 1, justifyContent: 'center', padding: '11px', opacity: loading ? 0.7 : 1 }}
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-4 h-4" />}
-                {loading ? 'Sending...' : 'Send Request'}
-              </motion.button>
-              <motion.button
+                {loading ? <Loader2 size={16} style={{ animation: 'spin 0.7s linear infinite' }} /> : <Play size={14} />}
+                {loading ? 'Sending…' : 'Send Request'}
+              </button>
+              <button
                 onClick={generateCurl}
-                whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                className="btn btn-secondary"
+                style={{ padding: '11px 14px' }}
                 title="Copy as cURL"
-                className="px-4 py-3 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg transition-all"
               >
-                <Code2 className="w-5 h-5" />
-              </motion.button>
+                <Code2 size={16} />
+              </button>
             </div>
           </motion.div>
 
-          {/* ── RIGHT: Response Panel ── */}
-          <motion.div variants={fadeRight} className="bg-[#111] border border-white/[0.08] rounded-lg p-5 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-violet-400" />
-                <h3 className="text-sm font-semibold text-white">Response</h3>
+          {/* RIGHT: Response Panel */}
+          <motion.div variants={fadeRight} style={{
+            background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+            borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Terminal size={14} style={{ color: 'var(--c-accent)' }} />
+                <h3 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.875rem' }}>Response</h3>
                 {response?.streaming && (
-                  <span className="flex items-center gap-1 text-xs text-violet-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />streaming
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: 'var(--c-accent)' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--c-accent)', animation: 'pulse 1s infinite' }} />
+                    streaming
                   </span>
                 )}
               </div>
               {responseTime && (
-                <span className="text-xs text-gray-600">{responseTime}ms</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--c-text-3)' }}>{responseTime}ms</span>
               )}
             </div>
 
-            <div className="flex-1 min-h-[300px]">
+            <div style={{ flex: 1, minHeight: '300px' }}>
               <AnimatePresence mode="wait">
                 {!response && !loading && (
                   <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="h-full flex flex-col items-center justify-center text-center py-12">
-                    <Zap className="w-8 h-8 text-gray-800 mb-3" />
-                    <p className="text-gray-600 text-sm">Send a request to see the response</p>
+                    style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '48px 0' }}>
+                    <Zap size={28} style={{ color: 'var(--c-border-hi)', marginBottom: '12px' }} />
+                    <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Send a request to see the response</p>
                   </motion.div>
                 )}
 
                 {loading && !response && (
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="h-full flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                    style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Loader2 size={28} style={{ color: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
                   </motion.div>
                 )}
 
                 {response?.error && (
                   <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                    <p className="text-red-300 text-sm font-mono">{response.error}</p>
+                    style={{ padding: '16px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <p style={{ color: '#f87171', fontSize: '0.875rem', fontFamily: 'monospace' }}>{response.error}</p>
                   </motion.div>
                 )}
 
                 {response?.content && (
                   <motion.div key="content" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4">
-                    <div className="p-4 rounded-lg bg-black/40 border border-white/[0.06] max-h-[360px] overflow-y-auto">
-                      <pre className="text-emerald-400 text-sm whitespace-pre-wrap font-mono leading-relaxed">
+                    style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{
+                      padding: '16px', borderRadius: '8px',
+                      background: 'var(--c-raised)', border: '1px solid var(--c-border)',
+                      maxHeight: '360px', overflowY: 'auto',
+                    }}>
+                      <pre style={{ color: 'var(--c-accent)', fontSize: '0.825rem', whiteSpace: 'pre-wrap', fontFamily: 'monospace', lineHeight: 1.6, margin: 0 }}>
                         {response.content}
-                        {response.streaming && <span className="animate-pulse text-violet-400">▌</span>}
+                        {response.streaming && <span style={{ animation: 'pulse 0.8s infinite', color: 'var(--c-accent-hi)' }}>▌</span>}
                       </pre>
                     </div>
 
                     {response.usage && (
-                      <div className="grid grid-cols-3 gap-2">
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                         {[
                           { label: 'Input',  val: response.usage.prompt_tokens },
                           { label: 'Output', val: response.usage.completion_tokens },
                           { label: 'Total',  val: response.usage.total_tokens },
                         ].map(({ label, val }) => (
-                          <div key={label} className="text-center p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                            <div className="text-xs text-gray-600 mb-1">{label}</div>
-                            <div className="text-white font-bold text-sm">{val}</div>
+                          <div key={label} style={{ textAlign: 'center', padding: '12px', borderRadius: '8px', background: 'var(--c-raised)', border: '1px solid var(--c-border)' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+                            <div style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.875rem' }}>{val}</div>
                           </div>
                         ))}
                       </div>
                     )}
 
                     {response.model && (
-                      <p className="text-xs text-gray-700">Model: <span className="text-gray-500 font-mono">{response.model}</span></p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--c-text-3)' }}>
+                        Model: <span style={{ color: 'var(--c-text-2)', fontFamily: 'monospace' }}>{response.model}</span>
+                      </p>
                     )}
 
-                    <motion.button
-                      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                    <button
                       onClick={() => { navigator.clipboard.writeText(response.content); toast.success('Copied!'); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg text-sm transition-all"
+                      className="btn btn-secondary"
+                      style={{ alignSelf: 'flex-start', fontSize: '0.8rem' }}
                     >
-                      <Copy className="w-4 h-4" />Copy Response
-                    </motion.button>
+                      <Copy size={13} /> Copy Response
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -305,6 +331,7 @@ export default function Playground() {
       </section>
 
       <Footer />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

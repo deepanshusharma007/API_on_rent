@@ -6,94 +6,96 @@ import Footer from '../components/Footer';
 import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, viewport } from '../lib/motion';
 
 const STATS = [
-  { value: '₹0',    label: 'Hidden fees',      color: '#34d399' },
-  { value: '3',     label: 'AI providers',      color: '#38bdf8' },
-  { value: '99.9%', label: 'Uptime target',     color: '#a78bfa' },
-  { value: '∞',     label: 'Passion for devs',  color: '#f472b6' },
+  { value: '₹0',    label: 'Hidden fees'       },
+  { value: '3',     label: 'AI providers'       },
+  { value: '99.9%', label: 'Uptime target'      },
+  { value: '< 10s', label: 'Key delivery time'  },
 ];
 
 const VALUES = [
-  { icon: Zap,    color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  title: 'Speed first',         desc: 'Your key arrives before you finish your coffee. Activation takes under 10 seconds.' },
-  { icon: Shield, color: '#34d399', bg: 'rgba(52,211,153,0.08)',  title: 'Security by default', desc: 'IP-pinned keys, PII masking, prompt safety — on every single request, always.' },
-  { icon: Heart,  color: '#f472b6', bg: 'rgba(244,114,182,0.08)', title: 'Dev-first design',    desc: 'Every detail — from the OpenAI-compatible endpoint to the live dashboard — built by a dev for devs.' },
-  { icon: Globe,  color: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  title: 'Made for India',      desc: 'Pay in INR via UPI. No forex fees, no enterprise lock-in. Just build what you want.' },
+  { icon: Zap,    title: 'Speed first',         desc: 'Your key arrives before you finish your coffee. Activation takes under 10 seconds end-to-end.' },
+  { icon: Shield, title: 'Security by default', desc: 'IP-pinned keys, PII masking, and prompt safety checks on every single API request — always.' },
+  { icon: Heart,  title: 'Developer-first',     desc: 'Every detail — from the OpenAI-compatible endpoint to the live dashboard — built by a dev, for devs.' },
+  { icon: Globe,  title: 'Made for India',      desc: 'Pay in INR via UPI. No forex fees, no enterprise lock-in. Just build what you want, when you want.' },
 ];
 
 const STACK = ['FastAPI', 'React', 'PostgreSQL', 'Redis', 'LiteLLM', 'Docker', 'Framer Motion', 'Tailwind CSS'];
 
 export default function AboutUs() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-36 pb-20 px-5 text-center mesh-hero">
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-3xl mx-auto">
-          <motion.div variants={fadeUp} className="mb-6 flex justify-center">
-            <span className="label-pill">Our Story</span>
+      <section style={{ paddingTop: '120px', paddingBottom: '80px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <div className="max-w-3xl mx-auto">
+          <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show">
+            <motion.p variants={fadeUp} className="eyebrow mb-5">Our Story</motion.p>
+            <motion.h1
+              variants={fadeUp}
+              style={{ fontSize: 'clamp(2.2rem,5vw,3.8rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '24px' }}
+            >
+              Making AI accessible<br />for every developer.
+            </motion.h1>
+            <motion.p
+              variants={fadeUp}
+              className="prose-width"
+              style={{ color: 'var(--c-text-2)', fontSize: '1.05rem', lineHeight: 1.75 }}
+            >
+              AIRent was born from frustration. Every time I needed to prototype with a frontier model,
+              I hit rate limits, billing delays, or annual contracts. So I built the tool I always wanted —
+              a marketplace to rent AI API access by the hour.
+            </motion.p>
           </motion.div>
-          <motion.h1
-            variants={fadeUp}
-            className="text-[clamp(2.2rem,5vw,4rem)] font-black text-[#f0eefa] leading-tight tracking-tight mb-6"
-          >
-            Making AI accessible<br />
-            <span className="gradient-text">for every developer</span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-[#8e8ca4] text-base leading-relaxed max-w-2xl mx-auto">
-            AIRent was born out of frustration. Every time I needed to prototype with a frontier model,
-            I hit rate limits, billing delays, or annual contracts. So I built the tool I always wanted —
-            a marketplace to rent AI API access by the hour.
-          </motion.p>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-14 px-5" style={{ background: 'var(--bg-surface)', borderTop: '1px solid rgba(255,255,255,0.055)', borderBottom: '1px solid rgba(255,255,255,0.055)' }}>
+      {/* Stats — horizontal rule style, not cards */}
+      <section style={{ borderTop: '1px solid var(--c-border)', borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)', padding: '48px 20px' }}>
         <motion.div
           variants={staggerContainer(0.1)} initial="hidden" whileInView="show" viewport={viewport}
-          className="max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6"
+          className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8"
         >
           {STATS.map(s => (
-            <motion.div key={s.label} variants={scaleIn} className="text-center">
-              <div className="text-4xl md:text-5xl font-black mb-2" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-[#52505f] text-sm">{s.label}</div>
+            <motion.div key={s.label} variants={scaleIn} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', marginBottom: '6px' }}>{s.value}</div>
+              <div style={{ color: 'var(--c-text-3)', fontSize: '0.825rem' }}>{s.label}</div>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
       {/* Mission */}
-      <section className="py-24 px-5" style={{ background: 'var(--bg-base)' }}>
+      <section style={{ padding: '96px 20px', background: 'var(--c-bg)' }}>
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            variants={staggerContainer(0.12)} initial="hidden" whileInView="show" viewport={viewport}
-            className="grid md:grid-cols-2 gap-14 items-start"
-          >
+          <motion.div variants={staggerContainer(0.1)} initial="hidden" whileInView="show" viewport={viewport} className="grid md:grid-cols-2 gap-16 items-start">
             <motion.div variants={fadeLeft}>
-              <span className="label-pill mb-6 inline-flex">Mission</span>
-              <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-bold text-[#f0eefa] mb-6 leading-tight tracking-tight">
-                AI shouldn't require<br />
-                <span className="gradient-text">a corporate budget</span>
+              <p className="eyebrow mb-5">Mission</p>
+              <h2 style={{ fontSize: 'clamp(1.6rem,3vw,2.4rem)', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--c-text)', lineHeight: 1.2, marginBottom: '24px' }}>
+                AI shouldn't need<br />a corporate budget.
               </h2>
-              <div className="space-y-4 text-[#8e8ca4] text-sm leading-relaxed">
-                <p>Independent developers, students, researchers, and small teams deserve the same access to frontier models as Fortune 500 companies.</p>
-                <p>AIRent flips the model. Instead of paying for what you <em>might</em> use, you pay for exactly what you <em>do</em> use — in a window you control.</p>
-                <p>I handle the billing complexity, provider rate-limiting, fallback routing, and cost protection so you can focus on shipping.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {[
+                  'Independent developers, students, and small teams deserve the same access to frontier models as Fortune 500 companies.',
+                  'AIRent flips the model. Instead of paying for what you might use, you pay for exactly what you do use — in a time window you control.',
+                  'I handle billing complexity, provider rate-limiting, fallback routing, and cost protection so you can focus on shipping.',
+                ].map((p, i) => (
+                  <p key={i} className="prose-width" style={{ color: 'var(--c-text-2)', fontSize: '0.925rem', lineHeight: 1.75 }}>{p}</p>
+                ))}
               </div>
             </motion.div>
 
-            <motion.div variants={fadeRight} className="grid grid-cols-2 gap-3">
+            {/* Values — list, not card grid */}
+            <motion.div variants={fadeRight} style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
               {VALUES.map(v => (
-                <div
-                  key={v.title}
-                  className="p-5 rounded-2xl transition-all duration-200"
-                  style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.07)' }}
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3.5" style={{ background: v.bg }}>
-                    <v.icon className="w-4 h-4" style={{ color: v.color }} />
+                <div key={v.title} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <v.icon size={16} style={{ color: 'var(--c-accent)' }} />
                   </div>
-                  <h4 className="text-[#f0eefa] font-semibold text-sm mb-1.5">{v.title}</h4>
-                  <p className="text-[#52505f] text-xs leading-relaxed">{v.desc}</p>
+                  <div>
+                    <h4 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '5px' }}>{v.title}</h4>
+                    <p style={{ color: 'var(--c-text-3)', fontSize: '0.825rem', lineHeight: 1.65 }}>{v.desc}</p>
+                  </div>
                 </div>
               ))}
             </motion.div>
@@ -102,42 +104,40 @@ export default function AboutUs() {
       </section>
 
       {/* Founder */}
-      <section className="py-24 px-5" style={{ background: 'var(--bg-surface)', borderTop: '1px solid rgba(255,255,255,0.055)', borderBottom: '1px solid rgba(255,255,255,0.055)' }}>
+      <section style={{ padding: '96px 20px', background: 'var(--c-surface)', borderTop: '1px solid var(--c-border)', borderBottom: '1px solid var(--c-border)' }}>
         <div className="max-w-4xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} className="text-center mb-14">
-            <span className="label-pill mb-5 inline-flex">The team</span>
-            <h2 className="text-[clamp(1.7rem,3vw,2.5rem)] font-bold text-[#f0eefa] tracking-tight">One person. Big mission.</h2>
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} style={{ marginBottom: '48px' }}>
+            <p className="eyebrow mb-4">The team</p>
+            <h2 style={{ fontSize: 'clamp(1.6rem,3vw,2.4rem)', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--c-text)' }}>One person. Big mission.</h2>
           </motion.div>
 
-          <motion.div variants={scaleIn} initial="hidden" whileInView="show" viewport={viewport} className="max-w-sm mx-auto">
+          <motion.div variants={scaleIn} initial="hidden" whileInView="show" viewport={viewport}>
             <div
-              className="rounded-2xl p-8 text-center"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+              className="card"
+              style={{ maxWidth: '400px', padding: '32px', textAlign: 'center' }}
             >
-              <div
-                className="w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center text-white font-black text-4xl"
-                style={{ background: 'linear-gradient(135deg,#7c3aed,#5b21b6)' }}
-              >D</div>
-              <h3 className="text-[#f0eefa] font-bold text-xl mb-1">Deepanshu Sharma</h3>
-              <p className="text-violet-400 text-sm font-medium mb-5">Founder & Solo Developer</p>
-              <p className="text-[#52505f] text-sm leading-relaxed mb-6">
-                Built the entire stack — backend APIs, frontend UI, payments, and infrastructure —
+              <div style={{ width: '64px', height: '64px', borderRadius: '12px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '1.8rem', fontWeight: 800, color: 'var(--c-text)' }}>
+                D
+              </div>
+              <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>Deepanshu Sharma</h3>
+              <p style={{ color: 'var(--c-accent)', fontSize: '0.825rem', fontWeight: 600, marginBottom: '16px' }}>Founder & Solo Developer</p>
+              <p className="prose-width mx-auto" style={{ color: 'var(--c-text-3)', fontSize: '0.825rem', lineHeight: 1.7, marginBottom: '20px' }}>
+                Built the entire stack — backend, frontend, payments, and infrastructure —
                 driven by one goal: making frontier AI affordable for every developer.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center mb-6">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginBottom: '20px' }}>
                 {['FastAPI', 'React', 'PostgreSQL', 'Redis', 'Docker'].map(tech => (
-                  <span key={tech} className="px-2.5 py-1 text-xs rounded-lg text-[#52505f]"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span key={tech} style={{ padding: '3px 10px', borderRadius: '4px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', color: 'var(--c-text-3)', fontSize: '0.75rem' }}>
                     {tech}
                   </span>
                 ))}
               </div>
               <a
                 href="https://github.com/deepanshusharma007" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all"
-                style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 0 16px rgba(124,58,237,0.25)' }}
+                className="btn btn-secondary"
+                style={{ display: 'inline-flex', fontSize: '0.825rem', padding: '8px 16px' }}
               >
-                <Github className="w-4 h-4" /> GitHub Profile
+                <Github size={14} /> GitHub Profile
               </a>
             </div>
           </motion.div>
@@ -145,18 +145,19 @@ export default function AboutUs() {
       </section>
 
       {/* Tech stack */}
-      <section className="py-20 px-5" style={{ background: 'var(--bg-base)' }}>
-        <div className="max-w-3xl mx-auto text-center">
+      <section style={{ padding: '80px 20px', background: 'var(--c-bg)' }}>
+        <div className="max-w-3xl mx-auto">
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-            <Code2 className="w-8 h-8 text-violet-500 mx-auto mb-5" />
-            <h2 className="text-2xl font-bold text-[#f0eefa] mb-2 tracking-tight">Built on modern open-source</h2>
-            <p className="text-[#52505f] text-sm mb-8">Production-tested, open-source stack from top to bottom.</p>
-            <div className="flex flex-wrap gap-2 justify-center">
+            <p className="eyebrow mb-4">Tech stack</p>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--c-text)', marginBottom: '8px' }}>Built on modern open-source</h2>
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', marginBottom: '28px' }}>Production-tested, open-source stack from top to bottom.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {STACK.map(tech => (
                 <span
                   key={tech}
-                  className="px-4 py-2 text-sm rounded-xl text-[#8e8ca4] hover:text-[#f0eefa] transition-colors cursor-default"
-                  style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ padding: '6px 14px', borderRadius: '6px', background: 'var(--c-surface)', border: '1px solid var(--c-border)', color: 'var(--c-text-2)', fontSize: '0.875rem', cursor: 'default', transition: 'border-color 150ms, color 150ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--c-border-hi)'; e.currentTarget.style.color = 'var(--c-text)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--c-border)'; e.currentTarget.style.color = 'var(--c-text-2)'; }}
                 >
                   {tech}
                 </span>

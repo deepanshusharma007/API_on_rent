@@ -7,10 +7,10 @@ import useAuthStore from '../store/authStore';
 import { fadeUp, staggerContainer } from '../lib/motion';
 
 export default function Login() {
-  const [email, setEmail]       = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [loading,  setLoading]  = useState(false);
   const navigate = useNavigate();
   const login    = useAuthStore(s => s.login);
 
@@ -30,88 +30,105 @@ export default function Login() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.15) 0%, transparent 70%), var(--bg-base)' }}
+      style={{ background: 'var(--c-bg)' }}
     >
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.018]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px)',
-          backgroundSize: '64px 64px',
-        }}
-      />
-
       <motion.div
         variants={staggerContainer(0.08)} initial="hidden" animate="show"
-        className="w-full max-w-sm relative z-10"
+        style={{ width: '100%', maxWidth: '380px' }}
       >
-        <motion.div variants={fadeUp} className="text-center mb-9">
-          <Link to="/" className="inline-flex items-center gap-2.5 mb-5 group">
-            <img
-              src="/logo.png" alt="AIRent"
-              className="w-9 h-9 object-contain drop-shadow-[0_0_8px_rgba(250,180,0,0.5)] group-hover:drop-shadow-[0_0_14px_rgba(250,180,0,0.7)] transition-all"
-            />
-            <span className="text-[#f0eefa] font-bold text-lg tracking-tight">AI<span className="text-violet-400">Rent</span></span>
+        {/* Logo */}
+        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '20px' }}>
+            <img src="/logo.png" alt="AIRent" style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(250,180,0,0.4))' }} />
+            <span style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1rem' }}>
+              AI<span style={{ color: 'var(--c-accent)' }}>Rent</span>
+            </span>
           </Link>
-          <h1 className="text-2xl font-bold text-[#f0eefa] mb-1.5 tracking-tight">Welcome back</h1>
-          <p className="text-[#52505f] text-sm">Sign in to your account</p>
+          <h1 style={{ color: 'var(--c-text)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '6px' }}>
+            Welcome back
+          </h1>
+          <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Sign in to your account</p>
         </motion.div>
 
+        {/* Card */}
         <motion.div
           variants={fadeUp}
-          className="rounded-2xl p-7"
-          style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}
+          style={{
+            background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+            borderRadius: '12px', padding: '28px',
+          }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-[#8e8ca4] mb-2">Email address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52505f] pointer-events-none" />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com" required className="field pl-10" />
+          <form onSubmit={handleSubmit}>
+            {/* Email */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '8px' }}>
+                Email address
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', pointerEvents: 'none' }} />
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com" required
+                  className="field" style={{ paddingLeft: '36px' }}
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-[#8e8ca4] mb-2">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#52505f] pointer-events-none" />
-                <input type={showPass ? 'text' : 'password'} value={password}
+            {/* Password */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '8px' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', pointerEvents: 'none' }} />
+                <input
+                  type={showPass ? 'text' : 'password'} value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••" required className="field pl-10 pr-10" />
-                <button type="button" onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#52505f] hover:text-[#8e8ca4] transition-colors">
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  placeholder="••••••••" required
+                  className="field" style={{ paddingLeft: '36px', paddingRight: '40px' }}
+                />
+                <button
+                  type="button" onClick={() => setShowPass(v => !v)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
-            <motion.button
+            <button
               type="submit" disabled={loading}
-              whileHover={{ scale: 1.01, boxShadow: '0 0 28px rgba(124,58,237,0.4)' }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-3 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 mt-1 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 0 20px rgba(124,58,237,0.22)' }}
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.9rem' }}
             >
               {loading
-                ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <><span>Sign in</span><ArrowRight className="w-4 h-4" /></>}
-            </motion.button>
+                ? <span style={{ width: '16px', height: '16px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#022c22', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                : <><span>Sign in</span><ArrowRight size={15} /></>
+              }
+            </button>
           </form>
 
-          <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-center text-[#52505f] text-sm">
-              No account yet?{' '}
-              <Link to="/register" className="text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                Create one free
-              </Link>
-            </p>
-          </div>
+          <div style={{ height: '1px', background: 'var(--c-border)', margin: '20px 0' }} />
+          <p style={{ textAlign: 'center', color: 'var(--c-text-3)', fontSize: '0.85rem' }}>
+            No account yet?{' '}
+            <Link to="/register" style={{ color: 'var(--c-accent)', textDecoration: 'none', fontWeight: 500 }}
+              onMouseEnter={e => e.target.style.color = 'var(--c-accent-hi)'}
+              onMouseLeave={e => e.target.style.color = 'var(--c-accent)'}>
+              Create one free
+            </Link>
+          </p>
         </motion.div>
 
-        <motion.p variants={fadeUp} className="text-center mt-5 text-xs text-[#2e2c3a]">
-          <Link to="/" className="hover:text-[#52505f] transition-colors">← Back to home</Link>
+        <motion.p variants={fadeUp} style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.8rem', color: 'var(--c-text-3)' }}>
+          <Link to="/" style={{ color: 'var(--c-text-3)', textDecoration: 'none' }}
+            onMouseEnter={e => e.target.style.color = 'var(--c-text-2)'}
+            onMouseLeave={e => e.target.style.color = 'var(--c-text-3)'}>
+            ← Back to home
+          </Link>
         </motion.p>
       </motion.div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

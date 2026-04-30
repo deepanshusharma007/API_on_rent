@@ -9,22 +9,19 @@ import { contactAPI } from '../api/client';
 
 const CONTACT_INFO = [
   {
-    icon: Mail, color: '#a78bfa', bg: 'rgba(167,139,250,0.1)',
-    title: 'Email',
+    icon: Mail, title: 'Email',
     value: 'deepanshu2210sharma@gmail.com',
     sub: 'For all queries — support, billing, and partnerships',
     href: 'mailto:deepanshu2210sharma@gmail.com',
   },
   {
-    icon: MessageSquare, color: '#38bdf8', bg: 'rgba(56,189,248,0.1)',
-    title: 'Phone / WhatsApp',
+    icon: MessageSquare, title: 'Phone / WhatsApp',
     value: '+91 91317 70985',
     sub: 'Mon – Sat, 10 AM – 8 PM IST',
     href: 'tel:+919131770985',
   },
   {
-    icon: Clock, color: '#34d399', bg: 'rgba(52,211,153,0.1)',
-    title: 'Response Time',
+    icon: Clock, title: 'Response Time',
     value: 'Usually within 24 hours',
     sub: null, note: true,
   },
@@ -32,26 +29,25 @@ const CONTACT_INFO = [
 
 const SUBJECTS = [
   { value: '',           label: 'Select a topic' },
-  { value: 'payment',   label: '💳 Payment / Billing Issue' },
-  { value: 'key',       label: '🔑 API Key Problem' },
-  { value: 'refund',    label: '↩️ Refund Request' },
-  { value: 'enterprise',label: '🏢 Enterprise / Bulk Plan' },
-  { value: 'bug',       label: '🐛 Bug Report' },
-  { value: 'other',     label: '💬 Other' },
+  { value: 'payment',   label: 'Payment / Billing Issue' },
+  { value: 'key',       label: 'API Key Problem' },
+  { value: 'refund',    label: 'Refund Request' },
+  { value: 'enterprise',label: 'Enterprise / Bulk Plan' },
+  { value: 'bug',       label: 'Bug Report' },
+  { value: 'other',     label: 'Other' },
 ];
 
 export default function ContactUs() {
-  const [form, setForm]     = useState({ name: '', email: '', subject: '', message: '' });
+  const [form, setForm]       = useState({ name: '', email: '', subject: '', message: '' });
   const [loading, setLoading] = useState(false);
-  const [sent, setSent]     = useState(false);
+  const [sent, setSent]       = useState(false);
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async e => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
-      toast.error('Please fill in all required fields.');
-      return;
+      toast.error('Please fill in all required fields.'); return;
     }
     setLoading(true);
     try {
@@ -66,142 +62,123 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-36 pb-16 px-5 text-center mesh-hero">
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-xl mx-auto">
-          <motion.div variants={fadeUp} className="mb-5 flex justify-center">
-            <span className="label-pill">Get in touch</span>
+      <section style={{ paddingTop: '120px', paddingBottom: '56px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <div className="max-w-2xl mx-auto">
+          <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show">
+            <motion.p variants={fadeUp} className="eyebrow mb-5">Get in touch</motion.p>
+            <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '16px' }}>
+              Let's talk.
+            </motion.h1>
+            <motion.p variants={fadeUp} className="prose-width" style={{ color: 'var(--c-text-2)', fontSize: '1rem', lineHeight: 1.7 }}>
+              Have a question, issue, or want to collaborate? I'm here and happy to help.
+            </motion.p>
           </motion.div>
-          <motion.h1 variants={fadeUp} className="text-[clamp(2.2rem,5vw,3.5rem)] font-black text-[#f0eefa] mb-4 leading-tight tracking-tight">
-            Let's <span className="gradient-text">talk</span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="text-[#8e8ca4] text-base leading-relaxed">
-            Have a question, issue, or want to collaborate? I'm here and happy to help.
-          </motion.p>
-        </motion.div>
+        </div>
       </section>
 
       {/* Main grid */}
-      <section className="py-12 px-5 flex-1">
+      <section style={{ padding: '0 20px 96px', flex: 1 }}>
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            variants={staggerContainer(0.12)} initial="hidden" whileInView="show" viewport={viewport}
-            className="grid md:grid-cols-2 gap-8"
-          >
+          <motion.div variants={staggerContainer(0.1)} initial="hidden" whileInView="show" viewport={viewport} className="grid md:grid-cols-2 gap-10">
+
             {/* Form */}
             <motion.div variants={fadeLeft}>
-              <div
-                className="rounded-2xl p-7"
-                style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
-              >
+              <div className="card" style={{ padding: '28px' }}>
                 <AnimatePresence mode="wait">
                   {sent ? (
                     <motion.div
                       key="success"
-                      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                      className="flex flex-col items-center justify-center py-14 text-center"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', textAlign: 'center' }}
                     >
-                      <motion.div
-                        initial={{ scale: 0 }} animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 220, delay: 0.1 }}
-                        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-                        style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}
-                      >
-                        <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                      </motion.div>
-                      <h3 className="text-[#f0eefa] text-lg font-bold mb-2">Message received!</h3>
-                      <p className="text-[#8e8ca4] text-sm mb-7 max-w-xs leading-relaxed">
-                        I'll reply to <strong className="text-[#f0eefa]">{form.email}</strong> within 24 hours.
+                      <CheckCircle2 size={40} style={{ color: 'var(--c-accent)', marginBottom: '16px' }} />
+                      <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px' }}>Message received!</h3>
+                      <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', marginBottom: '24px', maxWidth: '260px', lineHeight: 1.6 }}>
+                        I'll reply to <strong style={{ color: 'var(--c-text-2)' }}>{form.email}</strong> within 24 hours.
                       </p>
                       <button
                         onClick={() => { setSent(false); setForm({ name: '', email: '', subject: '', message: '' }); }}
-                        className="px-5 py-2.5 text-[#8e8ca4] hover:text-[#f0eefa] text-sm rounded-xl transition-all"
-                        style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}
+                        className="btn btn-secondary" style={{ fontSize: '0.825rem' }}
                       >
                         Send another message
                       </button>
                     </motion.div>
                   ) : (
-                    <motion.form
-                      key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                      onSubmit={handleSubmit} className="space-y-4"
-                    >
-                      <h2 className="text-base font-bold text-[#f0eefa] mb-6">Send a message</h2>
-                      <div className="grid grid-cols-2 gap-3">
+                    <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit}>
+                      <h2 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.95rem', marginBottom: '20px' }}>Send a message</h2>
+
+                      <div className="grid grid-cols-2 gap-3" style={{ marginBottom: '14px' }}>
                         <div>
-                          <label className="block text-xs font-medium text-[#8e8ca4] mb-2">
-                            Name <span className="text-violet-400">*</span>
+                          <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.78rem', fontWeight: 500, marginBottom: '6px' }}>
+                            Name <span style={{ color: 'var(--c-accent)' }}>*</span>
                           </label>
-                          <input type="text" name="name" value={form.name} onChange={handleChange}
-                            placeholder="Your name" className="field" />
+                          <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="Your name" className="field" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-[#8e8ca4] mb-2">
-                            Email <span className="text-violet-400">*</span>
+                          <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.78rem', fontWeight: 500, marginBottom: '6px' }}>
+                            Email <span style={{ color: 'var(--c-accent)' }}>*</span>
                           </label>
-                          <input type="email" name="email" value={form.email} onChange={handleChange}
-                            placeholder="you@email.com" className="field" />
+                          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@email.com" className="field" />
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-[#8e8ca4] mb-2">Topic</label>
-                        <select name="subject" value={form.subject} onChange={handleChange}
-                          className="field appearance-none cursor-pointer">
-                          {SUBJECTS.map(s => (
-                            <option key={s.value} value={s.value} style={{ background: 'var(--bg-base)' }}>{s.label}</option>
-                          ))}
+
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.78rem', fontWeight: 500, marginBottom: '6px' }}>Topic</label>
+                        <select name="subject" value={form.subject} onChange={handleChange} className="field" style={{ appearance: 'none', cursor: 'pointer' }}>
+                          {SUBJECTS.map(s => <option key={s.value} value={s.value} style={{ background: 'var(--c-raised)' }}>{s.label}</option>)}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-[#8e8ca4] mb-2">
-                          Message <span className="text-violet-400">*</span>
+
+                      <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.78rem', fontWeight: 500, marginBottom: '6px' }}>
+                          Message <span style={{ color: 'var(--c-accent)' }}>*</span>
                         </label>
-                        <textarea name="message" value={form.message} onChange={handleChange}
-                          rows={5} placeholder="Describe your question or issue..."
-                          className="field resize-none" />
+                        <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Describe your question or issue..." className="field" style={{ resize: 'none' }} />
                       </div>
-                      <motion.button
-                        type="submit" disabled={loading}
-                        whileHover={{ scale: 1.01, boxShadow: '0 0 28px rgba(124,58,237,0.4)' }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full py-3 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 0 20px rgba(124,58,237,0.22)' }}
-                      >
+
+                      <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px' }}>
                         {loading
-                          ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          : <><Send className="w-4 h-4" /> Send Message</>}
-                      </motion.button>
+                          ? <span style={{ width: '16px', height: '16px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#022c22', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                          : <><Send size={14} /> Send Message</>
+                        }
+                      </button>
                     </motion.form>
                   )}
                 </AnimatePresence>
               </div>
             </motion.div>
 
-            {/* Info side */}
-            <motion.div variants={fadeRight} className="space-y-3">
-              {CONTACT_INFO.map(info => (
+            {/* Info side — list, not cards */}
+            <motion.div variants={fadeRight} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {/* Contact items */}
+              {CONTACT_INFO.map((info, i) => (
                 <div
                   key={info.title}
-                  className="flex gap-4 p-5 rounded-2xl transition-all duration-200"
-                  style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{
+                    padding: '20px 0',
+                    borderBottom: i < CONTACT_INFO.length - 1 ? '1px solid var(--c-border)' : 'none',
+                    display: 'flex', gap: '14px', alignItems: 'flex-start',
+                  }}
                 >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: info.bg }}>
-                    <info.icon className="w-4 h-4" style={{ color: info.color }} />
-                  </div>
+                  <info.icon size={16} style={{ color: 'var(--c-accent)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
-                    <p className="text-[#52505f] text-xs uppercase tracking-widest mb-1 font-medium">{info.title}</p>
+                    <p style={{ color: 'var(--c-text-3)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px', fontWeight: 600 }}>{info.title}</p>
                     {info.href
-                      ? <a href={info.href} className="text-[#f0eefa] font-semibold hover:text-violet-300 transition-colors block text-sm">{info.value}</a>
-                      : <p className="text-[#f0eefa] font-semibold text-sm">{info.value}</p>
+                      ? <a href={info.href} style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none', display: 'block', transition: 'color 150ms' }}
+                          onMouseEnter={e => e.target.style.color = 'var(--c-accent)'}
+                          onMouseLeave={e => e.target.style.color = 'var(--c-text)'}
+                        >{info.value}</a>
+                      : <p style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.875rem' }}>{info.value}</p>
                     }
-                    {info.sub && <p className="text-[#52505f] text-xs mt-1">{info.sub}</p>}
+                    {info.sub && <p style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', marginTop: '3px' }}>{info.sub}</p>}
                     {info.note && (
-                      <p className="text-[#52505f] text-xs mt-1.5 flex items-center gap-1.5">
-                        <Heart className="w-3 h-3 text-pink-400 shrink-0" />
-                        I'm the sole developer here — I work hard for you, please be patient.
+                      <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Heart size={12} style={{ color: '#f472b6', flexShrink: 0 }} />
+                        I'm the sole developer here — please be patient.
                       </p>
                     )}
                   </div>
@@ -209,20 +186,17 @@ export default function ContactUs() {
               ))}
 
               {/* Quick FAQ */}
-              <div
-                className="p-5 rounded-2xl"
-                style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <h3 className="text-[#f0eefa] font-semibold text-sm mb-5">Quick answers</h3>
-                <div className="space-y-4">
+              <div style={{ marginTop: '32px', paddingTop: '28px', borderTop: '1px solid var(--c-border)' }}>
+                <h3 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '20px' }}>Quick answers</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   {[
                     { q: 'Payment went through but no key?', a: 'Email me with your order reference — resolved within 2 hours.' },
                     { q: 'Eligible for a refund?',           a: 'Yes — within 24 h of purchase if the key is unused.' },
-                    { q: 'Need a bulk / team plan?',         a: 'Email me — I offer custom pricing for high-volume users.' },
+                    { q: 'Need a bulk or team plan?',        a: 'Email me — I offer custom pricing for high-volume users.' },
                   ].map(item => (
                     <div key={item.q}>
-                      <p className="text-[#8e8ca4] text-sm font-medium mb-0.5">{item.q}</p>
-                      <p className="text-[#52505f] text-xs leading-relaxed">{item.a}</p>
+                      <p style={{ color: 'var(--c-text-2)', fontSize: '0.85rem', fontWeight: 500, marginBottom: '3px' }}>{item.q}</p>
+                      <p style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', lineHeight: 1.6 }}>{item.a}</p>
                     </div>
                   ))}
                 </div>
@@ -233,6 +207,7 @@ export default function ContactUs() {
       </section>
 
       <Footer />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
