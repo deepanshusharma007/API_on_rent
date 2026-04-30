@@ -1,6 +1,7 @@
 """Authentication API endpoints."""
 import asyncio
 from functools import partial
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
@@ -12,11 +13,34 @@ from backend.database.redis_manager import get_redis_manager, RedisManager
 
 router = APIRouter()
 
+# Load disposable email domain blocklist once at module import
+_BLOCKLIST_PATH = Path(__file__).parent.parent / "data" / "disposable_domains.txt"
+try:
+    _DISPOSABLE_DOMAINS: set[str] = {
+        line.strip().lower()
+        for line in _BLOCKLIST_PATH.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+except FileNotFoundError:
+    _DISPOSABLE_DOMAINS = set()
+
+
+def _is_disposable_email(email: str) -> bool:
+    domain = email.strip().lower().split("@")[-1]
+    return domain in _DISPOSABLE_DOMAINS
+
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="Create account", description="Register a new user account. Returns user info (no token — call /auth/login next).")
 async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user."""
     loop = asyncio.get_event_loop()
+
+    # Reject disposable / temporary email addresses
+    if _is_disposable_email(user_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Disposable or temporary email addresses are not allowed. Please use a real email address."
+        )
 
     existing_user = await loop.run_in_executor(
         None, lambda: db.query(User).filter(User.email == user_data.email).first()
