@@ -13,32 +13,51 @@ export default function AnnouncementBanner() {
     setDismissed(true);
   };
 
-  const message = "⚡ If the app feels slow or unresponsive, our backend is waking up from sleep (free tier). It takes up to 50–60 seconds on first load. We're upgrading soon — thanks for your patience!";
+  const message = "If the app feels slow on first load, the backend is waking up from sleep (free tier) — takes up to 60 seconds. Thanks for your patience!";
+
+  // Repeated enough times to guarantee seamless loop regardless of viewport width
+  const items = Array(6).fill(message);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-black">
-      <div className="relative flex items-center overflow-hidden h-9">
-        {/* Scrolling marquee text */}
-        <div className="flex-1 overflow-hidden">
-          <div className="marquee-banner flex whitespace-nowrap">
-            {[...Array(4)].map((_, i) => (
-              <span key={i} className="inline-flex items-center gap-2 px-8 text-xs font-semibold">
-                <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-                {message}
-              </span>
-            ))}
-          </div>
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+      background: '#92400e',        /* warm amber-800 — readable, not too loud */
+      borderBottom: '1px solid #78350f',
+      height: '36px',
+      display: 'flex', alignItems: 'center', overflow: 'hidden',
+    }}>
+      {/* Scrolling track */}
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <div className="marquee-banner" style={{ alignItems: 'center' }}>
+          {items.map((msg, i) => (
+            <span key={i} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
+              padding: '0 40px', whiteSpace: 'nowrap',
+              fontSize: '0.75rem', fontWeight: 600, color: '#fef3c7',
+              letterSpacing: '0.01em',
+            }}>
+              <Zap size={12} style={{ flexShrink: 0, color: '#fbbf24' }} />
+              {msg}
+            </span>
+          ))}
         </div>
-
-        {/* Dismiss button */}
-        <button
-          onClick={handleDismiss}
-          className="flex-shrink-0 px-3 h-full flex items-center hover:bg-black/10 transition-colors border-l border-black/10"
-          aria-label="Dismiss"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
       </div>
+
+      {/* Dismiss button */}
+      <button
+        onClick={handleDismiss}
+        aria-label="Dismiss"
+        style={{
+          flexShrink: 0, height: '100%', padding: '0 12px',
+          background: 'none', border: 'none', borderLeft: '1px solid #78350f',
+          color: '#fef3c7', cursor: 'pointer', display: 'flex', alignItems: 'center',
+          transition: 'background 150ms',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.15)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+      >
+        <X size={13} />
+      </button>
     </div>
   );
 }
