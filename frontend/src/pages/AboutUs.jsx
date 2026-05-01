@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Shield, Heart, Code2, Globe, Github } from 'lucide-react';
+import { Zap, Shield, Heart, Code2, Globe, Github, Linkedin } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { fadeUp, fadeLeft, fadeRight, scaleIn, staggerContainer, viewport } from '../lib/motion';
@@ -132,13 +132,22 @@ export default function AboutUs() {
                   </span>
                 ))}
               </div>
-              <a
-                href="https://github.com/deepanshusharma007" target="_blank" rel="noopener noreferrer"
-                className="btn btn-secondary"
-                style={{ display: 'inline-flex', fontSize: '0.825rem', padding: '8px 16px' }}
-              >
-                <Github size={14} /> GitHub Profile
-              </a>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a
+                  href="https://github.com/deepanshusharma007" target="_blank" rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.825rem', padding: '8px 16px' }}
+                >
+                  <Github size={14} /> GitHub
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/deepanshu-sharma-354154157/" target="_blank" rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.825rem', padding: '8px 16px' }}
+                >
+                  <Linkedin size={14} /> LinkedIn
+                </a>
+              </div>
             </div>
           </motion.div>
         </div>

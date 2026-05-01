@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Github, Mail, Shield } from 'lucide-react';
+import { Github, Mail, Shield, Linkedin } from 'lucide-react';
 
 const SECTIONS = [
   {
@@ -58,8 +58,9 @@ export default function Footer() {
             </p>
             <div className="flex gap-2">
               {[
-                { icon: <Github size={15} />, href: 'https://github.com/deepanshusharma007', label: 'GitHub' },
-                { icon: <Mail   size={15} />, href: 'mailto:deepanshu2210sharma@gmail.com',  label: 'Email'  },
+                { icon: <Github   size={15} />, href: 'https://github.com/deepanshusharma007',                        label: 'GitHub'   },
+                { icon: <Linkedin size={15} />, href: 'https://www.linkedin.com/in/deepanshu-sharma-354154157/', label: 'LinkedIn' },
+                { icon: <Mail     size={15} />, href: 'mailto:deepanshu2210sharma@gmail.com',                    label: 'Email'    },
               ].map(s => (
                 <a
                   key={s.label}
