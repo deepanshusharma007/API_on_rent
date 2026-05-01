@@ -89,11 +89,9 @@ echo $response['choices'][0]['message']['content'];`,
 }
 
 const MODELS = [
-  { model: "gpt-4o-mini",                provider: "OpenAI",    drain: "3x",  best: "Fast & affordable" },
-  { model: "gpt-4o",                     provider: "OpenAI",    drain: "10x", best: "Complex reasoning" },
-  { model: "gemini-1.5-flash",           provider: "Google",    drain: "1x",  best: "High-volume tasks" },
-  { model: "gemini-1.5-pro",             provider: "Google",    drain: "5x",  best: "Multimodal tasks" },
-  { model: "claude-3-5-sonnet-20241022", provider: "Anthropic", drain: "8x",  best: "Writing & analysis" },
+  { family: "All GPT Models",      provider: "OpenAI",    best: "Reasoning, code, chat" },
+  { family: "All Anthropic Models", provider: "Anthropic", best: "Writing, analysis, safety" },
+  { family: "All Gemini Models",   provider: "Google",    best: "Multimodal, high-volume" },
 ];
 
 const ERRORS = [
@@ -403,36 +401,27 @@ export default function ApiDocs() {
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Supported Models</h2>
           </div>
           <p style={{ fontSize: '0.875rem', color: 'var(--c-text-3)', marginBottom: '16px', lineHeight: 1.65 }}>
-            <span style={{ color: 'var(--c-accent)', fontWeight: 500 }}>Drain rate</span> — higher drain rate = tokens consumed faster. A 10x model uses 10x tokens per request compared to a 1x model.
+            AIRent supports all models from the following providers. The exact model you request is forwarded directly to the provider.
           </p>
           <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
                 <tr>
-                  {['Model ID', 'Provider', 'Drain Rate', 'Best For'].map((h, i) => (
-                    <th key={h} style={{ ...thStyle, display: i === 3 ? undefined : undefined }} className={i === 3 ? 'hidden md:table-cell' : ''}>{h}</th>
+                  {['Model Family', 'Provider', 'Best For'].map(h => (
+                    <th key={h} style={thStyle}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {MODELS.map(m => (
-                  <tr key={m.model} style={{ transition: 'background 100ms' }}
+                  <tr key={m.family} style={{ transition: 'background 100ms' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={tdStyle}>
-                      <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', fontSize: '0.775rem' }}>{m.model}</code>
+                      <span style={{ fontWeight: 600, color: 'var(--c-accent-hi)' }}>{m.family}</span>
                     </td>
                     <td style={{ ...tdStyle, color: 'var(--c-text-2)' }}>{m.provider}</td>
-                    <td style={tdStyle}>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '10px',
-                        fontSize: '0.75rem', fontWeight: 700, fontFamily: 'monospace',
-                        background: 'rgba(251,191,36,0.08)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)',
-                      }}>
-                        {m.drain}
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--c-text-3)' }} className="hidden md:table-cell">{m.best}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{m.best}</td>
                   </tr>
                 ))}
               </tbody>
