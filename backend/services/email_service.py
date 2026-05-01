@@ -152,6 +152,41 @@ class EmailService:
             logger.error(f"Contact form email failed: {e}")
             raise
 
+    def send_new_signup_notification(self, admin_email: str, new_user_email: str,
+                                       user_id: int, registered_at: str):
+        """Notify admin when a new user signs up."""
+        subject = f"🎉 New signup: {new_user_email}"
+        body = f"""
+        <html><body style="font-family: sans-serif; color: #333; max-width: 600px;">
+        <h2 style="color: #10b981;">New User Signed Up</h2>
+        <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600; width: 140px;">Email</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;"><a href="mailto:{new_user_email}">{new_user_email}</a></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">User ID</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; font-family: monospace;">#{user_id}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Registered At</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">{registered_at}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Role</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">USER</td>
+            </tr>
+        </table>
+        <p style="margin-top: 16px;">
+            <a href="http://localhost:5173/admin" style="color: #10b981; font-weight: 600;">Open Admin Panel →</a>
+        </p>
+        <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">
+            This is an automated notification from AIRent.
+        </p>
+        </body></html>
+        """
+        self._send(admin_email, subject, body)
+
     def send_token_low_warning(self, email: str, plan_name: str, tokens_remaining: int, pct: float):
         """Notify user when their tokens are running low (< 10%)."""
         subject = f"⚠️ Low tokens: {tokens_remaining:,} remaining"

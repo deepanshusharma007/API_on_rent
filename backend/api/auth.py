@@ -1,8 +1,10 @@
 """Authentication API endpoints."""
 import asyncio
+import os
+from datetime import timezone
 from functools import partial
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
 from backend.database.models import User, UserRole
@@ -10,6 +12,7 @@ from backend.api.schemas import UserRegister, UserLogin, Token, UserResponse
 from backend.services.auth_utils import verify_password, hash_password, create_access_token
 from backend.api.dependencies import get_current_user
 from backend.database.redis_manager import get_redis_manager, RedisManager
+from backend.services.email_service import email_service
 
 router = APIRouter()
 
@@ -31,7 +34,7 @@ def _is_disposable_email(email: str) -> bool:
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="Create account", description="Register a new user account. Returns user info (no token — call /auth/login next).")
-async def register(user_data: UserRegister, db: Session = Depends(get_db)):
+async def register(user_data: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Register a new user."""
     loop = asyncio.get_event_loop()
 
@@ -69,6 +72,22 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         return new_user
 
     new_user = await loop.run_in_executor(None, _create_user)
+
+    # Notify admin of new signup (best-effort — non-blocking)
+    try:
+        from backend.config import settings
+        admin_email = getattr(settings, 'ADMIN_NOTIFICATION_EMAIL', None) or os.getenv('ADMIN_NOTIFICATION_EMAIL', '')
+        if admin_email:
+            registered_at = new_user.created_at.replace(tzinfo=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC') if new_user.created_at else 'N/A'
+            background_tasks.add_task(
+                email_service.send_new_signup_notification,
+                admin_email,
+                new_user.email,
+                new_user.id,
+                registered_at,
+            )
+    except Exception:
+        pass  # Never block registration over notification failure
 
     # Create Stripe customer (best-effort — don't block registration)
     try:
