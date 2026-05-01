@@ -21,9 +21,9 @@ export default function AnnouncementBanner() {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: '#92400e',        /* warm amber-800 — readable, not too loud */
-      borderBottom: '1px solid #78350f',
-      height: '36px',
+      background: '#d97706',        /* amber-600 — high visibility */
+      borderBottom: '2px solid #b45309',
+      height: '40px',
       display: 'flex', alignItems: 'center', overflow: 'hidden',
     }}>
       {/* Scrolling track */}
@@ -31,13 +31,14 @@ export default function AnnouncementBanner() {
         <div className="marquee-banner" style={{ alignItems: 'center' }}>
           {items.map((msg, i) => (
             <span key={i} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '7px',
-              padding: '0 40px', whiteSpace: 'nowrap',
-              fontSize: '0.75rem', fontWeight: 600, color: '#fef3c7',
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '0 48px', whiteSpace: 'nowrap',
+              fontSize: '0.8rem', fontWeight: 700, color: '#1c1917',
               letterSpacing: '0.01em',
             }}>
-              <Zap size={12} style={{ flexShrink: 0, color: '#fbbf24' }} />
+              <Zap size={13} style={{ flexShrink: 0, color: '#78350f' }} />
               {msg}
+              <span style={{ margin: '0 8px', color: '#78350f', fontWeight: 900 }}>·</span>
             </span>
           ))}
         </div>
@@ -48,15 +49,15 @@ export default function AnnouncementBanner() {
         onClick={handleDismiss}
         aria-label="Dismiss"
         style={{
-          flexShrink: 0, height: '100%', padding: '0 12px',
-          background: 'none', border: 'none', borderLeft: '1px solid #78350f',
-          color: '#fef3c7', cursor: 'pointer', display: 'flex', alignItems: 'center',
+          flexShrink: 0, height: '100%', padding: '0 14px',
+          background: 'none', border: 'none', borderLeft: '2px solid #b45309',
+          color: '#1c1917', cursor: 'pointer', display: 'flex', alignItems: 'center',
           transition: 'background 150ms',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.15)'}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.12)'}
         onMouseLeave={e => e.currentTarget.style.background = 'none'}
       >
-        <X size={13} />
+        <X size={14} />
       </button>
     </div>
   );
