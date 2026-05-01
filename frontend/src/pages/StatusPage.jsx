@@ -6,28 +6,29 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { fadeUp, scaleIn, staggerContainer, viewport } from '../lib/motion';
 
+// Semantic status colours — these are intentional semantic colours, not brand accents
 const STATUS_CONFIG = {
-  operational:     { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', dot: 'bg-emerald-400', icon: CheckCircle,     label: 'Operational' },
-  degraded:        { color: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   dot: 'bg-amber-400',   icon: AlertTriangle,   label: 'Degraded' },
-  issues:          { color: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   dot: 'bg-amber-400',   icon: AlertCircle,     label: 'Issues' },
-  major_outage:    { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-400',     icon: AlertCircle,     label: 'Major Outage' },
-  partial_outage:  { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20',     dot: 'bg-red-400',     icon: AlertCircle,     label: 'Partial Outage' },
+  operational:    { color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', dot: '#10b981', icon: CheckCircle,   label: 'Operational' },
+  degraded:       { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.25)', dot: '#fbbf24', icon: AlertTriangle, label: 'Degraded' },
+  issues:         { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.25)', dot: '#fbbf24', icon: AlertCircle,   label: 'Issues' },
+  major_outage:   { color: '#fb7185', bg: 'rgba(251,113,133,0.08)', border: 'rgba(251,113,133,0.25)', dot: '#fb7185', icon: AlertCircle,  label: 'Major Outage' },
+  partial_outage: { color: '#fb7185', bg: 'rgba(251,113,133,0.08)', border: 'rgba(251,113,133,0.25)', dot: '#fb7185', icon: AlertCircle,  label: 'Partial Outage' },
 };
 
 function getConfig(st) {
-  return STATUS_CONFIG[st] || { color: 'text-gray-400', bg: 'bg-gray-500/10', border: 'border-gray-500/20', dot: 'bg-gray-400', icon: Activity, label: st || 'Unknown' };
+  return STATUS_CONFIG[st] || { color: 'var(--c-text-3)', bg: 'var(--c-raised)', border: 'var(--c-border)', dot: 'var(--c-border-hi)', icon: Activity, label: st || 'Unknown' };
 }
 
 const LEGEND = [
-  { color: 'bg-emerald-400', label: 'Operational' },
-  { color: 'bg-amber-400',   label: 'Issues / Degraded' },
-  { color: 'bg-red-400',     label: 'Outage' },
-  { color: 'bg-gray-500',    label: 'Unknown' },
+  { color: '#10b981', label: 'Operational' },
+  { color: '#fbbf24', label: 'Issues / Degraded' },
+  { color: '#fb7185', label: 'Outage' },
+  { color: 'var(--c-border-hi)', label: 'Unknown' },
 ];
 
 export default function StatusPage() {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [status,      setStatus]      = useState(null);
+  const [loading,     setLoading]     = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const loadStatus = async () => {
@@ -48,80 +49,92 @@ export default function StatusPage() {
   const overall = status ? getConfig(status.overall_status) : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-32 pb-10 px-5 text-center">
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show"
-          className="max-w-2xl mx-auto">
-          <motion.div variants={fadeUp} className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-5">
-            <Wifi className="w-6 h-6 text-violet-400" />
+      <section style={{ paddingTop: '120px', paddingBottom: '40px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
+        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-2xl mx-auto">
+          <motion.div variants={fadeUp} style={{
+            width: '48px', height: '48px', borderRadius: '10px',
+            background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
+          }}>
+            <Wifi size={22} style={{ color: 'var(--c-accent)' }} />
           </motion.div>
-          <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
-            System <span className="text-violet-400">Status</span>
+          <motion.p variants={fadeUp} className="eyebrow mb-4">System Status</motion.p>
+          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '8px' }}>
+            Platform Health
           </motion.h1>
-          <motion.p variants={fadeUp} className="text-gray-500 text-sm">
+          <motion.p variants={fadeUp} style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
             Real-time provider health monitoring · refreshes every 30 s
           </motion.p>
           {lastRefresh && (
-            <motion.p variants={fadeUp} className="text-gray-700 text-xs mt-1.5">
+            <motion.p variants={fadeUp} style={{ color: 'var(--c-text-3)', fontSize: '0.775rem', marginTop: '6px' }}>
               Last updated: {lastRefresh.toLocaleTimeString()}
             </motion.p>
           )}
         </motion.div>
       </section>
 
-      <section className="px-5 pb-20 flex-1">
-        <div className="max-w-3xl mx-auto space-y-4">
+      <section style={{ padding: '0 20px 80px', flex: 1 }}>
+        <div className="max-w-3xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(n => <div key={n} className="h-16 bg-[#111] rounded-lg animate-pulse border border-white/[0.04]" />)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1, 2, 3].map(n => (
+                <div key={n} style={{ height: '64px', background: 'var(--c-surface)', borderRadius: '10px', border: '1px solid var(--c-border)', animation: 'pulse 1.5s infinite' }} />
+              ))}
             </div>
           ) : !status ? (
-            <div className="text-center py-20 text-red-400 text-sm">Failed to load status data.</div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: '#fb7185', fontSize: '0.875rem' }}>Failed to load status data.</div>
           ) : (
             <>
               {/* Overall */}
               <motion.div variants={fadeUp} initial="hidden" animate="show"
-                className={`bg-[#111] border ${overall.border} rounded-lg p-5 flex items-center justify-between`}>
+                style={{
+                  background: 'var(--c-surface)', border: `1px solid ${overall.border}`,
+                  borderRadius: '10px', padding: '20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
                 <div>
-                  <p className="text-gray-500 text-xs uppercase tracking-widest font-semibold mb-0.5">Overall System</p>
-                  <h2 className="text-white font-bold text-base">AIRent Platform</h2>
+                  <p style={{ color: 'var(--c-text-3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '2px' }}>Overall System</p>
+                  <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>AIRent Platform</h2>
                 </div>
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${overall.bg} border ${overall.border}`}>
-                  <span className={`w-2 h-2 rounded-full ${overall.dot} ${status.overall_status === 'operational' ? 'animate-pulse' : ''}`} />
-                  <span className={`text-sm font-semibold ${overall.color}`}>{overall.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '8px', background: overall.bg, border: `1px solid ${overall.border}` }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: overall.dot, animation: status.overall_status === 'operational' ? 'pulse 2s infinite' : 'none' }} />
+                  <span style={{ fontSize: '0.825rem', fontWeight: 600, color: overall.color }}>{overall.label}</span>
                 </div>
               </motion.div>
 
               {/* Providers */}
               <div>
                 <motion.p variants={fadeUp} initial="hidden" animate="show"
-                  className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">Providers</motion.p>
+                  style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>
+                  Providers
+                </motion.p>
                 <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
-                  className="space-y-2">
+                  style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {Object.entries(status.providers).map(([provider, data]) => {
-                    const cfg = getConfig(data.status);
+                    const cfg  = getConfig(data.status);
                     const Icon = cfg.icon;
                     return (
                       <motion.div key={provider} variants={scaleIn}
-                        className={`bg-[#111] border ${cfg.border} rounded-lg p-4 flex items-center justify-between`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg ${cfg.bg} flex items-center justify-center`}>
-                            <Icon className={`w-4 h-4 ${cfg.color}`} />
+                        style={{ background: 'var(--c-surface)', border: `1px solid ${cfg.border}`, borderRadius: '10px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Icon size={16} style={{ color: cfg.color }} />
                           </div>
                           <div>
-                            <h3 className="text-white font-medium capitalize text-sm">{provider}</h3>
-                            <p className="text-gray-600 text-xs mt-0.5">
-                              Circuit: <span className="text-gray-500">{data.circuit_state}</span>
-                              {' '}· Failures: <span className="text-gray-500">{data.recent_failures}</span>
+                            <h3 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.875rem', textTransform: 'capitalize' }}>{provider}</h3>
+                            <p style={{ color: 'var(--c-text-3)', fontSize: '0.75rem', marginTop: '2px' }}>
+                              Circuit: <span style={{ color: 'var(--c-text-2)' }}>{data.circuit_state}</span>
+                              {' '}· Failures: <span style={{ color: 'var(--c-text-2)' }}>{data.recent_failures}</span>
                             </p>
                           </div>
                         </div>
-                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${cfg.bg} border ${cfg.border}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${data.status === 'operational' ? 'animate-pulse' : ''}`} />
-                          <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '8px', background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: cfg.dot, animation: data.status === 'operational' ? 'pulse 2s infinite' : 'none' }} />
+                          <span style={{ fontSize: '0.775rem', fontWeight: 600, color: cfg.color }}>{cfg.label}</span>
                         </div>
                       </motion.div>
                     );
@@ -131,24 +144,23 @@ export default function StatusPage() {
 
               {/* Legend */}
               <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                className="bg-[#111] border border-white/[0.08] rounded-lg p-4">
-                <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">Legend</p>
+                style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '16px' }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>Legend</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {LEGEND.map(({ color, label }) => (
-                    <div key={label} className="flex items-center gap-2 text-sm text-gray-400">
-                      <span className={`w-2 h-2 rounded-full ${color} shrink-0`} />
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.825rem', color: 'var(--c-text-2)' }}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />
                       {label}
                     </div>
                   ))}
                 </div>
               </motion.div>
 
-              {/* Refresh button */}
-              <div className="text-center">
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={loadStatus}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg text-sm transition-all">
-                  <RefreshCw className="w-4 h-4" />Refresh Now
-                </motion.button>
+              {/* Refresh */}
+              <div style={{ textAlign: 'center' }}>
+                <button onClick={loadStatus} className="btn btn-secondary" style={{ display: 'inline-flex', fontSize: '0.825rem' }}>
+                  <RefreshCw size={14} /> Refresh Now
+                </button>
               </div>
             </>
           )}
@@ -156,6 +168,7 @@ export default function StatusPage() {
       </section>
 
       <Footer />
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }

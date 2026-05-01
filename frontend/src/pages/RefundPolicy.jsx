@@ -6,30 +6,9 @@ import {
 } from '../components/PolicyLayout';
 
 const ELIGIBILITY = [
-  {
-    icon: CheckCircle,
-    label: 'Eligible',
-    sub: 'Within 24 h, zero API calls',
-    color: 'text-emerald-400',
-    bg: 'from-emerald-500/15 to-emerald-500/5',
-    border: 'border-emerald-500/20',
-  },
-  {
-    icon: AlertTriangle,
-    label: 'Case-by-case',
-    sub: 'Tech failures on our end',
-    color: 'text-yellow-400',
-    bg: 'from-yellow-500/15 to-yellow-500/5',
-    border: 'border-yellow-500/20',
-  },
-  {
-    icon: XCircle,
-    label: 'Not eligible',
-    sub: 'Used key or time expired',
-    color: 'text-rose-400',
-    bg: 'from-rose-500/15 to-rose-500/5',
-    border: 'border-rose-500/20',
-  },
+  { icon: CheckCircle,   label: 'Eligible',      sub: 'Within 24 h, zero API calls'  },
+  { icon: AlertTriangle, label: 'Case-by-case',  sub: 'Tech failures on our end'      },
+  { icon: XCircle,       label: 'Not eligible',  sub: 'Used key or time expired'       },
 ];
 
 export default function RefundPolicy() {
@@ -37,8 +16,8 @@ export default function RefundPolicy() {
     <PolicyPage>
       <PolicyHero
         icon={RefreshCcw}
-        iconColor="text-violet-400"
-        iconBg="bg-violet-500/10 border-violet-500/20"
+        iconColor="text-emerald-400"
+        iconBg="bg-emerald-500/10 border-emerald-500/20"
         badge="Straightforward & fair"
         title="Refund Policy"
         updated="April 12, 2025"

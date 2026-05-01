@@ -6,9 +6,9 @@ import {
 } from '../components/PolicyLayout';
 
 const SUMMARY = [
-  { icon: Eye,      label: 'No prompt storage',   sub: 'Your prompts are never saved',    color: 'text-violet-400', bg: 'from-violet-500/15 to-violet-500/5',   border: 'border-violet-500/20' },
-  { icon: Lock,     label: 'PII auto-masked',      sub: 'Emails, phones redacted in-flight', color: 'text-emerald-400', bg: 'from-emerald-500/15 to-emerald-500/5', border: 'border-emerald-500/20' },
-  { icon: Database, label: 'Minimal data kept',    sub: 'Only usage metadata stored',      color: 'text-sky-400',    bg: 'from-sky-500/15 to-sky-500/5',         border: 'border-sky-500/20' },
+  { icon: Eye,      label: 'No prompt storage',   sub: 'Your prompts are never saved'       },
+  { icon: Lock,     label: 'PII auto-masked',      sub: 'Emails, phones redacted in-flight' },
+  { icon: Database, label: 'Minimal data kept',    sub: 'Only usage metadata stored'        },
 ];
 
 export default function PrivacyPolicy() {

@@ -9,31 +9,34 @@ export default function TokenProgressBar({ used = 0, remaining = 0, label, size 
   const total    = used + remaining;
   const usagePct = total > 0 ? (used / total) * 100 : 0;
 
+  // Urgency colours — emerald (normal) → amber → red
   const barColor  = usagePct >= 90 ? 'from-red-500 to-red-600'
                   : usagePct >= 70 ? 'from-amber-500 to-orange-500'
-                  : 'from-violet-500 to-violet-600';
-  const textColor = usagePct >= 90 ? 'text-red-400'
-                  : usagePct >= 70 ? 'text-amber-400'
-                  : 'text-violet-400';
+                  : 'from-emerald-500 to-emerald-600';
+  const textColor = usagePct >= 90 ? '#f87171'
+                  : usagePct >= 70 ? '#fbbf24'
+                  : 'var(--c-accent)';
 
   const isSm = size === 'sm';
 
   return (
     <div>
-      <div className={`flex justify-between ${isSm ? 'text-xs' : 'text-sm'} mb-2`}>
-        <div className="flex items-center gap-1.5 text-gray-500">
-          <Zap className={isSm ? 'w-3 h-3' : 'w-3.5 h-3.5'} />
-          <span className="uppercase tracking-wider text-xs font-semibold">{label || 'Token Usage'}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: isSm ? '0.7rem' : '0.8rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--c-text-3)' }}>
+          <Zap size={isSm ? 11 : 12} />
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', fontWeight: 600 }}>
+            {label || 'Token Usage'}
+          </span>
         </div>
-        <span className={`text-xs font-bold ${textColor}`}>{usagePct.toFixed(1)}%</span>
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: textColor }}>{usagePct.toFixed(1)}%</span>
       </div>
-      <div className={`${isSm ? 'h-1.5' : 'h-2'} bg-white/[0.06] rounded-full overflow-hidden`}>
+      <div style={{ height: isSm ? '4px' : '6px', background: 'var(--c-raised)', borderRadius: '3px', overflow: 'hidden', border: '1px solid var(--c-border)' }}>
         <div
-          className={`h-full bg-gradient-to-r ${barColor} transition-all duration-700 ease-out rounded-full`}
-          style={{ width: `${Math.min(usagePct, 100)}%` }}
+          className={`h-full bg-gradient-to-r ${barColor} transition-all duration-700 ease-out`}
+          style={{ width: `${Math.min(usagePct, 100)}%`, borderRadius: '3px' }}
         />
       </div>
-      <div className="flex justify-between text-xs mt-1.5 text-gray-600">
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginTop: '5px', color: 'var(--c-text-3)' }}>
         <span>{(used / 1000).toFixed(1)}K used</span>
         <span>{(remaining / 1000).toFixed(1)}K left</span>
       </div>

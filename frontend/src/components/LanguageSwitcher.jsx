@@ -7,56 +7,70 @@ import { useTranslation } from '../i18n';
  * Persists choice to localStorage automatically via the i18n store.
  */
 export default function LanguageSwitcher() {
-    const { language, setLanguage, languages } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const ref = useRef(null);
+  const { language, setLanguage, languages } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
-    // Close on outside click
-    useEffect(() => {
-        const handleClick = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) {
-                setOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, []);
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
-    const current = languages.find(l => l.code === language) || languages[0];
+  const current = languages.find(l => l.code === language) || languages[0];
 
-    return (
-        <div ref={ref} className="relative">
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '7px',
+          padding: '7px 12px', borderRadius: '7px',
+          background: 'var(--c-raised)', border: '1px solid var(--c-border)',
+          color: 'var(--c-text-2)', fontSize: '0.825rem', cursor: 'pointer',
+          transition: 'border-color 150ms',
+        }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--c-border-hi)'}
+        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--c-border)'}
+        title="Change language"
+      >
+        <Globe size={14} />
+        <span>{current.flag}</span>
+        <span className="hidden sm:inline">{current.name}</span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+          background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+          borderRadius: '8px', overflow: 'hidden', zIndex: 50, minWidth: '160px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        }}>
+          {languages.map(lang => (
             <button
-                onClick={() => setOpen(!open)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-white text-sm"
-                title="Change language"
+              key={lang.code}
+              onClick={() => { setLanguage(lang.code); setOpen(false); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '10px 16px', fontSize: '0.875rem', cursor: 'pointer',
+                background: language === lang.code ? 'var(--c-accent-bg)' : 'transparent',
+                color: language === lang.code ? 'var(--c-accent-hi)' : 'var(--c-text-2)',
+                border: 'none', textAlign: 'left', transition: 'background 100ms',
+              }}
+              onMouseEnter={e => { if (language !== lang.code) e.currentTarget.style.background = 'var(--c-raised)'; }}
+              onMouseLeave={e => { if (language !== lang.code) e.currentTarget.style.background = 'transparent'; }}
             >
-                <Globe className="w-4 h-4" />
-                <span>{current.flag}</span>
-                <span className="hidden sm:inline">{current.name}</span>
+              <span style={{ fontSize: '1.1rem' }}>{lang.flag}</span>
+              <span style={{ flex: 1 }}>{lang.name}</span>
+              {language === lang.code && (
+                <span style={{ color: 'var(--c-accent)', fontSize: '0.75rem' }}>✓</span>
+              )}
             </button>
-
-            {open && (
-                <div className="absolute right-0 top-full mt-2 bg-gray-900 border border-white/20 rounded-lg shadow-xl overflow-hidden z-50 min-w-[160px]">
-                    {languages.map(lang => (
-                        <button
-                            key={lang.code}
-                            onClick={() => { setLanguage(lang.code); setOpen(false); }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all hover:bg-white/10 ${
-                                language === lang.code
-                                    ? 'bg-purple-500/20 text-purple-300'
-                                    : 'text-white'
-                            }`}
-                        >
-                            <span className="text-lg">{lang.flag}</span>
-                            <span>{lang.name}</span>
-                            {language === lang.code && (
-                                <span className="ml-auto text-purple-400">✓</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            )}
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }

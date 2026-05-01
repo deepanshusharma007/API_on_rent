@@ -63,15 +63,15 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen" style={{ background: 'var(--c-bg)' }}>
         <AnnouncementBanner />
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: '#111',
-              color: '#e2e8f0',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--c-surface, #161b22)',
+              color: 'var(--c-text, #e6edf3)',
+              border: '1px solid var(--c-border, #30363d)',
             },
           }}
         />

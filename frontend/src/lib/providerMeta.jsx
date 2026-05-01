@@ -67,11 +67,11 @@ export const PROVIDER_META = {
 // Fallback for unknown providers
 const DEFAULT_PROVIDER = {
   name: null, // will use raw provider id
-  accent: 'text-violet-400',
-  bg: 'bg-violet-500/10',
-  border: 'border-violet-500/25',
+  accent: 'text-emerald-400',
+  bg: 'bg-emerald-500/10',
+  border: 'border-emerald-500/25',
   glow: '',
-  logoColor: 'text-violet-400',
+  logoColor: 'text-emerald-400',
   Logo: ({ className = 'w-8 h-8' }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -136,10 +136,10 @@ export function getModelMeta(modelId) {
   return {
     label: formatModelId(modelId),
     emoji: '🤖',
-    color: 'text-violet-400',
-    gradient: 'from-violet-600/20 to-violet-600/5',
-    border: 'border-violet-500/30',
-    ring: 'ring-violet-500/40',
+    color: 'text-emerald-400',
+    gradient: 'from-emerald-600/20 to-emerald-600/5',
+    border: 'border-emerald-500/30',
+    ring: 'ring-emerald-500/40',
     badge: null,
     badgeColor: '',
     tagline: modelId,

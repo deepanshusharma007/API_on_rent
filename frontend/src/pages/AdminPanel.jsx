@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, Key, BarChart3, AlertTriangle, Package, ArrowLeft,
+  Users, Key, BarChart3, AlertTriangle, Package,
   Plus, Trash2, RefreshCw, DollarSign, Zap, TrendingUp,
   Shield, Download, Loader2, Activity, CheckCircle, XCircle,
   Pencil, Save, X as XIcon,
@@ -21,47 +20,49 @@ const TABS = [
   { id: 'alerts',     label: 'Alerts',     icon: AlertTriangle },
 ];
 
+// Colour sets for stat cards — emerald is primary, others are semantic
 const STAT_COLORS = {
-  violet:  { ring: 'ring-violet-500/20',  bg: 'bg-violet-500/10',  icon: 'text-violet-400',  val: 'text-violet-300' },
-  emerald: { ring: 'ring-emerald-500/20', bg: 'bg-emerald-500/10', icon: 'text-emerald-400', val: 'text-emerald-300' },
-  sky:     { ring: 'ring-sky-500/20',     bg: 'bg-sky-500/10',     icon: 'text-sky-400',     val: 'text-sky-300' },
-  amber:   { ring: 'ring-amber-500/20',   bg: 'bg-amber-500/10',   icon: 'text-amber-400',   val: 'text-amber-300' },
-  rose:    { ring: 'ring-rose-500/20',    bg: 'bg-rose-500/10',    icon: 'text-rose-400',    val: 'text-rose-300' },
+  emerald: { bg: 'rgba(16,185,129,0.08)', icon: '#10b981', val: '#34d399' },
+  sky:     { bg: 'rgba(56,189,248,0.08)', icon: '#38bdf8', val: '#7dd3fc' },
+  amber:   { bg: 'rgba(251,191,36,0.08)', icon: '#fbbf24', val: '#fde68a' },
+  rose:    { bg: 'rgba(251,113,133,0.08)', icon: '#fb7185', val: '#fda4af' },
 };
 
-function StatCard({ icon: Icon, label, value, color = 'violet', sub }) {
-  const c = STAT_COLORS[color];
+function StatCard({ icon: Icon, label, value, color = 'emerald', sub }) {
+  const c = STAT_COLORS[color] || STAT_COLORS.emerald;
   return (
-    <motion.div variants={scaleIn} className={`p-5 rounded-lg bg-[#111] border border-white/[0.08]`}>
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center`}>
-          <Icon className={`w-4 h-4 ${c.icon}`} />
+    <motion.div variants={scaleIn} style={{
+      padding: '20px', borderRadius: '10px',
+      background: 'var(--c-surface)', border: '1px solid var(--c-border)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={16} style={{ color: c.icon }} />
         </div>
-        <span className="text-gray-500 text-sm">{label}</span>
+        <span style={{ color: 'var(--c-text-3)', fontSize: '0.825rem' }}>{label}</span>
       </div>
-      <div className="text-2xl font-black text-white mb-1">{value}</div>
-      {sub && <div className="text-xs text-gray-600">{sub}</div>}
+      <div style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', marginBottom: sub ? '4px' : 0 }}>{value}</div>
+      {sub && <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)' }}>{sub}</div>}
     </motion.div>
   );
 }
 
-const tableHead = 'text-left px-4 py-3 text-xs text-gray-600 font-semibold uppercase tracking-wider border-b border-white/[0.06]';
-const tableCell = 'px-4 py-3.5 text-sm border-b border-white/[0.06]';
-const inputCls  = 'w-full px-3 py-2.5 rounded-lg bg-[#111] border border-white/[0.10] text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 text-sm transition-all';
+const thStyle = { textAlign: 'left', padding: '10px 16px', fontSize: '0.7rem', color: 'var(--c-text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--c-border)' };
+const tdStyle = { padding: '12px 16px', fontSize: '0.825rem', borderBottom: '1px solid var(--c-border)' };
+const inputStyle = { width: '100%', padding: '9px 12px', borderRadius: '7px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', color: 'var(--c-text)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [stats,     setStats]     = useState(null);
+  const [users,     setUsers]     = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [alerts,    setAlerts]    = useState([]);
+  const [loading,   setLoading]   = useState(true);
 
   const adminFetch = async (url, options = {}) => {
     const token = localStorage.getItem('auth_token');
-    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const res = await fetch(`${base}/admin${url}`, {
+    const base  = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const res   = await fetch(`${base}/admin${url}`, {
       ...options,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...options.headers },
     });
@@ -84,30 +85,33 @@ export default function AdminPanel() {
     setLoading(false);
   };
 
-  // ── OVERVIEW ──
+  // ── OVERVIEW ──────────────────────────────────────────────────────────────────
   const OverviewTab = () => (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users}       label="Total Users"     value={stats?.total_users  || 0}                          color="sky" />
-        <StatCard icon={Activity}    label="Active Rentals"  value={stats?.active_rentals || 0}                         color="emerald" />
-        <StatCard icon={Package}     label="Total Rentals"   value={stats?.total_rentals || 0}                          color="violet" />
-        <StatCard icon={DollarSign}  label="Revenue"         value={`₹${(stats?.total_revenue || 0).toFixed(2)}`}       color="amber" />
+        <StatCard icon={Users}      label="Total Users"    value={stats?.total_users   || 0}                          color="sky" />
+        <StatCard icon={Activity}   label="Active Rentals" value={stats?.active_rentals || 0}                          color="emerald" />
+        <StatCard icon={Package}    label="Total Rentals"  value={stats?.total_rentals  || 0}                          color="sky" />
+        <StatCard icon={DollarSign} label="Revenue"        value={`₹${(stats?.total_revenue || 0).toFixed(2)}`}        color="amber" />
       </motion.div>
       {analytics && (
-        <motion.div variants={fadeUp} initial="hidden" animate="show"
-          className="bg-[#111] border border-white/[0.08] rounded-lg p-5">
-          <h3 className="text-white font-bold mb-4 text-sm uppercase tracking-widest">Last 24 h Performance</h3>
+        <motion.div variants={fadeUp} initial="hidden" animate="show" style={{
+          background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px',
+        }}>
+          <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '16px' }}>
+            Last 24 h Performance
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Revenue',       val: `₹${analytics.revenue_usd?.toFixed(2)}`,       color: 'text-emerald-400' },
-              { label: 'Provider Cost', val: `₹${analytics.provider_cost_usd?.toFixed(2)}`, color: 'text-rose-400' },
-              { label: 'Profit',        val: `₹${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? 'text-emerald-400' : 'text-rose-400' },
-              { label: 'Cache Hit',     val: `${analytics.cache_hit_rate?.toFixed(1)}%`,     color: 'text-violet-400' },
+              { label: 'Revenue',       val: `₹${analytics.revenue_usd?.toFixed(2)}`,       color: '#10b981' },
+              { label: 'Provider Cost', val: `₹${analytics.provider_cost_usd?.toFixed(2)}`, color: '#fb7185' },
+              { label: 'Profit',        val: `₹${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? '#10b981' : '#fb7185' },
+              { label: 'Cache Hit',     val: `${analytics.cache_hit_rate?.toFixed(1)}%`,     color: 'var(--c-accent)' },
             ].map(({ label, val, color }) => (
-              <div key={label} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                <div className="text-xs text-gray-600 mb-1.5">{label}</div>
-                <div className={`text-xl font-black ${color}`}>{val}</div>
+              <div key={label} style={{ padding: '16px', borderRadius: '8px', background: 'var(--c-raised)', border: '1px solid var(--c-border)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color }}>{val}</div>
               </div>
             ))}
           </div>
@@ -116,38 +120,47 @@ export default function AdminPanel() {
     </div>
   );
 
-  // ── USERS ──
+  // ── USERS ──────────────────────────────────────────────────────────────────────
   const UsersTab = () => {
     const act = async (id, action) => {
       try { await adminFetch(`/users/${id}/${action}`, { method: 'POST' }); toast.success(`User ${action}d`); loadData(); }
       catch (e) { toast.error(e.message); }
     };
     return (
-      <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
-            {['ID', 'Email', 'Role', 'Status', 'Rentals', 'Actions'].map(h => <th key={h} className={tableHead}>{h}</th>)}
+            {['ID', 'Email', 'Role', 'Status', 'Rentals', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}
           </tr></thead>
           <tbody>
             {users.map(user => (
-              <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
-                <td className={tableHead + ' font-mono text-gray-600 border-0 py-4'}># {user.id}</td>
-                <td className={tableCell + ' text-white'}>{user.email}</td>
-                <td className={tableCell}>
-                  <span className={`px-2 py-0.5 rounded-full text-xs border ${user.role === 'admin' ? 'text-violet-400 bg-violet-500/10 border-violet-500/20' : 'text-sky-400 bg-sky-500/10 border-sky-500/20'}`}>{user.role}</span>
+              <tr key={user.id} style={{ transition: 'background 100ms' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--c-text-3)', fontSize: '0.75rem' }}># {user.id}</td>
+                <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{user.email}</td>
+                <td style={tdStyle}>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', border: '1px solid',
+                    background: user.role === 'admin' ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)',
+                    borderColor: user.role === 'admin' ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)',
+                    color: user.role === 'admin' ? 'var(--c-accent-hi)' : '#7dd3fc',
+                  }}>{user.role}</span>
                 </td>
-                <td className={tableCell}>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                    <span className={`text-xs ${user.is_active ? 'text-emerald-400' : 'text-rose-400'}`}>{user.is_active ? 'Active' : 'Suspended'}</span>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: user.is_active ? '#10b981' : '#fb7185' }} />
+                    <span style={{ fontSize: '0.775rem', color: user.is_active ? '#10b981' : '#fb7185' }}>
+                      {user.is_active ? 'Active' : 'Suspended'}
+                    </span>
                   </div>
                 </td>
-                <td className={tableCell + ' text-gray-500'}>{user.rental_count}</td>
-                <td className={tableCell}>
+                <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{user.rental_count}</td>
+                <td style={tdStyle}>
                   {user.role !== 'admin' && (
                     user.is_active
-                      ? <button onClick={() => act(user.id, 'suspend')} className="px-3 py-1.5 text-xs rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all">Suspend</button>
-                      : <button onClick={() => act(user.id, 'activate')} className="px-3 py-1.5 text-xs rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all">Activate</button>
+                      ? <button onClick={() => act(user.id, 'suspend')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', cursor: 'pointer' }}>Suspend</button>
+                      : <button onClick={() => act(user.id, 'activate')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', color: 'var(--c-accent-hi)', cursor: 'pointer' }}>Activate</button>
                   )}
                 </td>
               </tr>
@@ -158,189 +171,180 @@ export default function AdminPanel() {
     );
   };
 
-  // ── PLANS ──
+  // ── PLANS ──────────────────────────────────────────────────────────────────────
   const PlansTab = () => {
-  const [plans, setPlans] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+    const [plans, setPlans] = useState([]);
+    const [showForm, setShowForm] = useState(false);
 
-  const DURATION_PRESETS = [
-    { label: '15 min',  minutes: 15,   emoji: '⚡', tokens: 50_000,     price: 0.99,  rpm: 60 },
-    { label: '30 min',  minutes: 30,   emoji: '🕐', tokens: 100_000,    price: 1.99,  rpm: 60 },
-    { label: '1 hour',  minutes: 60,   emoji: '🌙', tokens: 200_000,    price: 3.99,  rpm: 60 },
-    { label: '1 day',   minutes: 1440, emoji: '☀️', tokens: 2_000_000,  price: 24.99, rpm: 60 },
-  ];
+    const DURATION_PRESETS = [
+      { label: '15 min',  minutes: 15,   tokens: 50_000,    price: 0.99,  rpm: 60 },
+      { label: '30 min',  minutes: 30,   tokens: 100_000,   price: 1.99,  rpm: 60 },
+      { label: '1 hour',  minutes: 60,   tokens: 200_000,   price: 3.99,  rpm: 60 },
+      { label: '1 day',   minutes: 1440, tokens: 2_000_000, price: 24.99, rpm: 60 },
+    ];
 
-  const blankForm = { duration_minutes: 60, duration_label: '1 hour', price: 3.99, token_cap: 200000, rpm_limit: 60, name: '1 Hour Access', description: '' };
-  const [form, setForm] = useState(blankForm);
+    const blankForm = { duration_minutes: 60, duration_label: '1 hour', price: 3.99, token_cap: 200000, rpm_limit: 60, name: '1 Hour Access', description: '' };
+    const [form, setForm] = useState(blankForm);
 
-  const applyPreset = (preset) => {
-    setForm({
-      duration_minutes: preset.minutes,
-      duration_label:   preset.label,
-      price:            preset.price,
-      token_cap:        preset.tokens,
-      rpm_limit:        preset.rpm,
-      name:             `${preset.label} Access`,
-      description:      `${preset.label} access to all available AI models`,
+    const applyPreset = (preset) => setForm({
+      duration_minutes: preset.minutes, duration_label: preset.label,
+      price: preset.price, token_cap: preset.tokens, rpm_limit: preset.rpm,
+      name: `${preset.label} Access`,
+      description: `${preset.label} access to all available AI models`,
     });
-  };
 
-  useEffect(() => { adminFetch('/plans').then(setPlans).catch(() => {}); }, []);
-  const refresh = () => adminFetch('/plans').then(setPlans).catch(() => {});
+    useEffect(() => { adminFetch('/plans').then(setPlans).catch(() => {}); }, []);
+    const refresh = () => adminFetch('/plans').then(setPlans).catch(() => {});
 
-  const handleCreate = async () => {
-    if (!form.name.trim()) { toast.error('Plan name is required'); return; }
-    try {
-      await adminFetch('/plans', { method: 'POST', body: JSON.stringify({ ...form, model_id: null, drain_rate_multiplier: 1.0 }) });
-      toast.success('Plan created');
-      setShowForm(false);
-      setForm(blankForm);
-      refresh();
-    } catch (e) { toast.error(e.message); }
-  };
+    const handleCreate = async () => {
+      if (!form.name.trim()) { toast.error('Plan name is required'); return; }
+      try {
+        await adminFetch('/plans', { method: 'POST', body: JSON.stringify({ ...form, model_id: null, drain_rate_multiplier: 1.0 }) });
+        toast.success('Plan created'); setShowForm(false); setForm(blankForm); refresh();
+      } catch (e) { toast.error(e.message); }
+    };
 
-  const handleDelete = async (id) => {
-    try { await adminFetch(`/plans/${id}`, { method: 'DELETE' }); toast.success('Plan deactivated'); refresh(); }
-    catch (e) { toast.error(e.message); }
-  };
+    const handleDelete = async (id) => {
+      try { await adminFetch(`/plans/${id}`, { method: 'DELETE' }); toast.success('Plan deactivated'); refresh(); }
+      catch (e) { toast.error(e.message); }
+    };
 
-  const activePlans   = plans.filter(p => p.is_active);
-  const inactivePlans = plans.filter(p => !p.is_active);
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-white font-bold">Rental Plans</h3>
-          <p className="text-gray-600 text-xs mt-0.5">Duration-based plans — one key gives access to all active AI models.</p>
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>Rental Plans</h3>
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem', marginTop: '2px' }}>Duration-based plans — one key gives access to all active AI models.</p>
+          </div>
+          <button onClick={() => setShowForm(v => !v)} className="btn btn-primary" style={{ fontSize: '0.825rem' }}>
+            <Plus size={14} /> New Plan
+          </button>
         </div>
-        <motion.button whileHover={{ scale: 1.04 }} onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 rounded-xl text-sm transition-all">
-          <Plus className="w-4 h-4" />New Plan
-        </motion.button>
-      </div>
 
-      {/* Tip */}
-      <div className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-4 text-xs text-gray-500 leading-relaxed">
-        <span className="text-violet-400 font-semibold">How plans work:</span> Each plan gives the user a virtual key valid for the chosen duration.
-        The key works with <strong className="text-gray-300">all active AI providers</strong> (OpenAI, Gemini, Anthropic).
-        Expensive models consume tokens faster via their drain rate — no separate plans needed per model.
-      </div>
+        {/* Info tip */}
+        <div style={{ background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', borderRadius: '8px', padding: '14px 16px', fontSize: '0.8rem', color: 'var(--c-text-2)', lineHeight: 1.6 }}>
+          <span style={{ color: 'var(--c-accent-hi)', fontWeight: 600 }}>How plans work: </span>
+          Each plan gives the user a virtual key valid for the chosen duration. The key works with all active AI providers (OpenAI, Gemini, Anthropic). Expensive models consume tokens faster via their drain rate — no separate plans needed per model.
+        </div>
 
-      {/* ── Create form ── */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
-            className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-5 space-y-5">
-            <p className="text-xs text-violet-400 uppercase tracking-widest font-semibold">Create a new rental plan</p>
+        {/* Create form */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              style={{ background: 'var(--c-surface)', border: '1px solid var(--c-accent-border)', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <p style={{ color: 'var(--c-accent)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Create a new rental plan</p>
 
-            {/* Duration picker */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-2.5 uppercase tracking-wider font-semibold">Duration</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {DURATION_PRESETS.map(d => (
-                  <button key={d.label} onClick={() => applyPreset(d)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      form.duration_minutes === d.minutes
-                        ? 'bg-violet-500/15 border-violet-500/40 ring-1 ring-violet-500/30 text-white'
-                        : 'bg-[#111] border-white/[0.08] hover:border-white/[0.14] text-gray-400'
-                    }`}>
-                    <div className="text-lg mb-1">{d.emoji}</div>
-                    <div className="text-xs font-bold">{d.label}</div>
-                    <div className="text-gray-600 text-[10px] mt-0.5">{d.tokens >= 1_000_000 ? `${(d.tokens/1_000_000).toFixed(1)}M` : `${(d.tokens/1000).toFixed(0)}K`} tokens</div>
-                  </button>
-                ))}
+              {/* Duration presets */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Duration</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {DURATION_PRESETS.map(d => (
+                    <button key={d.label} onClick={() => applyPreset(d)}
+                      style={{
+                        padding: '12px', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
+                        background: form.duration_minutes === d.minutes ? 'var(--c-accent-bg)' : 'var(--c-raised)',
+                        border: `1px solid ${form.duration_minutes === d.minutes ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
+                        transition: 'all 150ms',
+                      }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--c-text)', marginBottom: '2px' }}>{d.label}</div>
+                      <div style={{ color: 'var(--c-text-3)', fontSize: '0.7rem' }}>{d.tokens >= 1_000_000 ? `${(d.tokens/1_000_000).toFixed(1)}M` : `${(d.tokens/1000).toFixed(0)}K`} tokens</div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Editable fields */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-2.5 uppercase tracking-wider font-semibold">Customise</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { key: 'name',      label: 'Plan Name',   type: 'text' },
-                  { key: 'price',     label: 'Price (INR)', type: 'number', step: 0.01 },
-                  { key: 'token_cap', label: 'Token Cap',   type: 'number' },
-                  { key: 'rpm_limit', label: 'RPM Limit',   type: 'number' },
-                ].map(f => (
-                  <div key={f.key} className={f.key === 'name' ? 'col-span-2' : ''}>
-                    <label className="block text-[10px] text-gray-600 mb-1 uppercase tracking-wider">{f.label}</label>
-                    <input type={f.type} step={f.step} value={form[f.key]}
-                      onChange={e => setForm({ ...form, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value })}
-                      className={inputCls} />
-                  </div>
-                ))}
+              {/* Fields */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Customise</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { key: 'name',      label: 'Plan Name',   type: 'text' },
+                    { key: 'price',     label: 'Price (INR)', type: 'number', step: 0.01 },
+                    { key: 'token_cap', label: 'Token Cap',   type: 'number' },
+                    { key: 'rpm_limit', label: 'RPM Limit',   type: 'number' },
+                  ].map(f => (
+                    <div key={f.key} className={f.key === 'name' ? 'col-span-2' : ''}>
+                      <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>{f.label}</label>
+                      <input type={f.type} step={f.step} value={form[f.key]}
+                        onChange={e => setForm({ ...form, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value })}
+                        style={inputStyle}
+                        onFocus={e => e.target.style.borderColor = 'var(--c-accent)'}
+                        onBlur={e  => e.target.style.borderColor = 'var(--c-border)'}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Preview */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border bg-violet-500/10 border-violet-500/30 text-violet-300">
-              <strong>{form.name || 'Unnamed plan'}</strong>
-              <span className="opacity-60">· ₹{form.price} · {form.token_cap >= 1_000_000 ? `${(form.token_cap/1_000_000).toFixed(1)}M` : `${(form.token_cap/1000).toFixed(0)}K`} tokens · {form.duration_label}</span>
-            </div>
+              {/* Preview badge */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '6px 12px', borderRadius: '6px', fontSize: '0.775rem',
+                background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', color: 'var(--c-accent-hi)',
+              }}>
+                <strong>{form.name || 'Unnamed plan'}</strong>
+                <span style={{ opacity: 0.7 }}>· ₹{form.price} · {form.token_cap >= 1_000_000 ? `${(form.token_cap/1_000_000).toFixed(1)}M` : `${(form.token_cap/1000).toFixed(0)}K`} tokens · {form.duration_label}</span>
+              </div>
 
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleCreate}
-              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-semibold transition-colors">
-              Create Plan
-            </motion.button>
-          </motion.div>
+              <div>
+                <button onClick={handleCreate} className="btn btn-primary" style={{ fontSize: '0.875rem' }}>Create Plan</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Table */}
+        {plans.length === 0 ? (
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '64px 20px', textAlign: 'center' }}>
+            <Package size={36} style={{ color: 'var(--c-border-hi)', margin: '0 auto 12px' }} />
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>No plans yet. Create one above.</p>
+          </div>
+        ) : (
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr>
+                {['Duration', 'Name', 'Price', 'Tokens', 'RPM', 'Status', ''].map((h, i) => (
+                  <th key={i} style={thStyle}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {plans.map(plan => (
+                  <tr key={plan.id} style={{ opacity: plan.is_active ? 1 : 0.4, transition: 'background 100ms' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ ...tdStyle, color: 'var(--c-text)', fontWeight: 700 }}>{plan.duration_label || `${plan.duration_minutes} min`}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)', fontSize: '0.775rem' }}>{plan.name}</td>
+                    <td style={tdStyle}><span style={{ color: 'var(--c-accent)', fontWeight: 700 }}>₹{plan.price}</span></td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-3)', fontSize: '0.775rem' }}>
+                      {plan.token_cap >= 1_000_000 ? `${(plan.token_cap/1_000_000).toFixed(1)}M` : `${(plan.token_cap/1000).toFixed(0)}K`}
+                    </td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-3)', fontSize: '0.775rem' }}>{plan.rpm_limit}</td>
+                    <td style={tdStyle}>
+                      {plan.is_active
+                        ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontSize: '0.775rem' }}><CheckCircle size={12} />Active</span>
+                        : <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fb7185', fontSize: '0.775rem' }}><XCircle size={12} />Off</span>}
+                    </td>
+                    <td style={tdStyle}>
+                      {plan.is_active && (
+                        <button onClick={() => handleDelete(plan.id)} style={{ padding: '4px', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#fb7185'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
+    );
+  };
 
-      {/* ── Active plans ── */}
-      {plans.length === 0 ? (
-        <div className="bg-[#111] border border-white/[0.08] rounded-lg py-16 text-center">
-          <Package className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-600 text-sm">No plans yet. Create one above.</p>
-          <p className="text-gray-700 text-xs mt-1">Tip: create one plan per duration (15 min, 30 min, 1 hour, 1 day).</p>
-        </div>
-      ) : (
-        <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead><tr>
-              {['Duration', 'Name', 'Price', 'Tokens', 'RPM', 'Status', ''].map((h, i) => (
-                <th key={i} className={tableHead}>{h}</th>
-              ))}
-            </tr></thead>
-            <tbody>
-              {plans.map(plan => (
-                <tr key={plan.id} className={`border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors ${!plan.is_active ? 'opacity-40' : ''}`}>
-                  <td className={tableCell}>
-                    <span className="text-white font-bold text-sm">{plan.duration_label || `${plan.duration_minutes} min`}</span>
-                  </td>
-                  <td className={tableCell + ' text-gray-400 text-xs'}>{plan.name}</td>
-                  <td className={tableCell}>
-                    <span className="text-emerald-400 font-bold">₹{plan.price}</span>
-                  </td>
-                  <td className={tableCell + ' text-gray-500 text-xs'}>
-                    {plan.token_cap >= 1_000_000 ? `${(plan.token_cap/1_000_000).toFixed(1)}M` : `${(plan.token_cap/1000).toFixed(0)}K`}
-                  </td>
-                  <td className={tableCell + ' text-gray-600 text-xs'}>{plan.rpm_limit}</td>
-                  <td className={tableCell}>
-                    {plan.is_active
-                      ? <span className="text-emerald-400 text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3" />Active</span>
-                      : <span className="text-rose-400 text-xs flex items-center gap-1"><XCircle className="w-3 h-3" />Off</span>}
-                  </td>
-                  <td className={tableCell}>
-                    {plan.is_active && (
-                      <button onClick={() => handleDelete(plan.id)}
-                        className="p-1.5 text-gray-600 hover:text-rose-400 transition-colors" title="Deactivate">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-};
-
-  // ── API KEYS ──
+  // ── API KEYS ──────────────────────────────────────────────────────────────────
   const KeysTab = () => {
     const [keys, setKeys] = useState([]);
     const [showForm, setShowForm] = useState(false);
@@ -348,11 +352,10 @@ export default function AdminPanel() {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({ provider: '', is_active: true });
 
-    // Each supported provider with display metadata
     const PROVIDERS = [
-      { id: 'openai',    label: 'OpenAI',    models: ['GPT-4o', 'GPT-4o Mini'],              color: 'text-sky-400',    bg: 'bg-sky-500/10',    border: 'border-sky-500/20' },
-      { id: 'gemini',    label: 'Google',    models: ['Gemini 1.5 Pro', 'Gemini 1.5 Flash'], color: 'text-emerald-400',bg: 'bg-emerald-500/10',border: 'border-emerald-500/20' },
-      { id: 'anthropic', label: 'Anthropic', models: ['Claude 3.5 Sonnet'],                  color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+      { id: 'openai',    label: 'OpenAI',    models: ['GPT-4o', 'GPT-4o Mini'],              accent: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
+      { id: 'gemini',    label: 'Google',    models: ['Gemini 1.5 Pro', 'Gemini 1.5 Flash'], accent: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  border: 'rgba(56,189,248,0.3)' },
+      { id: 'anthropic', label: 'Anthropic', models: ['Claude 3.5 Sonnet'],                  accent: '#fb923c', bg: 'rgba(251,146,60,0.08)',   border: 'rgba(251,146,60,0.3)' },
     ];
 
     const loadKeys = () => adminFetch('/provider-keys').then(d => setKeys(d.keys || [])).catch(() => {});
@@ -361,235 +364,210 @@ export default function AdminPanel() {
     const handleAdd = async () => {
       if (!form.api_key.trim()) { toast.error('Please enter an API key'); return; }
       try {
-        await adminFetch('/provider-keys', {
-          method: 'POST',
-          body: JSON.stringify(form),
-        });
-        toast.success(`${form.provider} key added — models now available`);
-        setShowForm(false);
-        setForm({ provider: 'openai', api_key: '' });
-        loadKeys();
+        await adminFetch('/provider-keys', { method: 'POST', body: JSON.stringify(form) });
+        toast.success(`${form.provider} key added`);
+        setShowForm(false); setForm({ provider: 'openai', api_key: '' }); loadKeys();
       } catch (e) { toast.error(e.message); }
     };
 
-    const startEdit = (k) => {
-      setEditingId(k.id);
-      setEditForm({ provider: k.provider, is_active: k.is_active });
-    };
+    const startEdit = (k) => { setEditingId(k.id); setEditForm({ provider: k.provider, is_active: k.is_active }); };
 
     const handleSaveEdit = async (id) => {
-      try {
-        await adminFetch(`/provider-keys/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(editForm),
-        });
-        toast.success('Key updated');
-        setEditingId(null);
-        loadKeys();
-      } catch (e) { toast.error(e.message); }
+      try { await adminFetch(`/provider-keys/${id}`, { method: 'PUT', body: JSON.stringify(editForm) }); toast.success('Key updated'); setEditingId(null); loadKeys(); }
+      catch (e) { toast.error(e.message); }
     };
 
     const handleDelete = async (id, providerLabel) => {
-      try {
-        await adminFetch(`/provider-keys/${id}`, { method: 'DELETE' });
-        toast.success(`Key removed — ${providerLabel} models hidden if no keys remain`);
-        loadKeys();
-      } catch (e) { toast.error(e.message); }
+      try { await adminFetch(`/provider-keys/${id}`, { method: 'DELETE' }); toast.success(`Key removed — ${providerLabel} models hidden if no keys remain`); loadKeys(); }
+      catch (e) { toast.error(e.message); }
     };
 
-    // Group keys by provider for the availability overview
-    const keysByProvider = keys.reduce((acc, k) => {
-      if (!acc[k.provider]) acc[k.provider] = [];
-      acc[k.provider].push(k);
-      return acc;
-    }, {});
+    const keysByProvider = keys.reduce((acc, k) => { if (!acc[k.provider]) acc[k.provider] = []; acc[k.provider].push(k); return acc; }, {});
+
+    const getP = (id) => PROVIDERS.find(p => p.id === id);
 
     return (
-      <div className="space-y-6">
-        {/* ── Provider availability overview ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Provider availability */}
         <div>
-          <p className="text-xs text-gray-600 uppercase tracking-widest font-semibold mb-3">
-            Provider Availability — models are shown to users only when their provider has ≥ 1 active key
+          <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>
+            Provider Availability — models shown to users only when ≥ 1 active key
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {PROVIDERS.map(p => {
-              const providerKeys = keysByProvider[p.id] || [];
-              const activeCount  = providerKeys.filter(k => k.is_active).length;
-              const isLive       = activeCount > 0;
+              const provKeys   = keysByProvider[p.id] || [];
+              const active     = provKeys.filter(k => k.is_active).length;
+              const isLive     = active > 0;
               return (
-                <motion.div key={p.id} variants={scaleIn}
-                  className={`rounded-lg p-4 border transition-all ${
-                    isLive ? `${p.border} ${p.bg}` : 'border-red-500/20 bg-red-500/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`font-bold text-sm ${isLive ? p.color : 'text-rose-400'}`}>{p.label}</span>
-                    <div className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border ${
-                      isLive ? `${p.bg} ${p.border} ${p.color}` : 'bg-red-500/10 border-red-500/20 text-red-400'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-current animate-pulse' : 'bg-red-400'}`} />
-                      {isLive ? `${activeCount} key${activeCount > 1 ? 's' : ''} active` : 'No keys — hidden'}
+                <motion.div key={p.id} variants={scaleIn} style={{
+                  borderRadius: '10px', padding: '16px',
+                  background: isLive ? p.bg : 'rgba(251,113,133,0.06)',
+                  border: `1px solid ${isLive ? p.border : 'rgba(251,113,133,0.25)'}`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: isLive ? p.accent : '#fb7185' }}>{p.label}</span>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
+                      background: isLive ? p.bg : 'rgba(251,113,133,0.08)',
+                      border: `1px solid ${isLive ? p.border : 'rgba(251,113,133,0.25)'}`,
+                      color: isLive ? p.accent : '#fb7185',
+                    }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor', animation: isLive ? 'pulse 2s infinite' : 'none' }} />
+                      {isLive ? `${active} key${active > 1 ? 's' : ''} active` : 'No keys — hidden'}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-600">{p.models.join(' · ')}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--c-text-3)' }}>{p.models.join(' · ')}</p>
                 </motion.div>
               );
             })}
           </div>
         </div>
 
-        {/* ── Add key button ── */}
-        <div className="flex justify-between items-center">
-          <h3 className="text-white font-bold">All Keys</h3>
-          <motion.button whileHover={{ scale: 1.04 }} onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 rounded-xl text-sm transition-all">
-            <Plus className="w-4 h-4" />Add Key
-          </motion.button>
+        {/* Add key button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>All Keys</h3>
+          <button onClick={() => setShowForm(v => !v)} className="btn btn-primary" style={{ fontSize: '0.825rem' }}>
+            <Plus size={14} /> Add Key
+          </button>
         </div>
 
-        {/* ── Add key form ── */}
+        {/* Add key form */}
         <AnimatePresence>
           {showForm && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className="bg-violet-500/5 border border-violet-500/20 rounded-lg p-5 space-y-4">
-              <p className="text-xs text-violet-400 uppercase tracking-widest font-semibold">Add Provider API Key</p>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              style={{ background: 'var(--c-surface)', border: '1px solid var(--c-accent-border)', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ color: 'var(--c-accent)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Add Provider API Key</p>
 
-              {/* Provider selector */}
               <div>
-                <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">Provider</label>
-                <div className="flex gap-2">
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Provider</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
                   {PROVIDERS.map(p => (
                     <button key={p.id} onClick={() => setForm({ ...form, provider: p.id })}
-                      className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                        form.provider === p.id
-                          ? `${p.bg} ${p.border} ${p.color}`
-                          : 'bg-[#111] border-white/[0.08] text-gray-500 hover:text-gray-300'
-                      }`}>
+                      style={{
+                        flex: 1, padding: '10px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                        background: form.provider === p.id ? p.bg : 'var(--c-raised)',
+                        border: `1px solid ${form.provider === p.id ? p.border : 'var(--c-border)'}`,
+                        color: form.provider === p.id ? p.accent : 'var(--c-text-3)',
+                        transition: 'all 150ms',
+                      }}>
                       {p.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* API key */}
               <div>
-                <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wider">
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
                   API Key for {PROVIDERS.find(p => p.id === form.provider)?.label}
                 </label>
-                <div className="flex gap-3">
-                  <input type="text" placeholder={
-                    form.provider === 'openai' ? 'sk-...' :
-                    form.provider === 'anthropic' ? 'sk-ant-...' : 'AIza...'
-                  } value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })}
-                    className={inputCls + ' font-mono flex-1'} />
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={handleAdd}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
-                    Add Key
-                  </motion.button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input type="text"
+                    placeholder={form.provider === 'openai' ? 'sk-...' : form.provider === 'anthropic' ? 'sk-ant-...' : 'AIza...'}
+                    value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })}
+                    style={{ ...inputStyle, fontFamily: 'monospace', flex: 1 }}
+                    onFocus={e => e.target.style.borderColor = 'var(--c-accent)'}
+                    onBlur={e  => e.target.style.borderColor = 'var(--c-border)'}
+                  />
+                  <button onClick={handleAdd} className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>Add Key</button>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Keys table ── */}
+        {/* Keys table */}
         {keys.length === 0 ? (
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg py-16 text-center">
-            <Key className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-            <p className="text-gray-600 text-sm">No provider keys yet. Add one above to enable AI models.</p>
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '64px 20px', textAlign: 'center' }}>
+            <Key size={36} style={{ color: 'var(--c-border-hi)', margin: '0 auto 12px' }} />
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>No provider keys yet. Add one above to enable AI models.</p>
           </div>
         ) : (
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-            <table className="w-full">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>
                 {['Provider', 'Key (masked)', 'Usage', 'Status', 'Actions'].map((h, i) => (
-                  <th key={i} className={tableHead}>{h}</th>
+                  <th key={i} style={thStyle}>{h}</th>
                 ))}
               </tr></thead>
               <tbody>
                 {keys.map(k => {
-                  const pMeta   = PROVIDERS.find(p => p.id === k.provider);
+                  const pMeta   = getP(k.provider);
                   const isEditing = editingId === k.id;
                   return (
-                    <tr key={k.id} className={`transition-colors ${isEditing ? 'bg-violet-500/5' : 'hover:bg-white/[0.02]'}`}>
+                    <tr key={k.id} style={{ background: isEditing ? 'var(--c-raised)' : 'transparent', transition: 'background 100ms' }}
+                      onMouseEnter={e => { if (!isEditing) e.currentTarget.style.background = 'var(--c-raised)'; }}
+                      onMouseLeave={e => { if (!isEditing) e.currentTarget.style.background = 'transparent'; }}>
 
-                      {/* Provider — editable */}
-                      <td className={tableCell}>
+                      <td style={tdStyle}>
                         {isEditing ? (
-                          <div className="flex gap-1.5">
-                            {PROVIDERS.map(p => {
-                              const active = editForm.provider === p.id;
-                              return (
-                                <button key={p.id}
-                                  onClick={() => setEditForm({ ...editForm, provider: p.id, model_name: '' })}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap ${
-                                    active
-                                      ? `${p.bg} ${p.border} ${p.color}`
-                                      : 'bg-white/[0.03] border-white/[0.08] text-gray-500 hover:text-gray-300 hover:border-white/20'
-                                  }`}>
-                                  {p.label}
-                                </button>
-                              );
-                            })}
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {PROVIDERS.map(p => (
+                              <button key={p.id}
+                                onClick={() => setEditForm({ ...editForm, provider: p.id })}
+                                style={{
+                                  padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                                  background: editForm.provider === p.id ? p.bg : 'var(--c-raised)',
+                                  border: `1px solid ${editForm.provider === p.id ? p.border : 'var(--c-border)'}`,
+                                  color: editForm.provider === p.id ? p.accent : 'var(--c-text-3)',
+                                }}>
+                                {p.label}
+                              </button>
+                            ))}
                           </div>
                         ) : (
-                          <span className={`px-2.5 py-1 rounded-full text-xs border font-semibold ${pMeta?.color || 'text-gray-400'} ${pMeta?.bg || ''} ${pMeta?.border || 'border-white/10'}`}>
+                          <span style={{
+                            padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600,
+                            background: pMeta?.bg || 'var(--c-raised)',
+                            border: `1px solid ${pMeta?.border || 'var(--c-border)'}`,
+                            color: pMeta?.accent || 'var(--c-text-3)',
+                          }}>
                             {pMeta?.label || k.provider}
                           </span>
                         )}
                       </td>
 
-                      <td className={tableCell + ' font-mono text-gray-400 text-xs'}>{k.key_preview}</td>
-                      <td className={tableCell + ' text-gray-500'}>{k.usage_count} calls</td>
+                      <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--c-text-2)', fontSize: '0.775rem' }}>{k.key_preview}</td>
+                      <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{k.usage_count} calls</td>
 
-                      {/* Status — toggleable when editing */}
-                      <td className={tableCell}>
+                      <td style={tdStyle}>
                         {isEditing ? (
                           <button onClick={() => setEditForm({ ...editForm, is_active: !editForm.is_active })}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border font-semibold transition-all ${
-                              editForm.is_active
-                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
-                            }`}>
-                            {editForm.is_active ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                              background: editForm.is_active ? 'rgba(16,185,129,0.08)' : 'rgba(251,113,133,0.08)',
+                              border: `1px solid ${editForm.is_active ? 'rgba(16,185,129,0.3)' : 'rgba(251,113,133,0.3)'}`,
+                              color: editForm.is_active ? '#10b981' : '#fb7185',
+                            }}>
+                            {editForm.is_active ? <CheckCircle size={11} /> : <XCircle size={11} />}
                             {editForm.is_active ? 'Active' : 'Inactive'}
                           </button>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            {k.is_active
-                              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                              : <XCircle    className="w-3.5 h-3.5 text-rose-400" />}
-                            <span className={`text-xs ${k.is_active ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            {k.is_active ? <CheckCircle size={13} style={{ color: '#10b981' }} /> : <XCircle size={13} style={{ color: '#fb7185' }} />}
+                            <span style={{ fontSize: '0.775rem', color: k.is_active ? '#10b981' : '#fb7185' }}>
                               {k.is_active ? 'Active' : 'Inactive'}
                             </span>
                           </div>
                         )}
                       </td>
 
-                      {/* Actions */}
-                      <td className={tableCell}>
-                        <div className="flex items-center gap-1">
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {isEditing ? (
                             <>
-                              <button onClick={() => handleSaveEdit(k.id)}
-                                className="p-1.5 text-emerald-400 hover:text-emerald-300 transition-colors" title="Save">
-                                <Save className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => setEditingId(null)}
-                                className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors" title="Cancel">
-                                <XIcon className="w-4 h-4" />
-                              </button>
+                              <button onClick={() => handleSaveEdit(k.id)} style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#10b981' }}><Save size={14} /></button>
+                              <button onClick={() => setEditingId(null)}    style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)' }}><XIcon size={14} /></button>
                             </>
                           ) : (
                             <>
                               <button onClick={() => startEdit(k)}
-                                className="p-1.5 text-gray-600 hover:text-violet-400 transition-colors" title="Edit">
-                                <Pencil className="w-4 h-4" />
-                              </button>
+                                style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)' }}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--c-accent)'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}><Pencil size={13} /></button>
                               <button onClick={() => handleDelete(k.id, pMeta?.label || k.provider)}
-                                className="p-1.5 text-gray-600 hover:text-rose-400 transition-colors" title="Delete key">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                                style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)' }}
+                                onMouseEnter={e => e.currentTarget.style.color = '#fb7185'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}><Trash2 size={13} /></button>
                             </>
                           )}
                         </div>
@@ -605,7 +583,7 @@ export default function AdminPanel() {
     );
   };
 
-  // ── ANALYTICS ──
+  // ── ANALYTICS ──────────────────────────────────────────────────────────────────
   const AnalyticsTab = () => {
     const handleExport = async () => {
       try {
@@ -616,46 +594,45 @@ export default function AdminPanel() {
         document.body.appendChild(link); link.click(); link.parentNode.removeChild(link);
       } catch { toast.error('Failed to export CSV'); }
     };
-    if (!analytics) return <div className="text-gray-500 py-12 text-center">No analytics data yet.</div>;
+    if (!analytics) return <div style={{ color: 'var(--c-text-3)', padding: '48px', textAlign: 'center' }}>No analytics data yet.</div>;
     return (
-      <div className="space-y-5">
-        <div className="flex justify-end">
-          <motion.button whileHover={{ scale: 1.04 }} onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 rounded-xl text-sm transition-all">
-            <Download className="w-4 h-4" />Export CSV
-          </motion.button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={handleExport} className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
+            <Download size={14} /> Export CSV
+          </button>
         </div>
-        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
-          className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard icon={DollarSign}  label="Revenue (24h)"    value={`₹${analytics.revenue_usd?.toFixed(2)}`}      color="emerald" />
-          <StatCard icon={Zap}         label="Provider Cost"    value={`₹${analytics.provider_cost_usd?.toFixed(2)}`} color="rose" />
-          <StatCard icon={TrendingUp}  label="Profit Margin"    value={`${analytics.profit_margin_pct?.toFixed(1)}%`} color="violet" />
+        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard icon={DollarSign} label="Revenue (24h)"  value={`₹${analytics.revenue_usd?.toFixed(2)}`}      color="emerald" />
+          <StatCard icon={Zap}        label="Provider Cost"  value={`₹${analytics.provider_cost_usd?.toFixed(2)}`} color="rose" />
+          <StatCard icon={TrendingUp} label="Profit Margin"  value={`${analytics.profit_margin_pct?.toFixed(1)}%`} color="amber" />
         </motion.div>
-        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <StatCard icon={Shield} label="Requests" value={analytics.total_requests} color="sky"
+        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <StatCard icon={Shield} label="Requests"   value={analytics.total_requests} color="sky"
             sub={`${analytics.cached_requests} cached (${analytics.cache_hit_rate?.toFixed(1)}%)`} />
-          <StatCard icon={Zap} label="Tokens Used" value={`${(analytics.total_tokens_used / 1000).toFixed(1)}K`} color="amber"
+          <StatCard icon={Zap}    label="Tokens Used" value={`${(analytics.total_tokens_used / 1000).toFixed(1)}K`} color="emerald"
             sub={`${(analytics.tokens_saved_by_cache / 1000).toFixed(1)}K saved by cache`} />
         </motion.div>
         {analytics.per_model?.length > 0 && (
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.05]">
-              <h3 className="text-white font-bold text-sm">Per-Model Breakdown</h3>
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--c-border)' }}>
+              <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.875rem' }}>Per-Model Breakdown</h3>
             </div>
-            <table className="w-full">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>
                 {['Model', 'Requests', 'Tokens', 'Cost'].map((h, i) => (
-                  <th key={h} className={tableHead + (i > 0 ? ' text-right' : '')}>{h}</th>
+                  <th key={h} style={{ ...thStyle, textAlign: i > 0 ? 'right' : 'left' }}>{h}</th>
                 ))}
               </tr></thead>
               <tbody>
                 {analytics.per_model.map((m, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02]">
-                    <td className={tableCell + ' text-white'}>{m.model}</td>
-                    <td className={tableCell + ' text-gray-400 text-right'}>{m.requests}</td>
-                    <td className={tableCell + ' text-gray-400 text-right'}>{(m.tokens / 1000).toFixed(1)}K</td>
-                    <td className={tableCell + ' text-gray-400 text-right'}>₹{m.cost_usd.toFixed(4)}</td>
+                  <tr key={i} style={{ transition: 'background 100ms' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{m.model}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)', textAlign: 'right' }}>{m.requests}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)', textAlign: 'right' }}>{(m.tokens / 1000).toFixed(1)}K</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)', textAlign: 'right' }}>₹{m.cost_usd.toFixed(4)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -666,31 +643,38 @@ export default function AdminPanel() {
     );
   };
 
-  // ── ALERTS ──
+  // ── ALERTS ──────────────────────────────────────────────────────────────────────
   const AlertsTab = () => (
-    <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
+    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
       {alerts.length === 0 ? (
-        <div className="py-20 text-center">
-          <Shield className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-600">No spending alerts yet</p>
+        <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+          <Shield size={36} style={{ color: 'var(--c-border-hi)', margin: '0 auto 12px' }} />
+          <p style={{ color: 'var(--c-text-3)' }}>No spending alerts yet</p>
         </div>
       ) : (
-        <table className="w-full">
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
-            {['User', 'Amount', 'Window', 'Action', 'Time'].map(h => <th key={h} className={tableHead}>{h}</th>)}
+            {['User', 'Amount', 'Window', 'Action', 'Time'].map(h => <th key={h} style={thStyle}>{h}</th>)}
           </tr></thead>
           <tbody>
             {alerts.map(alert => (
-              <tr key={alert.id} className="hover:bg-white/[0.02]">
-                <td className={tableCell + ' text-white'}>{alert.user_email}</td>
-                <td className={tableCell + ' text-rose-400 font-bold'}>₹{alert.amount_usd.toFixed(2)}</td>
-                <td className={tableCell + ' text-gray-500'}>{alert.window_minutes} min</td>
-                <td className={tableCell}>
-                  <span className={`px-2 py-0.5 rounded-full text-xs border ${alert.was_suspended ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
+              <tr key={alert.id} style={{ transition: 'background 100ms' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{alert.user_email}</td>
+                <td style={{ ...tdStyle, color: '#fb7185', fontWeight: 700 }}>₹{alert.amount_usd.toFixed(2)}</td>
+                <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{alert.window_minutes} min</td>
+                <td style={tdStyle}>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', border: '1px solid',
+                    background: alert.was_suspended ? 'rgba(251,113,133,0.08)' : 'rgba(251,191,36,0.08)',
+                    borderColor: alert.was_suspended ? 'rgba(251,113,133,0.25)' : 'rgba(251,191,36,0.25)',
+                    color: alert.was_suspended ? '#fb7185' : '#fbbf24',
+                  }}>
                     {alert.was_suspended ? 'Suspended' : 'Warned'}
                   </span>
                 </td>
-                <td className={tableCell + ' text-gray-600 text-xs'}>{new Date(alert.created_at).toLocaleString()}</td>
+                <td style={{ ...tdStyle, color: 'var(--c-text-3)', fontSize: '0.75rem' }}>{new Date(alert.created_at).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -703,44 +687,52 @@ export default function AdminPanel() {
   const ActiveTab = TAB_MAP[activeTab];
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+    <div style={{ minHeight: '100vh', background: 'var(--c-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={32} style={{ color: 'var(--c-accent)', animation: 'spin 0.7s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
       <Navbar />
 
       {/* Header */}
-      <section className="pt-32 pb-6 px-5">
+      <section style={{ paddingTop: '120px', paddingBottom: '24px', paddingLeft: '20px', paddingRight: '20px' }}>
         <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show"
           className="max-w-6xl mx-auto flex items-end justify-between flex-wrap gap-4">
           <motion.div variants={fadeUp}>
-            <p className="text-violet-400 text-xs font-semibold tracking-widest uppercase mb-2">Admin</p>
-            <h1 className="text-3xl font-bold text-white mb-1">Control Panel</h1>
-            <p className="text-gray-500 text-sm">Platform management & analytics</p>
+            <p className="eyebrow mb-2">Admin</p>
+            <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', marginBottom: '4px' }}>Control Panel</h1>
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Platform management & analytics</p>
           </motion.div>
-          <motion.button variants={fadeUp} onClick={loadData} whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#111] border border-white/[0.08] hover:border-white/[0.14] text-gray-400 hover:text-white rounded-lg text-sm transition-all">
-            <RefreshCw className="w-4 h-4" />Refresh
+          <motion.button variants={fadeUp} onClick={loadData} className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
+            <RefreshCw size={14} /> Refresh
           </motion.button>
         </motion.div>
       </section>
 
       {/* Tabs */}
-      <section className="px-5 pb-5">
-        <div className="max-w-6xl mx-auto overflow-x-auto">
-          <div className="flex gap-1 p-1 bg-[#111] border border-white/[0.06] rounded-lg w-fit min-w-full sm:min-w-0">
+      <section style={{ paddingLeft: '20px', paddingRight: '20px', paddingBottom: '20px' }}>
+        <div className="max-w-6xl mx-auto" style={{ overflowX: 'auto' }}>
+          <div style={{
+            display: 'inline-flex', gap: '4px', padding: '4px',
+            background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '8px',
+            minWidth: '100%',
+          }}>
             {TABS.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-violet-500/20 text-white border border-violet-500/30'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                <tab.icon className="w-3.5 h-3.5" />{tab.label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '7px 14px', borderRadius: '6px', fontSize: '0.775rem', fontWeight: 600,
+                  textTransform: 'uppercase', letterSpacing: '0.06em', cursor: 'pointer', whiteSpace: 'nowrap',
+                  border: '1px solid',
+                  background:  activeTab === tab.id ? 'var(--c-accent-bg)'     : 'transparent',
+                  borderColor: activeTab === tab.id ? 'var(--c-accent-border)' : 'transparent',
+                  color:       activeTab === tab.id ? 'var(--c-accent-hi)'     : 'var(--c-text-3)',
+                  transition: 'all 150ms',
+                }}>
+                <tab.icon size={13} />{tab.label}
               </button>
             ))}
           </div>
@@ -748,16 +740,17 @@ export default function AdminPanel() {
       </section>
 
       {/* Content */}
-      <section className="px-5 pb-16 flex-1">
+      <section style={{ padding: '0 20px 80px', flex: 1 }}>
         <div className="max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}>
+            <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
               <ActiveTab />
             </motion.div>
           </AnimatePresence>
         </div>
       </section>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }

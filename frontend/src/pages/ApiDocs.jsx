@@ -6,11 +6,10 @@ import Footer from "../components/Footer";
 
 const BASE_URL = "https://api-on-rent-backend.onrender.com";
 
-// ── Provider model config ─────────────────────────────────────────────────────
 const PROVIDERS = [
-  { id: "OpenAI", label: "OpenAI", models: { fast: "gpt-4o-mini", powerful: "gpt-4o" } },
-  { id: "Google Gemini", label: "Google Gemini", models: { fast: "gemini-1.5-flash", powerful: "gemini-1.5-pro" } },
-  { id: "Anthropic Claude", label: "Anthropic Claude", models: { fast: "claude-3-5-sonnet-20241022", powerful: "claude-3-5-sonnet-20241022" } },
+  { id: "OpenAI",           label: "OpenAI",           models: { fast: "gpt-4o-mini",                 powerful: "gpt-4o" } },
+  { id: "Google Gemini",    label: "Google Gemini",    models: { fast: "gemini-1.5-flash",            powerful: "gemini-1.5-pro" } },
+  { id: "Anthropic Claude", label: "Anthropic Claude", models: { fast: "claude-3-5-sonnet-20241022",  powerful: "claude-3-5-sonnet-20241022" } },
 ];
 
 const LANGUAGES = ["Python", "JavaScript", "Node.js", "cURL", "PHP"];
@@ -90,11 +89,11 @@ echo $response['choices'][0]['message']['content'];`,
 }
 
 const MODELS = [
-  { model: "gpt-4o-mini", provider: "OpenAI", drain: "3x", best: "Fast & affordable" },
-  { model: "gpt-4o", provider: "OpenAI", drain: "10x", best: "Complex reasoning" },
-  { model: "gemini-1.5-flash", provider: "Google", drain: "1x", best: "High-volume tasks" },
-  { model: "gemini-1.5-pro", provider: "Google", drain: "5x", best: "Multimodal tasks" },
-  { model: "claude-3-5-sonnet-20241022", provider: "Anthropic", drain: "8x", best: "Writing & analysis" },
+  { model: "gpt-4o-mini",                provider: "OpenAI",    drain: "3x",  best: "Fast & affordable" },
+  { model: "gpt-4o",                     provider: "OpenAI",    drain: "10x", best: "Complex reasoning" },
+  { model: "gemini-1.5-flash",           provider: "Google",    drain: "1x",  best: "High-volume tasks" },
+  { model: "gemini-1.5-pro",             provider: "Google",    drain: "5x",  best: "Multimodal tasks" },
+  { model: "claude-3-5-sonnet-20241022", provider: "Anthropic", drain: "8x",  best: "Writing & analysis" },
 ];
 
 const ERRORS = [
@@ -106,24 +105,23 @@ const ERRORS = [
 ];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function CopyButton({ text, className = "" }) {
+
+function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
   return (
-    <button
-      onClick={handleCopy}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-        copied
-          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-          : "bg-white/[0.06] text-gray-400 hover:text-white hover:bg-white/[0.1] border border-white/[0.08]"
-      } ${className}`}
-    >
-      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+    <button onClick={handleCopy}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '5px',
+        padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
+        background: copied ? 'var(--c-accent-bg)' : 'var(--c-raised)',
+        border: `1px solid ${copied ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
+        color: copied ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
+        transition: 'all 150ms',
+      }}>
+      {copied ? <Check size={11} /> : <Copy size={11} />}
       {copied ? "Copied" : "Copy"}
     </button>
   );
@@ -131,11 +129,11 @@ function CopyButton({ text, className = "" }) {
 
 function CodeBlock({ code }) {
   return (
-    <div className="relative bg-black/60 border border-white/[0.08] rounded-lg overflow-hidden">
-      <div className="flex justify-end px-4 pt-3 pb-2 border-b border-white/[0.06]">
+    <div style={{ background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 12px', borderBottom: '1px solid var(--c-border)' }}>
         <CopyButton text={code} />
       </div>
-      <pre className="font-mono text-sm text-gray-300 p-4 overflow-x-auto whitespace-pre leading-relaxed">
+      <pre style={{ fontFamily: 'monospace', fontSize: '0.825rem', color: 'var(--c-text-2)', padding: '16px', overflowX: 'auto', whiteSpace: 'pre', lineHeight: 1.6, margin: 0 }}>
         <code>{code}</code>
       </pre>
     </div>
@@ -143,12 +141,14 @@ function CodeBlock({ code }) {
 }
 
 function MethodBadge({ method }) {
-  const styles =
-    method === "GET"
-      ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-      : "bg-violet-500/10 border border-violet-500/20 text-violet-400";
+  const isGet = method === "GET";
   return (
-    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${styles}`}>
+    <span style={{
+      fontSize: '0.7rem', fontFamily: 'monospace', fontWeight: 700, padding: '2px 7px', borderRadius: '4px',
+      background: isGet ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)',
+      border: `1px solid ${isGet ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)'}`,
+      color: isGet ? 'var(--c-accent-hi)' : '#7dd3fc',
+    }}>
       {method}
     </span>
   );
@@ -157,19 +157,23 @@ function MethodBadge({ method }) {
 function EndpointRow({ method, path, description, children }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left"
-      >
+    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '8px', overflow: 'hidden' }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+          transition: 'background 150ms',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
         <MethodBadge method={method} />
-        <code className="font-mono text-sm text-gray-200 flex-1 min-w-0 truncate">{path}</code>
-        <span className="text-gray-500 text-sm hidden sm:block flex-shrink-0">{description}</span>
-        <span className="text-gray-600 text-xs ml-2 flex-shrink-0">{open ? "▲" : "▼"}</span>
+        <code style={{ fontFamily: 'monospace', fontSize: '0.825rem', color: 'var(--c-text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</code>
+        <span style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', flexShrink: 0, display: 'none' }} className="sm:block">{description}</span>
+        <span style={{ color: 'var(--c-text-3)', fontSize: '0.7rem', marginLeft: '8px', flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="border-t border-white/[0.06] px-4 pb-4 pt-3 space-y-3 bg-[#0f0f0f]">
-          <p className="text-sm text-gray-400 sm:hidden">{description}</p>
+        <div style={{ borderTop: '1px solid var(--c-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--c-bg)' }}>
+          <p style={{ fontSize: '0.825rem', color: 'var(--c-text-3)' }}>{description}</p>
           {children}
         </div>
       )}
@@ -179,113 +183,129 @@ function EndpointRow({ method, path, description, children }) {
 
 function EndpointDetail({ label, code }) {
   return (
-    <div className="space-y-1">
-      <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">{label}</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{label}</p>
       <CodeBlock code={code} />
     </div>
   );
 }
 
+function SectionIcon({ icon: Icon, danger }) {
+  return (
+    <div style={{
+      width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: danger ? 'rgba(251,113,133,0.08)' : 'var(--c-accent-bg)',
+      border: `1px solid ${danger ? 'rgba(251,113,133,0.25)' : 'var(--c-accent-border)'}`,
+    }}>
+      <Icon size={16} style={{ color: danger ? '#fb7185' : 'var(--c-accent)' }} />
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function ApiDocs() {
   const [activeProvider, setActiveProvider] = useState("OpenAI");
-  const [activeLang, setActiveLang] = useState("Python");
+  const [activeLang,     setActiveLang]     = useState("Python");
 
-  const providerInfo = PROVIDERS.find((p) => p.id === activeProvider);
-  const model = providerInfo.models.fast;
-  const snippets = getSnippets(model);
+  const providerInfo = PROVIDERS.find(p => p.id === activeProvider);
+  const model        = providerInfo.models.fast;
+  const snippets     = getSnippets(model);
+
+  const thStyle = { textAlign: 'left', padding: '10px 20px', fontSize: '0.7rem', color: 'var(--c-text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--c-border)' };
+  const tdStyle = { padding: '14px 20px', fontSize: '0.875rem', borderBottom: '1px solid var(--c-border)' };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
       <Navbar />
 
-      {/* Section 1: Hero */}
-      <section className="pt-32 pb-16 px-5 md:px-8 text-center">
+      {/* Hero */}
+      <section style={{ paddingTop: '120px', paddingBottom: '64px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
         <div className="max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded border border-violet-500/30 bg-violet-500/10 text-violet-400 text-sm font-medium mb-6">
-            <BookOpen className="w-4 h-4" />
-            Developer Reference
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '8px 16px', borderRadius: '8px', marginBottom: '24px',
+            background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
+            color: 'var(--c-accent)', fontSize: '0.875rem', fontWeight: 500,
+          }}>
+            <BookOpen size={14} /> Developer Reference
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-4">
-            API <span className="text-violet-400">Reference</span>
+          <h1 style={{ fontSize: 'clamp(2.2rem,6vw,4rem)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--c-text)', marginBottom: '16px', lineHeight: 1.05 }}>
+            API Reference
           </h1>
-          <p className="text-lg text-gray-400">
+          <p style={{ fontSize: '1rem', color: 'var(--c-text-2)', lineHeight: 1.7 }}>
             OpenAI-compatible endpoint. Drop in your virtual key and start building.
           </p>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto px-5 md:px-8 pb-24 space-y-14">
+      <div className="max-w-4xl mx-auto" style={{ padding: '0 20px 96px', display: 'flex', flexDirection: 'column', gap: '56px' }}>
 
-        {/* Section 2: Authentication */}
+        {/* Authentication */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-              <Key className="w-4 h-4 text-violet-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Authentication</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <SectionIcon icon={Key} />
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Authentication</h2>
           </div>
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg p-6 space-y-5">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-2 font-semibold">Base URL</p>
-              <div className="flex items-center gap-3 bg-black/50 border border-white/[0.08] rounded-lg px-4 py-3">
-                <code className="flex-1 font-mono text-sm text-violet-300">{BASE_URL}/v1</code>
+              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>Base URL</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '12px 16px' }}>
+                <code style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-accent-hi)' }}>{BASE_URL}/v1</code>
                 <CopyButton text={`${BASE_URL}/v1`} />
               </div>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-2 font-semibold">Authorization Header</p>
-              <div className="flex items-center gap-3 bg-black/50 border border-white/[0.08] rounded-lg px-4 py-3">
-                <code className="flex-1 font-mono text-sm text-gray-300">
-                  Authorization: <span className="text-emerald-400">Bearer vk_your_key_here</span>
+              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>Authorization Header</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '12px 16px' }}>
+                <code style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-text-2)' }}>
+                  Authorization: <span style={{ color: 'var(--c-accent)' }}>Bearer vk_your_key_here</span>
                 </code>
                 <CopyButton text="Authorization: Bearer vk_your_key_here" />
               </div>
             </div>
-            <p className="text-sm text-gray-500">
+            <p style={{ fontSize: '0.875rem', color: 'var(--c-text-3)', lineHeight: 1.6 }}>
               Replace{" "}
-              <code className="text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded">vk_your_key_here</code>{" "}
-              with the virtual key you receive after purchase. Find it in your{" "}
-              <Link to="/dashboard" className="text-violet-400 hover:underline">Dashboard</Link>.
+              <code style={{ color: 'var(--c-accent)', background: 'var(--c-accent-bg)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.8rem' }}>vk_your_key_here</code>
+              {" "}with the virtual key you receive after purchase. Find it in your{" "}
+              <Link to="/dashboard" style={{ color: 'var(--c-accent)', textDecoration: 'none', fontWeight: 500 }}>Dashboard</Link>.
             </p>
           </div>
         </section>
 
-        {/* Section 3: Chat Completions */}
+        {/* Chat Completions */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-              <Code2 className="w-4 h-4 text-violet-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Chat Completions</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <SectionIcon icon={Code2} />
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Chat Completions</h2>
           </div>
 
-          <div className="flex items-center gap-3 bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-4 py-3 mb-5 w-fit">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '10px 16px', marginBottom: '20px' }}>
             <MethodBadge method="POST" />
-            <code className="font-mono text-sm text-gray-200">/v1/chat/completions</code>
+            <code style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-text)' }}>/v1/chat/completions</code>
           </div>
 
-          <p className="text-gray-400 text-sm mb-5">
+          <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', marginBottom: '20px', lineHeight: 1.65 }}>
             Fully OpenAI-compatible. Works with the official OpenAI SDK — just change{" "}
-            <code className="font-mono text-xs bg-white/5 px-1 rounded">base_url</code> and{" "}
-            <code className="font-mono text-xs bg-white/5 px-1 rounded">api_key</code>.
+            <code style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'var(--c-raised)', padding: '1px 5px', borderRadius: '3px', color: 'var(--c-text-2)' }}>base_url</code> and{" "}
+            <code style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'var(--c-raised)', padding: '1px 5px', borderRadius: '3px', color: 'var(--c-text-2)' }}>api_key</code>.
           </p>
 
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg p-5 space-y-5">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Provider tabs */}
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Provider</p>
-              <div className="flex gap-2 flex-wrap">
-                {PROVIDERS.map((p) => (
-                  <button
-                    key={p.id}
+              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>Provider</p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {PROVIDERS.map(p => (
+                  <button key={p.id}
                     onClick={() => { setActiveProvider(p.id); setActiveLang("Python"); }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
-                      activeProvider === p.id
-                        ? "bg-violet-600 border-violet-600 text-white"
-                        : "bg-[#1a1a1a] border-white/[0.08] text-gray-400 hover:text-white hover:border-white/[0.2]"
-                    }`}
-                  >
+                    style={{
+                      padding: '7px 16px', borderRadius: '7px', fontSize: '0.825rem', fontWeight: 500, cursor: 'pointer',
+                      background: activeProvider === p.id ? 'var(--c-accent-bg)' : 'var(--c-raised)',
+                      border: `1px solid ${activeProvider === p.id ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
+                      color: activeProvider === p.id ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
+                      transition: 'all 150ms',
+                    }}>
                     {p.label}
                   </button>
                 ))}
@@ -293,16 +313,16 @@ export default function ApiDocs() {
             </div>
 
             {/* Model info */}
-            <div className="bg-[#1a1a1a] border border-white/[0.06] rounded-lg px-4 py-3 flex items-center gap-2 flex-wrap text-sm text-gray-400">
-              <Zap className="w-4 h-4 text-violet-400 flex-shrink-0" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '10px 14px', fontSize: '0.825rem', color: 'var(--c-text-3)' }}>
+              <Zap size={14} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
               <span>Model used in examples:</span>
-              <code className="font-mono text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded text-xs">
+              <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', background: 'var(--c-accent-bg)', padding: '1px 7px', borderRadius: '4px', fontSize: '0.775rem' }}>
                 {model}
               </code>
               {providerInfo.models.fast !== providerInfo.models.powerful && (
                 <>
-                  <span className="text-gray-600">or</span>
-                  <code className="font-mono text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded text-xs">
+                  <span style={{ color: 'var(--c-border-hi)' }}>or</span>
+                  <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', background: 'var(--c-accent-bg)', padding: '1px 7px', borderRadius: '4px', fontSize: '0.775rem' }}>
                     {providerInfo.models.powerful}
                   </code>
                 </>
@@ -311,18 +331,17 @@ export default function ApiDocs() {
 
             {/* Language tabs */}
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">Language</p>
-              <div className="flex gap-1 flex-wrap bg-black/30 border border-white/[0.06] rounded-lg p-1">
-                {LANGUAGES.map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => setActiveLang(lang)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      activeLang === lang
-                        ? "bg-violet-600 text-white"
-                        : "text-gray-400 hover:text-white hover:bg-white/[0.05]"
-                    }`}
-                  >
+              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>Language</p>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '4px' }}>
+                {LANGUAGES.map(lang => (
+                  <button key={lang} onClick={() => setActiveLang(lang)}
+                    style={{
+                      padding: '5px 12px', borderRadius: '6px', fontSize: '0.825rem', fontWeight: 500, cursor: 'pointer',
+                      background: activeLang === lang ? 'var(--c-accent-bg)' : 'transparent',
+                      border: `1px solid ${activeLang === lang ? 'var(--c-accent-border)' : 'transparent'}`,
+                      color: activeLang === lang ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
+                      transition: 'all 150ms',
+                    }}>
                     {lang}
                   </button>
                 ))}
@@ -333,130 +352,87 @@ export default function ApiDocs() {
           </div>
         </section>
 
-        {/* Section 4: REST Endpoints */}
+        {/* REST Endpoints */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-              <Globe className="w-4 h-4 text-violet-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">REST Endpoints</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <SectionIcon icon={Globe} />
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>REST Endpoints</h2>
           </div>
 
-          <div className="space-y-6">
-            {/* Auth */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">Auth</h3>
-              <EndpointRow method="POST" path="/auth/register" description="Create a new account">
-                <EndpointDetail label="Body" code={`{ "email": "user@example.com", "password": "secret123" }`} />
-                <EndpointDetail label="Response" code={`{ "id": 1, "email": "user@example.com", "role": "USER" }`} />
-              </EndpointRow>
-              <EndpointRow method="POST" path="/auth/login" description="Get JWT access token">
-                <EndpointDetail label="Body" code={`{ "email": "user@example.com", "password": "secret123" }`} />
-                <EndpointDetail label="Response" code={`{ "access_token": "eyJ...", "token_type": "bearer" }`} />
-              </EndpointRow>
-              <EndpointRow method="GET" path="/auth/me" description="Get current user info — auth required" />
-            </div>
-
-            {/* Marketplace */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">Marketplace</h3>
-              <EndpointRow method="GET" path="/api/plans" description="List available rental plans">
-                <EndpointDetail
-                  label="Response (example)"
-                  code={`[
-  {
-    "id": 1,
-    "duration_label": "1 Hour",
-    "duration_minutes": 60,
-    "token_cap": 80000,
-    "rpm_limit": 60,
-    "price": 49.0,
-    "is_active": true
-  }
-]`}
-                />
-              </EndpointRow>
-              <EndpointRow method="GET" path="/api/active-providers" description="List active AI providers available for rental" />
-              <EndpointRow method="GET" path="/api/rentals/active" description="List your active rentals — auth required">
-                <EndpointDetail
-                  label="Response (example)"
-                  code={`[
-  {
-    "id": 42,
-    "virtual_key": "vk_abc123...",
-    "provider": "openai",
-    "status": "ACTIVE",
-    "tokens_remaining": 72000,
-    "expires_at": "2025-04-22T15:00:00Z"
-  }
-]`}
-                />
-              </EndpointRow>
-            </div>
-
-            {/* Payment */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">Payment</h3>
-              <EndpointRow method="POST" path="/api/checkout/session" description="Create payment session — auth required">
-                <EndpointDetail
-                  label="Body"
-                  code={`{
-  "plan_id": 1,
-  "provider": "openai",
-  "customer_phone": "9876543210"
-}`}
-                />
-                <EndpointDetail
-                  label="Response"
-                  code={`{ "payment_session_id": "session_abc123..." }`}
-                />
-              </EndpointRow>
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest px-1">Status</h3>
-              <EndpointRow method="GET" path="/health" description="Health check — returns 200 OK if API is running" />
-              <EndpointRow method="GET" path="/status/" description="Full system status including database and Redis" />
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {[
+              { title: 'Auth', rows: [
+                { method: 'POST', path: '/auth/register', desc: 'Create a new account',
+                  detail: [{ label: 'Body', code: `{ "email": "user@example.com", "password": "secret123" }` }, { label: 'Response', code: `{ "id": 1, "email": "user@example.com", "role": "USER" }` }] },
+                { method: 'POST', path: '/auth/login', desc: 'Get JWT access token',
+                  detail: [{ label: 'Body', code: `{ "email": "user@example.com", "password": "secret123" }` }, { label: 'Response', code: `{ "access_token": "eyJ...", "token_type": "bearer" }` }] },
+                { method: 'GET',  path: '/auth/me', desc: 'Get current user info — auth required', detail: [] },
+              ]},
+              { title: 'Marketplace', rows: [
+                { method: 'GET', path: '/api/plans', desc: 'List available rental plans',
+                  detail: [{ label: 'Response (example)', code: `[\n  {\n    "id": 1,\n    "duration_label": "1 Hour",\n    "duration_minutes": 60,\n    "token_cap": 80000,\n    "rpm_limit": 60,\n    "price": 49.0,\n    "is_active": true\n  }\n]` }] },
+                { method: 'GET', path: '/api/active-providers', desc: 'List active AI providers available for rental', detail: [] },
+                { method: 'GET', path: '/api/rentals/active', desc: 'List your active rentals — auth required',
+                  detail: [{ label: 'Response (example)', code: `[\n  {\n    "id": 42,\n    "virtual_key": "vk_abc123...",\n    "provider": "openai",\n    "status": "ACTIVE",\n    "tokens_remaining": 72000,\n    "expires_at": "2025-04-22T15:00:00Z"\n  }\n]` }] },
+              ]},
+              { title: 'Payment', rows: [
+                { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session — auth required',
+                  detail: [{ label: 'Body', code: `{\n  "plan_id": 1,\n  "provider": "openai",\n  "customer_phone": "9876543210"\n}` }, { label: 'Response', code: `{ "payment_session_id": "session_abc123..." }` }] },
+              ]},
+              { title: 'Status', rows: [
+                { method: 'GET', path: '/health',  desc: 'Health check — returns 200 OK if API is running', detail: [] },
+                { method: 'GET', path: '/status/', desc: 'Full system status including database and Redis', detail: [] },
+              ]},
+            ].map(group => (
+              <div key={group.title} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>{group.title}</h3>
+                {group.rows.map(row => (
+                  <EndpointRow key={row.path} method={row.method} path={row.path} description={row.desc}>
+                    {row.detail.map(d => <EndpointDetail key={d.label} label={d.label} code={d.code} />)}
+                  </EndpointRow>
+                ))}
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Section 5: Supported Models */}
+        {/* Supported Models */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-              <Table2 className="w-4 h-4 text-violet-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Supported Models</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <SectionIcon icon={Table2} />
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Supported Models</h2>
           </div>
-          <p className="text-sm text-gray-400 mb-4">
-            <span className="text-violet-400 font-medium">Drain rate</span> — higher drain rate = tokens consumed faster.
-            A 10x model uses 10x tokens per request compared to a 1x model.
+          <p style={{ fontSize: '0.875rem', color: 'var(--c-text-3)', marginBottom: '16px', lineHeight: 1.65 }}>
+            <span style={{ color: 'var(--c-accent)', fontWeight: 500 }}>Drain rate</span> — higher drain rate = tokens consumed faster. A 10x model uses 10x tokens per request compared to a 1x model.
           </p>
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr className="border-b border-white/[0.08]">
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest">Model ID</th>
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest">Provider</th>
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest">Drain Rate</th>
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest hidden md:table-cell">Best For</th>
+                <tr>
+                  {['Model ID', 'Provider', 'Drain Rate', 'Best For'].map((h, i) => (
+                    <th key={h} style={{ ...thStyle, display: i === 3 ? undefined : undefined }} className={i === 3 ? 'hidden md:table-cell' : ''}>{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05]">
-                {MODELS.map((m) => (
-                  <tr key={m.model} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4">
-                      <code className="font-mono text-violet-300 text-xs">{m.model}</code>
+              <tbody>
+                {MODELS.map(m => (
+                  <tr key={m.model} style={{ transition: 'background 100ms' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={tdStyle}>
+                      <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', fontSize: '0.775rem' }}>{m.model}</code>
                     </td>
-                    <td className="px-5 py-4 text-gray-300">{m.provider}</td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 font-mono">
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)' }}>{m.provider}</td>
+                    <td style={tdStyle}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '10px',
+                        fontSize: '0.75rem', fontWeight: 700, fontFamily: 'monospace',
+                        background: 'rgba(251,191,36,0.08)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)',
+                      }}>
                         {m.drain}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-400 hidden md:table-cell">{m.best}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-3)' }} className="hidden md:table-cell">{m.best}</td>
                   </tr>
                 ))}
               </tbody>
@@ -464,31 +440,35 @@ export default function ApiDocs() {
           </div>
         </section>
 
-        {/* Section 6: Error Reference */}
+        {/* Error Reference */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-rose-600/20 flex items-center justify-center border border-rose-500/20">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Error Reference</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <SectionIcon icon={AlertTriangle} danger />
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Error Reference</h2>
           </div>
-          <div className="bg-[#111] border border-white/[0.08] rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
               <thead>
-                <tr className="border-b border-white/[0.08]">
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest">Code</th>
-                  <th className="text-left px-5 py-3 text-gray-500 font-semibold text-xs uppercase tracking-widest">Meaning</th>
+                <tr>
+                  <th style={thStyle}>Code</th>
+                  <th style={thStyle}>Meaning</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05]">
-                {ERRORS.map((e) => (
-                  <tr key={e.code} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono">
+              <tbody>
+                {ERRORS.map(e => (
+                  <tr key={e.code} style={{ transition: 'background 100ms' }}
+                    onMouseEnter={el => el.currentTarget.style.background = 'var(--c-raised)'}
+                    onMouseLeave={el => el.currentTarget.style.background = 'transparent'}>
+                    <td style={tdStyle}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: '6px',
+                        fontSize: '0.775rem', fontWeight: 700, fontFamily: 'monospace',
+                        background: 'rgba(251,113,133,0.08)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.25)',
+                      }}>
                         {e.code}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-300">{e.meaning}</td>
+                    <td style={{ ...tdStyle, color: 'var(--c-text-2)' }}>{e.meaning}</td>
                   </tr>
                 ))}
               </tbody>
@@ -496,19 +476,15 @@ export default function ApiDocs() {
           </div>
         </section>
 
-        {/* Section 7: CTA */}
+        {/* CTA */}
         <section>
-          <div className="bg-[#111] border border-violet-500/20 rounded-lg p-10 text-center">
-            <h2 className="text-2xl font-bold text-white mb-3">Ready to build?</h2>
-            <p className="text-gray-400 mb-7 max-w-md mx-auto">
+          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-accent-border)', borderRadius: '10px', padding: '40px 32px', textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.3rem', marginBottom: '12px' }}>Ready to build?</h2>
+            <p style={{ color: 'var(--c-text-3)', marginBottom: '28px', maxWidth: '400px', margin: '0 auto 28px', lineHeight: 1.65, fontSize: '0.9rem' }}>
               Purchase a plan on the marketplace, get your virtual key instantly, and start making API calls in minutes.
             </p>
-            <Link
-              to="/marketplace"
-              className="inline-flex items-center gap-2 px-7 py-3.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-lg transition-colors text-sm"
-            >
-              Browse Plans
-              <ArrowRight className="w-4 h-4" />
+            <Link to="/marketplace" className="btn btn-primary" style={{ display: 'inline-flex', padding: '11px 24px' }}>
+              Browse Plans <ArrowRight size={14} />
             </Link>
           </div>
         </section>
