@@ -49,7 +49,6 @@ const lineColor = t =>
   t === 'string'  ? '#58a6ff' :
   t === 'blank'   ? 'transparent' : '#8b949e';
 
-const MODELS = ['GPT-4o', 'Claude 3.5 Sonnet', 'Gemini 1.5 Pro', 'GPT-4o mini', 'Gemini Flash', 'Claude Haiku'];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -115,21 +114,6 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
-
-      {/* ── MODEL STRIP ── */}
-      <div style={{ borderTop: '1px solid var(--c-border)', borderBottom: '1px solid var(--c-border)', background: 'var(--c-surface)', padding: '14px 0', overflow: 'hidden' }}>
-        <div className="marquee">
-          {[...MODELS, ...MODELS].map((m, i) => (
-            <span
-              key={i}
-              style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', fontWeight: 500, padding: '0 32px', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '10px' }}
-            >
-              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--c-accent)', display: 'inline-block', opacity: 0.6 }} />
-              {m}
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* ── CODE + COPY ── */}
       <section style={{ padding: '96px 20px', background: 'var(--c-bg)' }}>
