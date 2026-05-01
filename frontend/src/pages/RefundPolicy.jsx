@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { RefreshCcw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import {
   PolicyPage, PolicyHero, PolicyBody, PolicySection,
@@ -14,6 +15,11 @@ const ELIGIBILITY = [
 export default function RefundPolicy() {
   return (
     <PolicyPage>
+      <Helmet>
+        <title>Refund Policy — AIRent</title>
+        <meta name="description" content="AIRent's refund policy — full refund within 24 hours if you haven't used the key. Clear, fair, and straightforward." />
+        <link rel="canonical" href="https://airent.dev/refund-policy" />
+      </Helmet>
       <PolicyHero
         icon={RefreshCcw}
         iconColor="text-emerald-400"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -93,6 +94,11 @@ export default function FAQ() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+      <Helmet>
+        <title>FAQ — AIRent | Common Questions About AI API Rental</title>
+        <meta name="description" content="Answers to common questions about renting AI APIs — how it works, pricing, supported models, refunds, and security." />
+        <link rel="canonical" href="https://airent.dev/faq" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

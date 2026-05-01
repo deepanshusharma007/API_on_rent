@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { FileText } from 'lucide-react';
 import {
   PolicyPage, PolicyHero, PolicyBody, PolicySection,
@@ -8,6 +9,11 @@ import {
 export default function TermsOfService() {
   return (
     <PolicyPage>
+      <Helmet>
+        <title>Terms of Service — AIRent</title>
+        <meta name="description" content="AIRent's terms of service — rules for using the platform, acceptable use policy, and your rights as a user." />
+        <link rel="canonical" href="https://airent.dev/terms" />
+      </Helmet>
       <PolicyHero
         icon={FileText}
         iconColor="text-sky-400"

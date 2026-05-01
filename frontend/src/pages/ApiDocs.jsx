@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Copy, Check, BookOpen, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
 import Navbar from "../components/Navbar";
@@ -215,6 +216,11 @@ export default function ApiDocs() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
+      <Helmet>
+        <title>API Docs — AIRent | OpenAI-Compatible AI API Rental</title>
+        <meta name="description" content="AIRent is 100% OpenAI-compatible. Swap your API key and base URL — that's it. Supports GPT, Claude, and Gemini models. Full API reference and code examples." />
+        <link rel="canonical" href="https://airent.dev/docs" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

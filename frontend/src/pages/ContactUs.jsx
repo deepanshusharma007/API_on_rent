@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, MessageSquare, Clock, Send, CheckCircle2, Heart } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -63,6 +64,11 @@ export default function ContactUs() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+      <Helmet>
+        <title>Contact — AIRent | Get in Touch</title>
+        <meta name="description" content="Contact AIRent for support, refund requests, or general questions. We respond within 2 business hours Mon–Sat." />
+        <link rel="canonical" href="https://airent.dev/contact" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

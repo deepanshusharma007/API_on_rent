@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Zap, Shield, Heart, Code2, Globe, Github, Linkedin } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -24,6 +25,11 @@ const STACK = ['FastAPI', 'React', 'PostgreSQL', 'Redis', 'LiteLLM', 'Docker', '
 export default function AboutUs() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+      <Helmet>
+        <title>About — AIRent | Built by a Developer, for Developers</title>
+        <meta name="description" content="AIRent is a one-person SaaS by Deepanshu Sharma. Rent AI APIs by the hour — GPT-4o, Claude, Gemini. No subscriptions, pay in INR." />
+        <link rel="canonical" href="https://airent.dev/about" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

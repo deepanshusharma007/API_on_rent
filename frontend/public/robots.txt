@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block private/app routes from indexing
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /playground
+Disallow: /marketplace
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://airent.dev/sitemap.xml

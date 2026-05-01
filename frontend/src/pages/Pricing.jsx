@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { CheckCircle2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -80,6 +81,11 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+      <Helmet>
+        <title>Pricing — AIRent | Affordable AI API Rental Plans in INR</title>
+        <meta name="description" content="Simple, pay-as-you-go AI API rental plans. Rent GPT-4o, Claude, Gemini by the hour or day. No subscription. Pay in INR via UPI." />
+        <link rel="canonical" href="https://airent.dev/pricing" />
+      </Helmet>
       <Navbar />
 
       {/* Hero */}

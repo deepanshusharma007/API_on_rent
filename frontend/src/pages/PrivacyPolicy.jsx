@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Shield, Eye, Lock, Database, Bell, Trash2 } from 'lucide-react';
 import {
   PolicyPage, PolicyHero, PolicyBody, PolicySection,
@@ -14,6 +15,11 @@ const SUMMARY = [
 export default function PrivacyPolicy() {
   return (
     <PolicyPage>
+      <Helmet>
+        <title>Privacy Policy — AIRent</title>
+        <meta name="description" content="AIRent's privacy policy — what data we collect, how we use it, and how we protect it. No prompt storage. PII auto-masked." />
+        <link rel="canonical" href="https://airent.dev/privacy" />
+      </Helmet>
       <PolicyHero
         icon={Shield}
         iconColor="text-emerald-400"

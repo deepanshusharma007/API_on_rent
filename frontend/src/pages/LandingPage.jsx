@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -55,6 +56,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+      <Helmet>
+        <title>AIRent — Rent AI APIs by the Minute | AI on Rent, API on Rent</title>
+        <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your virtual API key in under 10 seconds. AI on rent, API on rent." />
+        <link rel="canonical" href="https://airent.dev/" />
+      </Helmet>
       <Navbar />
 
       {/* ── HERO ── */}
