@@ -91,42 +91,32 @@ export default function Marketplace() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '32px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-2xl mx-auto">
-          <motion.p variants={fadeUp} className="eyebrow mb-4">AI API Marketplace</motion.p>
-          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '12px' }}>
-            Rent AI access by the hour
-          </motion.h1>
-          <motion.p variants={fadeUp} style={{ color: 'var(--c-text-2)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '24px' }}>
-            Pick a provider. Choose a duration. Get a virtual key instantly.
-          </motion.p>
-          <motion.div variants={fadeUp} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {[
-              { icon: LayoutDashboard, label: 'My Rentals', to: '/dashboard' },
-              { icon: FlaskConical,    label: 'Playground',  to: '/playground' },
-              { icon: Activity,        label: 'Status',      to: '/status' },
-            ].map(({ icon: Icon, label, to }) => (
-              <Link key={to} to={to} className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
-                <Icon size={14} /> {label}
+      <section style={{ paddingTop: '120px', paddingBottom: '16px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show" className="max-w-4xl mx-auto">
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <motion.p variants={fadeUp} className="eyebrow mb-4">AI API Marketplace</motion.p>
+              <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '10px' }}>
+                Rent AI access by the hour
+              </motion.h1>
+              <motion.p variants={fadeUp} style={{ color: 'var(--c-text-2)', fontSize: '0.95rem', lineHeight: 1.65, maxWidth: '480px' }}>
+                Pick a provider. Choose a duration. Get a virtual key instantly, in INR via UPI.
+              </motion.p>
+            </div>
+            <motion.div variants={fadeUp} style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+              <Link to="/dashboard" className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
+                <LayoutDashboard size={14} /> My Rentals
               </Link>
-            ))}
-            <button
-              onClick={() => { logout(); navigate('/'); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '7px 14px', borderRadius: '7px', fontSize: '0.825rem', fontWeight: 500,
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                color: '#f87171', cursor: 'pointer',
-              }}
-            >
-              <LogOut size={14} /> Log out
-            </button>
-          </motion.div>
+              <Link to="/playground" className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
+                <FlaskConical size={14} /> Playground
+              </Link>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
       {/* Main */}
-      <section style={{ padding: '0 20px 80px', flex: 1 }}>
+      <section style={{ padding: '24px 20px 80px', flex: 1 }}>
         <div className="max-w-4xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

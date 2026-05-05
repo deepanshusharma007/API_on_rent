@@ -224,26 +224,19 @@ export default function ApiDocs() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '64px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
-        <div className="max-w-3xl mx-auto">
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '8px 16px', borderRadius: '8px', marginBottom: '24px',
-            background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
-            color: 'var(--c-accent)', fontSize: '0.875rem', fontWeight: 500,
-          }}>
-            <BookOpen size={14} /> Developer Reference
-          </div>
-          <h1 style={{ fontSize: 'clamp(2.2rem,6vw,4rem)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--c-text)', marginBottom: '16px', lineHeight: 1.05 }}>
+      <section style={{ paddingTop: '120px', paddingBottom: '64px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <div className="max-w-4xl mx-auto">
+          <p className="eyebrow mb-5">Developer Reference</p>
+          <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 3.8rem)', fontWeight: 800, letterSpacing: '-0.035em', color: 'var(--c-text)', marginBottom: '16px', lineHeight: 1.05 }}>
             API Reference
           </h1>
-          <p style={{ fontSize: '1rem', color: 'var(--c-text-2)', lineHeight: 1.7 }}>
-            OpenAI-compatible endpoint. Drop in your virtual key and start building.
+          <p style={{ fontSize: '1rem', color: 'var(--c-text-2)', lineHeight: 1.7, maxWidth: '520px' }}>
+            OpenAI-compatible endpoint. Swap your key and base URL. That's it.
           </p>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto" style={{ padding: '0 20px 96px', display: 'flex', flexDirection: 'column', gap: '56px' }}>
+      <div className="max-w-4xl mx-auto" style={{ padding: '0 20px 96px', display: 'flex', flexDirection: 'column', gap: '64px' }}>
 
         {/* Authentication */}
         <section>
