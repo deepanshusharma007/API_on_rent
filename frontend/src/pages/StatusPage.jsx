@@ -32,12 +32,17 @@ export default function StatusPage() {
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const loadStatus = async () => {
+    setLoading(true);
     try {
       const response = await statusAPI.getStatus();
       setStatus(response.data);
       setLastRefresh(new Date());
-    } catch {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error('Status fetch failed:', err);
+      setStatus(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,32 +58,27 @@ export default function StatusPage() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '40px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-2xl mx-auto">
-          <motion.div variants={fadeUp} style={{
-            width: '48px', height: '48px', borderRadius: '10px',
-            background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
-          }}>
-            <Wifi size={22} style={{ color: 'var(--c-accent)' }} />
-          </motion.div>
+      <section style={{ paddingTop: '120px', paddingBottom: '40px', paddingLeft: '20px', paddingRight: '20px' }}>
+        <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show" className="max-w-3xl mx-auto">
           <motion.p variants={fadeUp} className="eyebrow mb-4">System Status</motion.p>
-          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '8px' }}>
+          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '10px' }}>
             Platform Health
           </motion.h1>
-          <motion.p variants={fadeUp} style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
-            Real-time provider health monitoring · refreshes every 30 s
-          </motion.p>
-          {lastRefresh && (
-            <motion.p variants={fadeUp} style={{ color: 'var(--c-text-3)', fontSize: '0.775rem', marginTop: '6px' }}>
-              Last updated: {lastRefresh.toLocaleTimeString()}
-            </motion.p>
-          )}
+          <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
+              Real-time provider health &middot; refreshes every 30s
+            </p>
+            {lastRefresh && (
+              <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem' }}>
+                Last updated: {lastRefresh.toLocaleTimeString()}
+              </p>
+            )}
+          </motion.div>
         </motion.div>
       </section>
 
       <section style={{ padding: '0 20px 80px', flex: 1 }}>
-        <div className="max-w-3xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="max-w-3xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[1, 2, 3].map(n => (

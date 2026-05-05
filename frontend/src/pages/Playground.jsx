@@ -261,7 +261,7 @@ export default function Playground() {
                 {!response && !loading && (
                   <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '48px 0' }}>
-                    <Zap size={28} style={{ color: 'var(--c-border-hi)', marginBottom: '12px' }} />
+                    <Zap size={28} style={{ color: 'var(--c-text-3)', marginBottom: '12px' }} />
                     <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Send a request to see the response</p>
                   </motion.div>
                 )}
@@ -275,8 +275,8 @@ export default function Playground() {
 
                 {response?.error && (
                   <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ padding: '16px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    <p style={{ color: '#f87171', fontSize: '0.875rem', fontFamily: 'monospace' }}>{response.error}</p>
+                    style={{ padding: '16px', borderRadius: '8px', background: 'rgba(248,81,73,0.06)', border: '1px solid rgba(248,81,73,0.2)' }}>
+                    <p style={{ color: 'var(--c-danger)', fontSize: '0.875rem', fontFamily: 'monospace' }}>{response.error}</p>
                   </motion.div>
                 )}
 
@@ -288,7 +288,7 @@ export default function Playground() {
                       background: 'var(--c-raised)', border: '1px solid var(--c-border)',
                       maxHeight: '360px', overflowY: 'auto',
                     }}>
-                      <pre style={{ color: 'var(--c-accent)', fontSize: '0.825rem', whiteSpace: 'pre-wrap', fontFamily: 'monospace', lineHeight: 1.6, margin: 0 }}>
+                      <pre style={{ color: 'var(--c-text)', fontSize: '0.825rem', whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.7, margin: 0 }}>
                         {response.content}
                         {response.streaming && <span style={{ animation: 'pulse 0.8s infinite', color: 'var(--c-accent-hi)' }}>▌</span>}
                       </pre>

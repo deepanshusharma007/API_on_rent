@@ -56,7 +56,7 @@ const SNIPPETS = {
 const lineColor = t =>
   t === 'kw' ? '#10b981' :
   t === 'st' ? '#58a6ff' :
-  t === 'cm' ? '#484f58' : '#8b949e';
+  t === 'cm' ? '#636e7b' : '#8b949e';
 
 // ── Features ───────────────────────────────────────────────────────────────
 const FEATURES = [
@@ -252,7 +252,7 @@ export default function LandingPage() {
                 {i < STEPS.length - 1 && (
                   <div style={{ position: 'absolute', top: '18px', right: '0', width: '100%', height: '1px', background: 'var(--c-border)', display: 'none' }} className="hidden lg:block" />
                 )}
-                <div style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--c-border-hi)', lineHeight: 1, marginBottom: '16px', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.04em' }}>
+                <div style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--c-text-3)', lineHeight: 1, marginBottom: '16px', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.04em' }}>
                   {s.n}
                 </div>
                 <h3 style={{ color: 'var(--c-text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>{s.title}</h3>

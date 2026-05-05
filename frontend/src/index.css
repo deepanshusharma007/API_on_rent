@@ -25,7 +25,7 @@
   /* ── Text (tinted slate, never pure white/gray) ── */
   --c-text:      #e6edf3;   /* primary — off-white with blue tint */
   --c-text-2:    #8b949e;   /* secondary */
-  --c-text-3:    #484f58;   /* muted/placeholder */
+  --c-text-3:    #636e7b;   /* muted — readable, not invisible */
 
   /* ── Accent: Emerald (single, committed) ── */
   --c-accent:    #10b981;   /* emerald-500 */
