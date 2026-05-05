@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-05T00:00:00.000Z",
+  "title": "Design System: AIRent",
+  "extensions": {
+    "colorMeta": {
+      "midnight-slate-bg":      { "role": "neutral",   "displayName": "Midnight Slate BG",      "canonical": "#0d1117", "tonalRamp": ["#060809","#0d1117","#131920","#1c2128","#222930","#2d3640","#3d4a57","#8b949e"] },
+      "midnight-slate-surface": { "role": "neutral",   "displayName": "Midnight Slate Surface",  "canonical": "#161b22", "tonalRamp": ["#060809","#0d1117","#161b22","#1c2128","#222930","#2d3640","#3d4a57","#8b949e"] },
+      "midnight-slate-raised":  { "role": "neutral",   "displayName": "Midnight Slate Raised",   "canonical": "#1c2128", "tonalRamp": ["#060809","#0d1117","#161b22","#1c2128","#222930","#2d3640","#3d4a57","#8b949e"] },
+      "midnight-slate-overlay": { "role": "neutral",   "displayName": "Midnight Slate Overlay",  "canonical": "#222930", "tonalRamp": ["#060809","#0d1117","#161b22","#1c2128","#222930","#2d3640","#3d4a57","#8b949e"] },
+      "forest-pulse":           { "role": "primary",   "displayName": "Forest Pulse",            "canonical": "#10b981", "tonalRamp": ["#022c16","#034a26","#065f46","#047857","#059669","#10b981","#34d399","#6ee7b7"] },
+      "forest-pulse-hi":        { "role": "primary",   "displayName": "Forest Pulse Hi",         "canonical": "#34d399", "tonalRamp": ["#022c16","#034a26","#065f46","#047857","#059669","#10b981","#34d399","#6ee7b7"] },
+      "semantic-danger":        { "role": "semantic",  "displayName": "Danger Red",              "canonical": "#f85149", "tonalRamp": ["#450a09","#7f1d1d","#991b1b","#b91c1c","#dc2626","#f85149","#fca5a5","#fee2e2"] },
+      "semantic-warning":       { "role": "semantic",  "displayName": "Amber Warning",           "canonical": "#d29922", "tonalRamp": ["#431407","#78350f","#92400e","#b45309","#d97706","#d29922","#fbbf24","#fef3c7"] },
+      "semantic-info":          { "role": "semantic",  "displayName": "Sky Info",                "canonical": "#58a6ff", "tonalRamp": ["#0c1a2e","#1e3a5f","#1d4ed8","#2563eb","#3b82f6","#58a6ff","#93c5fd","#dbeafe"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display",  "purpose": "Hero headlines. One per page. Maximum visual weight." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles. Tight tracking pulls weight into authority." },
+      "title":    { "displayName": "Title",    "purpose": "Card headings, modal titles, sidebar section labels." },
+      "body":     { "displayName": "Body",     "purpose": "All prose. Max 65ch line length. 1.65 line-height for readability." },
+      "label":    { "displayName": "Label",    "purpose": "Eyebrows, badges, table headers, status chips. Always uppercase." },
+      "mono":     { "displayName": "Mono",     "purpose": "Code snippets, API keys, virtual key strings, technical values." }
+    },
+    "shadows": [
+      { "name": "ambient-lift",  "value": "0 1px 3px rgba(0,0,0,0.4)",          "purpose": "Cards and surface containers. Ambient separation from background." },
+      { "name": "focus-glow",    "value": "0 0 0 3px rgba(16,185,129,0.15)",    "purpose": "Input focus state. Soft emerald halo confirming keyboard position." },
+      { "name": "error-glow",    "value": "0 0 0 3px rgba(248,81,73,0.15)",     "purpose": "Input error state. Red halo matching Danger semantic color." }
+    ],
+    "motion": [
+      { "name": "ease-expo-out",  "value": "cubic-bezier(0.22, 1, 0.36, 1)",   "purpose": "Standard easing for scroll reveals, transitions. All Framer Motion variants." },
+      { "name": "duration-fast",  "value": "150ms",                             "purpose": "Interactive state changes: hover, border, background." },
+      { "name": "duration-base",  "value": "300ms",                             "purpose": "Page fade-in on load. Modal/drawer entry." },
+      { "name": "duration-reveal","value": "500ms",                             "purpose": "Scroll-triggered fadeUp and fadeLeft/Right reveals." }
+    ],
+    "breakpoints": [
+      { "name": "sm",  "value": "640px"  },
+      { "name": "md",  "value": "768px"  },
+      { "name": "lg",  "value": "1024px" },
+      { "name": "xl",  "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The sole call-to-action. Forest Pulse background, very dark emerald text. Used once per primary flow.",
+      "html": "<button class=\"ds-btn-primary\">Get Started</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #022c22; background: #10b981; border: 1px solid #10b981; border-radius: 8px; cursor: pointer; white-space: nowrap; transition: background 150ms ease, border-color 150ms ease; } .ds-btn-primary:hover { background: #34d399; border-color: #34d399; } .ds-btn-primary:active { background: #059669; } .ds-btn-primary:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting actions. Raised surface background, full-border treatment.",
+      "html": "<button class=\"ds-btn-secondary\">View Docs</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #e6edf3; background: #1c2128; border: 1px solid #30363d; border-radius: 8px; cursor: pointer; white-space: nowrap; transition: background 150ms ease, border-color 150ms ease; } .ds-btn-secondary:hover { background: #222930; border-color: #484f58; } .ds-btn-secondary:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-priority actions in dense contexts. No background at rest.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: #8b949e; background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer; transition: background 150ms ease, color 150ms ease; } .ds-btn-ghost:hover { color: #e6edf3; background: #1c2128; } .ds-btn-ghost:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "All form fields. Raised surface, emerald focus ring, tonal error state.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Enter your email\" />",
+      "css": ".ds-input { display: block; width: 100%; padding: 9px 13px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; color: #e6edf3; background: #1c2128; border: 1px solid #30363d; border-radius: 8px; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input::placeholder { color: #484f58; } .ds-input:hover { border-color: #484f58; } .ds-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); } .ds-input.error { border-color: #f85149; } .ds-input.error:focus { box-shadow: 0 0 0 3px rgba(248,81,73,0.15); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Primary container surface. One level only; never nest cards.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Plan Name</h3><p class=\"ds-card-body\">Description of what this plan includes.</p></div>",
+      "css": ".ds-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: border-color 150ms ease; } .ds-card:hover { border-color: #484f58; } .ds-card-title { font-family: Inter, system-ui, sans-serif; font-size: 1.1rem; font-weight: 700; color: #e6edf3; margin-bottom: 8px; } .ds-card-body { font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; color: #8b949e; line-height: 1.65; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Status labels and plan tier indicators. Forest Pulse tinted, always uppercase.",
+      "html": "<span class=\"ds-badge\">Active</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; font-family: Inter, system-ui, sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px; background: #052e16; color: #34d399; border: 1px solid #065f46; }"
+    },
+    {
+      "name": "Eyebrow Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Section-level category label. Always above a headline, never inside a card.",
+      "html": "<p class=\"ds-eyebrow\">Our Story</p>",
+      "css": ".ds-eyebrow { font-family: Inter, system-ui, sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #10b981; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Indie Studio",
+    "overview": "AIRent was built by one developer who hit a real wall and decided to remove it. The design system carries that same energy: made with genuine care, not assembled from a template. It does not try to look like a venture-backed startup. It does not imitate the ultra-minimal aesthetic of tools like Vercel or Linear. It has warmth where those tools have coldness, and character where they have blankness.\n\nThe physical scene: a student or indie developer, late at night at their desk, laptop screen the dominant light source, testing an idea before it becomes a product. The interface is the only thing between them and their work. Dark because the ambient light demands it. Not pitch black, because pure black is harsh and alienating. Midnight Slate: a tinted, breathing dark that feels like a well-lit studio at 11pm, not a server room at 3am.\n\nThe single accent, Forest Pulse emerald, earns its place precisely because it is rare. It marks action, success, and focus. It does not decorate. It does not appear on half the screen. Every emerald pixel is intentional.",
+    "keyCharacteristics": [
+      "Tinted-dark surfaces in four steps, never pure black",
+      "One accent color (Forest Pulse emerald), used on less than 10% of any surface",
+      "Inter for everything: warm humanist sans, no serif, no display type",
+      "Gently curved edges (8px on interactive elements, 12px on containers)",
+      "Elevation through tonal layering, not drop shadows",
+      "Dot-grid body texture: present but almost imperceptible (3% opacity)",
+      "Framer Motion for scroll reveals; 300ms page fade-in on load"
+    ],
+    "rules": [
+      { "name": "The Forest Pulse Rule",     "body": "The emerald accent appears on fewer than 10% of any screen. Used for exactly three things: primary action, active/selected state, and focus ring. If you are reaching for it to add visual interest, stop and find a structural solution instead.", "section": "colors" },
+      { "name": "The Tinted Neutrals Rule",  "body": "Every surface is tinted toward the slate-indigo hue. #000000 and #ffffff are forbidden. If a color looks like it came from a default palette, it is wrong.", "section": "colors" },
+      { "name": "The Single Stack Rule",     "body": "Inter handles everything except code. No mixing of serif and sans. No decorative display faces. If a moment calls for visual drama, achieve it through weight contrast and scale, not a different font.", "section": "typography" },
+      { "name": "The Tight Headline Rule",   "body": "Negative letter-spacing (-0.025em to -0.035em) on display and headline sizes. Never apply negative tracking to body copy.", "section": "typography" },
+      { "name": "The Tonal Depth Rule",      "body": "Shadows do not create hierarchy; surface steps do. The four-step surface ramp is the elevation system. Shadows appear only as ambient lift on cards and focus/error glows on inputs.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the four Midnight Slate surface steps to communicate depth.",
+      "Do keep Forest Pulse on fewer than 10% of any screen.",
+      "Do tint every neutral toward the slate-indigo hue.",
+      "Do use negative letter-spacing on headlines and slightly open tracking on labels.",
+      "Do cap body copy at 65ch.",
+      "Do use Framer Motion ease-out expo curves for scroll reveals.",
+      "Do write copy that is direct and honest.",
+      "Do use INR amounts, UPI references, and Indian developer context as first-class content."
+    ],
+    "donts": [
+      "Don't use white or light backgrounds.",
+      "Don't use #000000 or #ffffff anywhere.",
+      "Don't use gradient text (background-clip: text with a gradient).",
+      "Don't use side-stripe borders (colored border-left or border-right greater than 1px as an accent).",
+      "Don't use glassmorphism decoratively.",
+      "Don't build a hero-metric template.",
+      "Don't make identical card grids.",
+      "Don't reach for a modal as a first response.",
+      "Don't imitate OpenAI's white/blue corporate aesthetic, Vercel's pitch-black ultra-minimalism, or colorful-startup rainbow gradients.",
+      "Don't add a second accent color.",
+      "Don't use em dashes in UI copy."
+    ]
+  }
+}
