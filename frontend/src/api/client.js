@@ -11,6 +11,13 @@ const apiClient = axios.create({
     },
 });
 
+// Public client — no auth interceptor, used for public endpoints like /status/
+const publicClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 8000,
+});
+
 // Add auth token to requests
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('auth_token');
@@ -178,10 +185,10 @@ export const invoiceAPI = {
         apiClient.get(`/api/invoice/${rentalId}/html`, { responseType: 'text' }),
 };
 
-// Status API
+// Status API — uses publicClient so 401 interceptor never fires on a public route
 export const statusAPI = {
     getStatus: () =>
-        apiClient.get('/status/'),
+        publicClient.get('/status/'),
 };
 
 export default apiClient;

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key, Clock, Zap, TrendingUp, Copy, Activity, History,
-  FileText, CheckCircle, ShoppingBag, FlaskConical,
+  FileText, CheckCircle2, ShoppingBag, FlaskConical,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { marketplaceAPI, invoiceAPI, paymentAPI } from '../api/client';
@@ -11,7 +11,10 @@ import CountdownTimer from '../components/CountdownTimer';
 import TokenProgressBar from '../components/TokenProgressBar';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { fadeUp, scaleIn, staggerContainer, viewport } from '../lib/motion';
+
+const EASE = [0.22, 1, 0.36, 1];
+const VP = { once: true, margin: '-40px' };
+const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
 
 const WS_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
 
@@ -20,131 +23,98 @@ const TABS = [
   { id: 'history', label: 'Rental History',  icon: History },
 ];
 
-function StatChip({ icon: Icon, label, value, accent }) {
+function StatCell({ icon: Icon, label, value, green }) {
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', gap: '4px',
-      padding: '12px', borderRadius: '8px',
-      background: 'var(--c-raised)', border: '1px solid var(--c-border)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--c-text-3)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-        <Icon size={12} style={{ color: accent ? 'var(--c-accent)' : 'var(--c-text-3)', flexShrink: 0 }} />
-        {label}
-      </div>
-      <div style={{ fontSize: '1rem', fontWeight: 800, color: accent ? 'var(--c-accent-hi)' : 'var(--c-text)' }}>{value}</div>
+    <div style={{ padding: '12px 14px', background: 'var(--nb-bg)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Icon size={10} /> {label}
+      </span>
+      <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: green ? 'var(--nb-green)' : 'var(--nb-text)' }}>{value}</span>
     </div>
   );
 }
 
 function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
+  const isActive = rental.status === 'active' || !isHistory;
+
   return (
-    <motion.div variants={scaleIn}>
+    <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}>
       <div style={{
-        padding: '20px', borderRadius: '10px',
-        background: 'var(--c-surface)',
-        border: `1px solid ${isHistory ? 'var(--c-border)' : 'var(--c-border-hi)'}`,
-        opacity: isHistory ? 0.8 : 1,
+        border: `1px solid ${isActive && !isHistory ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
+        borderRadius: '4px', overflow: 'hidden',
+        background: isActive && !isHistory ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
+        opacity: isHistory ? 0.85 : 1,
       }}>
-        {/* Status + Plan */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-            <span style={{
-              width: '7px', height: '7px', borderRadius: '50%',
-              background: rental.status === 'active' ? 'var(--c-accent)' : 'var(--c-border-hi)',
-              animation: rental.status === 'active' ? 'pulse 2s infinite' : 'none',
-            }} />
-            <span style={{
-              fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
-              color: rental.status === 'active' ? 'var(--c-accent)' : 'var(--c-text-3)',
-            }}>
-              {rental.status}
+        {/* Card header */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-raised)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isActive && !isHistory ? 'var(--nb-green)' : 'var(--nb-text-4)', flexShrink: 0 }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.08em', color: isActive && !isHistory ? 'var(--nb-green)' : 'var(--nb-text-3)' }}>
+              {(rental.status || 'ACTIVE').toUpperCase()}
             </span>
           </div>
           {rental.plan_name && (
-            <span style={{
-              fontSize: '0.7rem', color: 'var(--c-text-3)',
-              background: 'var(--c-raised)', border: '1px solid var(--c-border)',
-              padding: '2px 8px', borderRadius: '4px',
-            }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em', border: '1px solid var(--nb-border)', padding: '2px 8px', borderRadius: '2px' }}>
               {rental.plan_name}
             </span>
           )}
         </div>
 
-        {/* Virtual Key */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', color: 'var(--c-text-3)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
-            Virtual API Key
-          </label>
+        {/* Virtual Key row */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>VIRTUAL API KEY</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              flex: 1, padding: '8px 12px', borderRadius: '6px',
-              background: 'var(--c-raised)', border: '1px solid var(--c-border)',
-              fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--c-text-2)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
+            <div style={{ flex: 1, padding: '8px 12px', borderRadius: '2px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--nb-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {rental.virtual_key}
             </div>
             <button
               onClick={() => !isHistory && onCopy(rental.virtual_key)}
               disabled={isHistory}
-              style={{
-                padding: '8px', borderRadius: '6px',
-                background: 'var(--c-raised)', border: '1px solid var(--c-border)',
-                color: isHistory ? 'var(--c-text-3)' : 'var(--c-accent)',
-                cursor: isHistory ? 'not-allowed' : 'pointer', opacity: isHistory ? 0.4 : 1,
-              }}
+              style={{ padding: '8px', borderRadius: '2px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', color: isHistory ? 'var(--nb-text-4)' : 'var(--nb-green)', cursor: isHistory ? 'not-allowed' : 'pointer', opacity: isHistory ? 0.4 : 1 }}
             >
-              <Copy size={14} />
+              <Copy size={13} />
             </button>
           </div>
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--nb-grid)', borderBottom: '1px solid var(--nb-border)' }}>
           {isHistory ? (
-            <StatChip icon={Clock} label="Expired" value={new Date(rental.expires_at).toLocaleDateString()} />
+            <StatCell icon={Clock} label="EXPIRED" value={new Date(rental.expires_at).toLocaleDateString()} />
           ) : (
-            <CountdownTimer
-              ttlSeconds={rental.ttl_seconds}
-              expiresAt={rental.expires_at}
-              onExpire={() => onExpire(rental.id)}
-              size="md"
-            />
+            <div style={{ padding: '12px 14px', background: 'var(--nb-bg)' }}>
+              <CountdownTimer
+                ttlSeconds={rental.ttl_seconds}
+                expiresAt={rental.expires_at}
+                onExpire={() => onExpire(rental.id)}
+                size="md"
+              />
+            </div>
           )}
-          <StatChip icon={Zap} label={isHistory ? 'Tokens Used' : 'Tokens Left'}
-            value={`${((isHistory ? rental.tokens_used : rental.tokens_remaining) / 1000).toFixed(1)}K`}
-            accent={!isHistory} />
-          <StatChip icon={TrendingUp} label="Total Cap"
-            value={`${((rental.tokens_used + rental.tokens_remaining) / 1000).toFixed(1)}K`} />
-          <StatChip icon={Key} label="Requests" value={rental.requests_made} />
+          <StatCell icon={Zap} label={isHistory ? 'TOKENS USED' : 'TOKENS LEFT'} value={`${((isHistory ? rental.tokens_used : rental.tokens_remaining) / 1000).toFixed(1)}K`} green={!isHistory} />
+          <StatCell icon={TrendingUp} label="TOTAL CAP" value={`${((rental.tokens_used + rental.tokens_remaining) / 1000).toFixed(1)}K`} />
+          <StatCell icon={Key} label="REQUESTS" value={rental.requests_made} />
         </div>
 
         {/* Progress */}
-        <div style={{ marginBottom: '16px' }}>
-          <TokenProgressBar
-            used={rental.tokens_used}
-            remaining={rental.tokens_remaining}
-            size={isHistory ? 'sm' : 'md'}
-          />
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+          <TokenProgressBar used={rental.tokens_used} remaining={rental.tokens_remaining} size={isHistory ? 'sm' : 'md'} />
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '12px 20px', background: 'var(--nb-raised)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {rental.created_at && (
-            <span style={{ color: 'var(--c-text-3)', fontSize: '0.75rem' }}>
-              {new Date(rental.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-4)', letterSpacing: '0.04em' }}>
+              {new Date(rental.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
             </span>
           )}
           <button
             onClick={() => onInvoice(rental.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              color: 'var(--c-accent)', fontSize: '0.775rem', fontWeight: 500,
-              background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.04em', color: 'var(--nb-text-3)', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto', transition: 'color 120ms' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
           >
-            <FileText size={13} /> Receipt
+            <FileText size={11} /> RECEIPT
           </button>
         </div>
       </div>
@@ -159,7 +129,7 @@ export default function Dashboard() {
   const [activeTab,      setActiveTab]      = useState('active');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const wsRefs = useRef({});
-  const [searchParams]  = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const orderId = searchParams.get('order_id');
@@ -194,8 +164,8 @@ export default function Dashboard() {
         }
       } catch {}
     };
-    ws.onerror  = () => ws.close();
-    ws.onclose  = () => { delete wsRefs.current[rentalId]; };
+    ws.onerror = () => ws.close();
+    ws.onclose = () => { delete wsRefs.current[rentalId]; };
     wsRefs.current[rentalId] = ws;
   };
 
@@ -239,130 +209,122 @@ export default function Dashboard() {
   const currentRentals = activeTab === 'active' ? activeRentals : historyRentals;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)' }}>
       <Navbar />
 
-      {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '24px', paddingLeft: '20px', paddingRight: '20px' }}>
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-5xl mx-auto">
-
+      {/* ── Hero ── */}
+      <section
+        className="nb-grid-hero"
+        style={{
+          paddingTop: 'clamp(120px,16vw,180px)',
+          paddingBottom: 'clamp(32px,4vw,48px)',
+          paddingLeft: 'clamp(20px,5vw,72px)',
+          paddingRight: 'clamp(20px,5vw,72px)',
+          borderBottom: '1px solid var(--nb-border)',
+          position: 'relative',
+        }}
+      >
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
           {/* Payment success banner */}
           <AnimatePresence>
             {paymentSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{
-                  marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '14px 16px', borderRadius: '8px',
-                  background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
-                }}
+                style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '4px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)' }}
               >
-                <CheckCircle size={18} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
+                <CheckCircle2 size={16} style={{ color: 'var(--nb-green)', flexShrink: 0 }} />
                 <div>
-                  <p style={{ color: 'var(--c-accent-hi)', fontWeight: 600, fontSize: '0.875rem' }}>Payment confirmed!</p>
-                  <p style={{ color: 'var(--c-accent)', fontSize: '0.775rem' }}>Your rental is being activated — it will appear below in a few seconds.</p>
+                  <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--nb-green)', letterSpacing: '-0.01em' }}>Payment confirmed!</p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--nb-text-2)', marginTop: '2px' }}>Your rental is activating — it will appear below in a few seconds.</p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <p className="eyebrow" style={{ marginBottom: '8px' }}>Dashboard</p>
-              <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', marginBottom: '4px' }}>My Rentals</h1>
-              <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Manage and monitor your AI API rentals</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Link to="/playground" className="btn btn-secondary">
-                <FlaskConical size={14} /> Playground
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
+            <motion.div variants={fadeUp(0)} initial="hidden" animate="show">
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <span style={{ width: '18px', height: '1px', background: 'var(--nb-green)', display: 'inline-block' }} />
+                DASHBOARD
+              </span>
+              <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(2.2rem,5vw,3.4rem)', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-text)', lineHeight: 0.98, marginBottom: '10px' }}>
+                My Rentals
+              </h1>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--nb-text-2)' }}>Manage and monitor your AI API rentals.</p>
+            </motion.div>
+            <motion.div variants={fadeUp(0.08)} initial="hidden" animate="show" style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <Link to="/playground" className="btn btn-secondary" style={{ fontSize: '0.8125rem' }}>
+                <FlaskConical size={13} /> Playground
               </Link>
-              <Link to="/marketplace" className="btn btn-primary">
-                <ShoppingBag size={14} /> Buy Plan
+              <Link to="/marketplace" className="btn btn-primary" style={{ fontSize: '0.8125rem' }}>
+                <ShoppingBag size={13} /> Buy plan
               </Link>
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Tabs */}
-      <section style={{ paddingLeft: '20px', paddingRight: '20px', paddingBottom: '20px' }}>
-        <div className="max-w-5xl mx-auto">
-          <div style={{
-            display: 'inline-flex', gap: '4px', padding: '4px',
-            background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '8px',
-          }}>
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '7px',
-                  padding: '7px 16px', borderRadius: '6px', fontSize: '0.825rem', fontWeight: 500,
-                  cursor: 'pointer', border: '1px solid',
-                  background:  activeTab === tab.id ? 'var(--c-accent-bg)'     : 'transparent',
-                  borderColor: activeTab === tab.id ? 'var(--c-accent-border)' : 'transparent',
-                  color:       activeTab === tab.id ? 'var(--c-accent-hi)'     : 'var(--c-text-3)',
-                  transition: 'all 150ms',
-                }}
-              >
-                <tab.icon size={14} />
-                {tab.label}
-                {tab.id === 'active' && activeRentals.length > 0 && (
-                  <span style={{
-                    minWidth: '18px', height: '18px', padding: '0 4px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--c-accent)', color: '#022c22',
-                    borderRadius: '9px', fontSize: '0.65rem', fontWeight: 700,
-                  }}>
-                    {activeRentals.length}
-                  </span>
-                )}
-              </button>
-            ))}
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Content */}
-      <section style={{ padding: '0 20px 80px', flex: 1 }}>
-        <div className="max-w-5xl mx-auto">
+      {/* ── Tabs ── */}
+      <section style={{ padding: '20px clamp(20px,5vw,72px) 0', borderBottom: '1px solid var(--nb-border)' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', gap: '0' }}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                padding: '10px 20px', borderRadius: '0', fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 500,
+                cursor: 'pointer', border: 'none', borderBottom: activeTab === tab.id ? '2px solid var(--nb-green)' : '2px solid transparent',
+                background: 'transparent',
+                color: activeTab === tab.id ? 'var(--nb-text)' : 'var(--nb-text-3)',
+                transition: 'color 120ms',
+                marginBottom: '-1px',
+              }}>
+              <tab.icon size={13} />
+              {tab.label}
+              {tab.id === 'active' && activeRentals.length > 0 && (
+                <span style={{ minWidth: '18px', height: '16px', padding: '0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nb-green)', color: 'oklch(12% 0.028 255)', borderRadius: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700 }}>
+                  {activeRentals.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Content ── */}
+      <section style={{ flex: 1, padding: 'clamp(28px,4vw,48px) clamp(20px,5vw,72px) clamp(64px,9vw,104px)' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="dash-grid">
                 {[1, 2].map(n => (
-                  <div key={n} style={{ height: '280px', background: 'var(--c-surface)', borderRadius: '10px', border: '1px solid var(--c-border)', animation: 'pulse 1.5s infinite' }} />
+                  <div key={n} style={{ height: '280px', background: 'var(--nb-surface)', borderRadius: '4px', border: '1px solid var(--nb-border)', animation: 'nb-pulse 1.5s infinite' }} />
                 ))}
               </motion.div>
             ) : currentRentals.length === 0 ? (
               <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 style={{ textAlign: 'center', padding: '80px 0' }}>
-                <div style={{
-                  width: '56px', height: '56px', borderRadius: '12px',
-                  background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 16px',
-                }}>
-                  <ShoppingBag size={24} style={{ color: 'var(--c-accent)' }} />
+                <div style={{ width: '40px', height: '40px', borderRadius: '2px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <ShoppingBag size={18} style={{ color: 'var(--nb-green)' }} />
                 </div>
-                <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px' }}>
+                <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--nb-text)', letterSpacing: '-0.02em', marginBottom: '8px' }}>
                   {activeTab === 'active' ? 'No active rentals' : 'No rental history'}
                 </h3>
-                <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', marginBottom: '24px' }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--nb-text-2)', marginBottom: '24px' }}>
                   {activeTab === 'active' ? 'Purchase a plan to get your virtual API key instantly.' : 'Your past rentals will appear here.'}
                 </p>
                 {activeTab === 'active' && (
                   <Link to="/marketplace" className="btn btn-primary" style={{ display: 'inline-flex' }}>
-                    <ShoppingBag size={14} /> Browse Plans
+                    <ShoppingBag size={13} /> Browse plans
                   </Link>
                 )}
               </motion.div>
             ) : (
-              <motion.div
-                key={activeTab}
-                variants={staggerContainer(0.07)} initial="hidden" animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              >
+              <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="dash-grid">
                 {currentRentals.map(rental => (
                   <RentalCard
                     key={rental.id}
@@ -380,7 +342,10 @@ export default function Dashboard() {
       </section>
 
       <Footer />
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }`}</style>
+      <style>{`
+        @keyframes nb-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @media (max-width: 720px) { .dash-grid { grid-template-columns: 1fr !important; } }
+      `}</style>
     </div>
   );
 }

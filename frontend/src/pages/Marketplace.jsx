@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Zap, Clock, ShoppingBag, ArrowRight, LogOut,
-  LayoutDashboard, FlaskConical, Activity, CheckCircle, Cpu, ChevronLeft,
-} from 'lucide-react';
+import { Zap, Clock, ShoppingBag, ArrowRight, LayoutDashboard, FlaskConical, CheckCircle2, Cpu, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { marketplaceAPI, paymentAPI, providersAPI } from '../api/client';
 import useAuthStore from '../store/authStore';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { fadeUp, scaleIn, staggerContainer, viewport } from '../lib/motion';
 import { getProviderMeta } from '../lib/providerMeta.jsx';
+
+const EASE = [0.22, 1, 0.36, 1];
+const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
 
 function formatTokens(n) {
   if (!n) return '—';
@@ -30,17 +29,28 @@ function formatDuration(plan) {
 
 const DURATION_LABELS = { 15: '15 min', 30: '30 min', 60: '1 hour', 1440: '24 hrs' };
 
+function StepNum({ n, done }) {
+  return (
+    <div style={{
+      width: '22px', height: '22px', borderRadius: '2px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em',
+      background: done ? 'var(--nb-green-bg)' : 'var(--nb-raised)',
+      border: `1px solid ${done ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
+      color: done ? 'var(--nb-green)' : 'var(--nb-text-3)',
+    }}>
+      {String(n).padStart(2, '0')}
+    </div>
+  );
+}
+
 export default function Marketplace() {
   const [plans,           setPlans]           = useState([]);
   const [activeProviders, setActiveProviders] = useState([]);
   const [loading,         setLoading]         = useState(true);
   const [purchasing,      setPurchasing]      = useState(false);
-
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [selectedPlan,     setSelectedPlan]     = useState(null);
-
-  const navigate = useNavigate();
-  const logout   = useAuthStore(s => s.logout);
 
   useEffect(() => {
     Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
@@ -73,171 +83,165 @@ export default function Marketplace() {
 
   const step = selectedProvider ? (selectedPlan ? 3 : 2) : 1;
 
-  const StepNum = ({ n, active }) => (
-    <div style={{
-      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '0.75rem', fontWeight: 700,
-      background: active ? 'var(--c-accent-bg)'     : 'var(--c-raised)',
-      border:     `1px solid ${active ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
-      color:      active ? 'var(--c-accent-hi)'      : 'var(--c-text-3)',
-    }}>
-      {n}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)' }}>
       <Navbar />
 
-      {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '32px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
-        <motion.div variants={staggerContainer(0.1)} initial="hidden" animate="show" className="max-w-2xl mx-auto">
-          <motion.p variants={fadeUp} className="eyebrow mb-4">AI API Marketplace</motion.p>
-          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2rem,5vw,3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--c-text)', lineHeight: 1.1, marginBottom: '12px' }}>
-            Rent AI access by the hour
-          </motion.h1>
-          <motion.p variants={fadeUp} style={{ color: 'var(--c-text-2)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '24px' }}>
-            Pick a provider. Choose a duration. Get a virtual key instantly.
-          </motion.p>
-          <motion.div variants={fadeUp} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {[
-              { icon: LayoutDashboard, label: 'My Rentals', to: '/dashboard' },
-              { icon: FlaskConical,    label: 'Playground',  to: '/playground' },
-              { icon: Activity,        label: 'Status',      to: '/status' },
-            ].map(({ icon: Icon, label, to }) => (
-              <Link key={to} to={to} className="btn btn-secondary" style={{ fontSize: '0.825rem' }}>
-                <Icon size={14} /> {label}
-              </Link>
-            ))}
-            <button
-              onClick={() => { logout(); navigate('/'); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '7px 14px', borderRadius: '7px', fontSize: '0.825rem', fontWeight: 500,
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                color: '#f87171', cursor: 'pointer',
-              }}
+      {/* ── Hero ── */}
+      <section
+        className="nb-grid-hero"
+        style={{
+          paddingTop: 'clamp(120px,16vw,180px)',
+          paddingBottom: 'clamp(32px,4vw,48px)',
+          paddingLeft: 'clamp(20px,5vw,72px)',
+          paddingRight: 'clamp(20px,5vw,72px)',
+          borderBottom: '1px solid var(--nb-border)',
+          position: 'relative',
+        }}
+      >
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
+          <div>
+            <motion.span variants={fadeUp(0)} initial="hidden" animate="show"
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}
             >
-              <LogOut size={14} /> Log out
-            </button>
+              <span style={{ width: '18px', height: '1px', background: 'var(--nb-green)', display: 'inline-block' }} />
+              AI API MARKETPLACE
+            </motion.span>
+            <motion.h1 variants={fadeUp(0.06)} initial="hidden" animate="show"
+              style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(2.2rem,5vw,3.4rem)', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-text)', lineHeight: 0.98, marginBottom: '16px' }}
+            >
+              Rent AI by the hour.
+            </motion.h1>
+            <motion.p variants={fadeUp(0.12)} initial="hidden" animate="show"
+              style={{ fontFamily: 'var(--font-body)', fontSize: '0.9375rem', color: 'var(--nb-text-2)', lineHeight: 1.75, maxWidth: '44ch' }}
+            >
+              Pick a provider, choose a duration, get a virtual key instantly. Pay in INR via UPI.
+            </motion.p>
+          </div>
+          <motion.div variants={fadeUp(0.16)} initial="hidden" animate="show" style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <Link to="/dashboard" className="btn btn-secondary" style={{ fontSize: '0.8125rem' }}>
+              <LayoutDashboard size={13} /> My Rentals
+            </Link>
+            <Link to="/playground" className="btn btn-secondary" style={{ fontSize: '0.8125rem' }}>
+              <FlaskConical size={13} /> Playground
+            </Link>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Main */}
-      <section style={{ padding: '0 20px 80px', flex: 1 }}>
-        <div className="max-w-4xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      {/* ── Steps ── */}
+      <section style={{ flex: 1, padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,72px) clamp(64px,9vw,104px)' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1,2,3,4].map(n => (
-                <div key={n} style={{ height: '112px', background: 'var(--c-surface)', borderRadius: '10px', border: '1px solid var(--c-border)', animation: 'pulse 1.5s infinite' }} />
-              ))}
+            <div style={{ border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+              {[1, 2, 3].map(n => <div key={n} style={{ height: '80px', background: 'var(--nb-surface)', borderTop: n > 1 ? '1px solid var(--nb-border)' : 'none', animation: 'nb-pulse 1.5s infinite' }} />)}
             </div>
           ) : (
             <>
               {/* Step 1 — Provider */}
-              <motion.div variants={staggerContainer(0.06)} initial="hidden" whileInView="show" viewport={viewport}>
-                <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <StepNum n={1} active={step >= 1} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <StepNum n={1} done={step >= 1} />
                   <div>
-                    <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>Choose a provider</h2>
-                    <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem' }}>Select the AI provider you want to use</p>
+                    <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--nb-text)', letterSpacing: '-0.01em' }}>Choose a provider</h2>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--nb-text-3)', marginTop: '2px' }}>Select the AI provider you want to use</p>
                   </div>
                   {selectedProvider && (
-                    <button
-                      onClick={() => { setSelectedProvider(null); setSelectedPlan(null); }}
-                      style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.775rem', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      <ChevronLeft size={12} /> Change
+                    <button onClick={() => { setSelectedProvider(null); setSelectedPlan(null); }}
+                      style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <ChevronLeft size={11} /> CHANGE
                     </button>
                   )}
-                </motion.div>
+                </div>
 
                 {activeProviders.length === 0 ? (
-                  <div style={{ padding: '40px', textAlign: 'center', color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
-                    No providers available right now — check back soon.
+                  <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--nb-text-3)', letterSpacing: '0.06em' }}>
+                    NO PROVIDERS AVAILABLE — CHECK BACK SOON
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: activeProviders.length === 1 ? '200px' : activeProviders.length === 2 ? '1fr 1fr' : 'repeat(auto-fill, minmax(160px, 1fr))' }}>
+                  <div style={{ display: 'grid', gap: '1px', gridTemplateColumns: `repeat(${Math.min(activeProviders.length, 4)}, 1fr)`, background: 'var(--nb-grid)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
                     {activeProviders.map(providerId => {
                       const meta = getProviderMeta(providerId);
                       const isSelected = selectedProvider === providerId;
                       return (
-                        <motion.button key={providerId} variants={scaleIn}
+                        <button key={providerId}
                           onClick={() => { setSelectedProvider(providerId); setSelectedPlan(null); }}
                           style={{
-                            textAlign: 'left', padding: '20px', borderRadius: '10px',
-                            background: isSelected ? 'var(--c-accent-bg)' : 'var(--c-surface)',
-                            border: `1px solid ${isSelected ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
-                            cursor: 'pointer', position: 'relative',
-                            transition: 'border-color 150ms, background 150ms',
-                          }}>
-                          {isSelected && <CheckCircle size={14} style={{ position: 'absolute', top: '12px', right: '12px', color: 'var(--c-accent)' }} />}
-                          <div style={{ marginBottom: '8px' }}>
-                            <meta.Logo className={`w-8 h-8 ${meta.logoColor}`} style={{ width: '32px', height: '32px' }} />
+                            textAlign: 'left', padding: '24px',
+                            background: isSelected ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
+                            border: 'none', cursor: 'pointer', position: 'relative',
+                            transition: 'background 120ms',
+                          }}
+                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-raised)'; }}
+                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-surface)'; }}
+                        >
+                          {isSelected && (
+                            <div style={{ position: 'absolute', top: '10px', right: '10px', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--nb-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <CheckCircle2 size={10} style={{ color: 'var(--nb-bg)' }} />
+                            </div>
+                          )}
+                          <div style={{ marginBottom: '10px' }}>
+                            <meta.Logo style={{ width: '28px', height: '28px' }} />
                           </div>
-                          <div style={{ fontWeight: 700, fontSize: '0.925rem', color: 'var(--c-text)', marginBottom: '2px' }}>
+                          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: isSelected ? 'var(--nb-green)' : 'var(--nb-text)', letterSpacing: '-0.01em', marginBottom: '3px' }}>
                             {meta.name || providerId}
                           </div>
-                          <div style={{ color: 'var(--c-text-3)', fontSize: '0.75rem' }}>All models included</div>
-                        </motion.button>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em' }}>ALL MODELS INCLUDED</div>
+                        </button>
                       );
                     })}
                   </div>
                 )}
-              </motion.div>
+              </div>
 
               {/* Step 2 — Duration */}
               <AnimatePresence>
                 {selectedProvider && (
-                  <motion.div key="step2" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <motion.div key="step2" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                      <StepNum n={2} active={step >= 2} />
+                      <StepNum n={2} done={step >= 2} />
                       <div>
-                        <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>Choose a duration</h2>
-                        <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem' }}>Your key works for the full period</p>
+                        <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--nb-text)', letterSpacing: '-0.01em' }}>Choose a duration</h2>
+                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--nb-text-3)', marginTop: '2px' }}>Your key is valid for the full period</p>
                       </div>
                       {selectedPlan && (
-                        <button
-                          onClick={() => setSelectedPlan(null)}
-                          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.775rem', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-                        >
-                          <ChevronLeft size={12} /> Change
+                        <button onClick={() => setSelectedPlan(null)}
+                          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em', background: 'none', border: 'none', cursor: 'pointer' }}>
+                          <ChevronLeft size={11} /> CHANGE
                         </button>
                       )}
                     </div>
 
                     {plans.length === 0 ? (
-                      <div style={{ padding: '40px', textAlign: 'center', color: 'var(--c-text-3)', fontSize: '0.875rem' }}>
-                        No plans available yet — check back soon.
-                      </div>
+                      <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--nb-text-3)', letterSpacing: '0.06em' }}>NO PLANS AVAILABLE YET</div>
                     ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div style={{ display: 'grid', gap: '1px', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)`, background: 'var(--nb-grid)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
                         {plans.map(plan => {
                           const isSelected = selectedPlan?.id === plan.id;
                           const durationText = DURATION_LABELS[plan.duration_minutes] || formatDuration(plan);
                           return (
-                            <motion.button key={plan.id} variants={scaleIn}
+                            <button key={plan.id}
                               onClick={() => setSelectedPlan(plan)}
                               style={{
-                                textAlign: 'left', padding: '18px', borderRadius: '10px',
-                                background: isSelected ? 'var(--c-accent-bg)' : 'var(--c-surface)',
-                                border: `1px solid ${isSelected ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
-                                cursor: 'pointer', position: 'relative',
-                                transition: 'border-color 150ms, background 150ms',
-                              }}>
-                              {isSelected && <CheckCircle size={13} style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--c-accent)' }} />}
-                              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--c-text)', marginBottom: '2px' }}>
-                                {durationText}
-                              </div>
-                              <div style={{ color: 'var(--c-text-3)', fontSize: '0.75rem', marginBottom: '12px' }}>
-                                {formatTokens(plan.token_cap)} tokens
-                              </div>
-                              <div style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em', color: isSelected ? 'var(--c-accent-hi)' : 'var(--c-text)' }}>
-                                ₹{plan.price}
-                              </div>
-                            </motion.button>
+                                textAlign: 'left', padding: '24px',
+                                background: isSelected ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
+                                border: 'none', cursor: 'pointer', position: 'relative',
+                                transition: 'background 120ms',
+                              }}
+                              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-raised)'; }}
+                              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-surface)'; }}
+                            >
+                              {isSelected && (
+                                <div style={{ position: 'absolute', top: '10px', right: '10px', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--nb-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <CheckCircle2 size={10} style={{ color: 'var(--nb-bg)' }} />
+                                </div>
+                              )}
+                              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: isSelected ? 'var(--nb-green)' : 'var(--nb-text)', letterSpacing: '-0.02em', marginBottom: '3px' }}>{durationText}</div>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em', marginBottom: '16px' }}>{formatTokens(plan.token_cap)} TOKENS</div>
+                              <div style={{ fontFamily: 'var(--font-head)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.03em', color: isSelected ? 'var(--nb-green)' : 'var(--nb-text)' }}>₹{plan.price}</div>
+                            </button>
                           );
                         })}
                       </div>
@@ -246,101 +250,89 @@ export default function Marketplace() {
                 )}
               </AnimatePresence>
 
-              {/* Step 3 — Review & Buy */}
+              {/* Step 3 — Review & Rent */}
               <AnimatePresence>
-                {selectedProvider && selectedPlan && (
-                  <motion.div key="step3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                      <StepNum n={3} active />
-                      <div>
-                        <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '0.95rem' }}>Review & rent</h2>
-                        <p style={{ color: 'var(--c-text-3)', fontSize: '0.775rem' }}>One-time payment · instant key delivery · no subscription</p>
+                {selectedProvider && selectedPlan && (() => {
+                  const provMeta = getProviderMeta(selectedProvider);
+                  const durationText = DURATION_LABELS[selectedPlan.duration_minutes] || formatDuration(selectedPlan);
+                  return (
+                    <motion.div key="step3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                        <StepNum n={3} done />
+                        <div>
+                          <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--nb-text)', letterSpacing: '-0.01em' }}>Review and rent</h2>
+                          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--nb-text-3)', marginTop: '2px' }}>One-time payment, instant key delivery, no subscription</p>
+                        </div>
                       </div>
-                    </div>
 
-                    {(() => {
-                      const provMeta = getProviderMeta(selectedProvider);
-                      const durationText = DURATION_LABELS[selectedPlan.duration_minutes] || formatDuration(selectedPlan);
-                      return (
-                        <div style={{
-                          borderRadius: '10px', overflow: 'hidden',
-                          background: 'var(--c-surface)',
-                          border: '1px solid var(--c-accent-border)',
-                        }}>
-                          <div style={{ padding: '24px' }}>
-                            <div className="flex flex-col md:flex-row md:items-start gap-6">
-                              {/* Details */}
-                              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                  <provMeta.Logo className={`w-8 h-8 ${provMeta.logoColor}`} style={{ width: '32px', height: '32px' }} />
-                                  <div>
-                                    <h3 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.1rem' }}>
-                                      {provMeta.name || selectedProvider} — {durationText}
-                                    </h3>
-                                    <p style={{ color: 'var(--c-text-3)', fontSize: '0.825rem' }}>
-                                      Access to all active {provMeta.name || selectedProvider} models
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Stats */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                  {[
-                                    { icon: Zap,   label: 'Token cap',  value: formatTokens(selectedPlan.token_cap) },
-                                    { icon: Clock, label: 'Duration',    value: durationText },
-                                    { icon: Cpu,   label: 'Rate limit',  value: `${selectedPlan.rpm_limit} RPM` },
-                                  ].map(({ icon: Icon, label, value }) => (
-                                    <div key={label} style={{ padding: '12px', borderRadius: '8px', background: 'var(--c-raised)', border: '1px solid var(--c-border)' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
-                                        <Icon size={11} style={{ color: 'var(--c-text-3)' }} />
-                                        <span style={{ fontSize: '0.65rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{label}</span>
-                                      </div>
-                                      <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--c-accent-hi)' }}>{value}</div>
-                                    </div>
-                                  ))}
-                                </div>
-
-                                {/* Features */}
-                                <ul style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                  {[
-                                    'Instant virtual key delivery via email & dashboard',
-                                    'Key is IP-pinned after first use for security',
-                                    'PII auto-masked before forwarding to provider',
-                                    'HTML invoice available after purchase',
-                                  ].map(f => (
-                                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--c-text-2)' }}>
-                                      <CheckCircle size={13} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
-                                      {f}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-
-                              {/* Price + CTA */}
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '16px', minWidth: '140px' }}>
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--c-text)' }}>₹{selectedPlan.price}</div>
-                                  <div style={{ color: 'var(--c-text-3)', fontSize: '0.8rem' }}>one-time</div>
-                                </div>
-                                <button
-                                  onClick={handlePurchase} disabled={purchasing}
-                                  className="btn btn-primary"
-                                  style={{ width: '100%', justifyContent: 'center', padding: '11px 20px', opacity: purchasing ? 0.6 : 1 }}
-                                >
-                                  {purchasing
-                                    ? <span style={{ width: '16px', height: '16px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#022c22', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                                    : <><ShoppingBag size={14} /> Rent Now <ArrowRight size={14} /></>
-                                  }
-                                </button>
-                                <p style={{ color: 'var(--c-text-3)', fontSize: '0.725rem', textAlign: 'center' }}>Secure checkout via Cashfree</p>
+                      <div style={{ border: '1px solid var(--nb-green-border)', borderRadius: '4px', overflow: 'hidden', background: 'var(--nb-green-bg)' }}>
+                        <div style={{ padding: '28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}>
+                          {/* Left: Details */}
+                          <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <provMeta.Logo style={{ width: '28px', height: '28px', flexShrink: 0 }} />
+                              <div>
+                                <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--nb-text)', letterSpacing: '-0.02em' }}>
+                                  {provMeta.name || selectedProvider} — {durationText}
+                                </h3>
+                                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--nb-text-2)' }}>All active {provMeta.name || selectedProvider} models included</p>
                               </div>
                             </div>
+
+                            {/* Stats row */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--nb-border)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                              {[
+                                { icon: Zap,   label: 'TOKEN CAP', value: formatTokens(selectedPlan.token_cap) },
+                                { icon: Clock, label: 'DURATION',  value: durationText },
+                                { icon: Cpu,   label: 'RATE LIMIT', value: `${selectedPlan.rpm_limit} RPM` },
+                              ].map(({ icon: Icon, label, value }) => (
+                                <div key={label} style={{ padding: '12px 14px', background: 'var(--nb-bg)' }}>
+                                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                                    <Icon size={10} /> {label}
+                                  </span>
+                                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--nb-green)' }}>{value}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Feature list */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {[
+                                'Instant virtual key via email and dashboard',
+                                'Key IP-pinned after first use for security',
+                                'PII auto-masked before forwarding to provider',
+                              ].map(f => (
+                                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--nb-text-2)' }}>
+                                  <CheckCircle2 size={12} style={{ color: 'var(--nb-green)', flexShrink: 0 }} />
+                                  {f}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Right: Price + CTA */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '16px', minWidth: '140px' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontFamily: 'var(--font-head)', fontSize: '2.4rem', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-green)' }}>₹{selectedPlan.price}</div>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em' }}>ONE-TIME</div>
+                            </div>
+                            <button
+                              onClick={handlePurchase} disabled={purchasing}
+                              className="btn btn-primary"
+                              style={{ width: '100%', justifyContent: 'center', padding: '11px 20px', opacity: purchasing ? 0.6 : 1 }}
+                            >
+                              {purchasing
+                                ? <span style={{ width: '14px', height: '14px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#02180e', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                                : <><ShoppingBag size={13} /> Rent now <ArrowRight size={13} /></>
+                              }
+                            </button>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em', textAlign: 'center' }}>SECURE VIA CASHFREE</span>
                           </div>
                         </div>
-                      );
-                    })()}
-                  </motion.div>
-                )}
+                      </div>
+                    </motion.div>
+                  );
+                })()}
               </AnimatePresence>
             </>
           )}
@@ -349,8 +341,9 @@ export default function Marketplace() {
 
       <Footer />
       <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @keyframes nb-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 640px) { .mk-grid { grid-template-columns: 1fr 1fr !important; } }
       `}</style>
     </div>
   );

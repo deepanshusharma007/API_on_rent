@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Copy, Check, BookOpen, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
+import { Copy, Check, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { motion } from "framer-motion";
+
+const EASE = [0.22, 1, 0.36, 1];
+const VP = { once: true, margin: '-40px' };
+const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
+const SP = { padding: 'clamp(64px,9vw,104px) clamp(20px,5vw,72px)' };
+const MAX = { maxWidth: '880px', margin: '0 auto' };
 
 const BASE_URL = "https://api-on-rent-backend.onrender.com";
 
 const PROVIDERS = [
-  { id: "OpenAI",           label: "OpenAI",           models: { fast: "gpt-4o-mini",                 powerful: "gpt-4o" } },
-  { id: "Google Gemini",    label: "Google Gemini",    models: { fast: "gemini-1.5-flash",            powerful: "gemini-1.5-pro" } },
-  { id: "Anthropic Claude", label: "Anthropic Claude", models: { fast: "claude-3-5-sonnet-20241022",  powerful: "claude-3-5-sonnet-20241022" } },
+  { id: "OpenAI",           label: "OpenAI",           models: { fast: "gpt-4o-mini",                power: "gpt-4o" } },
+  { id: "Google Gemini",    label: "Google Gemini",    models: { fast: "gemini-1.5-flash",           power: "gemini-1.5-pro" } },
+  { id: "Anthropic Claude", label: "Anthropic Claude", models: { fast: "claude-3-5-sonnet-20241022", power: "claude-3-5-sonnet-20241022" } },
 ];
 
 const LANGUAGES = ["Python", "JavaScript", "Node.js", "cURL", "PHP"];
@@ -90,20 +97,51 @@ echo $response['choices'][0]['message']['content'];`,
 }
 
 const MODELS = [
-  { family: "All GPT Models",      provider: "OpenAI",    best: "Reasoning, code, chat" },
+  { family: "All GPT Models",       provider: "OpenAI",    best: "Reasoning, code, chat" },
   { family: "All Anthropic Models", provider: "Anthropic", best: "Writing, analysis, safety" },
-  { family: "All Gemini Models",   provider: "Google",    best: "Multimodal, high-volume" },
+  { family: "All Gemini Models",    provider: "Google",    best: "Multimodal, high-volume" },
 ];
 
 const ERRORS = [
   { code: "401", meaning: "Invalid or expired virtual key" },
   { code: "402", meaning: "Insufficient tokens remaining" },
-  { code: "403", meaning: "This key is rented for a different provider" },
+  { code: "403", meaning: "Key is rented for a different provider" },
   { code: "429", meaning: "Rate limit exceeded (RPM limit hit)" },
   { code: "502", meaning: "Upstream provider error" },
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+const ENDPOINT_GROUPS = [
+  { title: 'AUTH', rows: [
+    { method: 'POST', path: '/auth/register', desc: 'Create a new account', detail: [
+      { label: 'BODY', code: `{ "email": "user@example.com", "password": "secret123" }` },
+      { label: 'RESPONSE', code: `{ "id": 1, "email": "user@example.com", "role": "USER" }` },
+    ]},
+    { method: 'POST', path: '/auth/login', desc: 'Get JWT access token', detail: [
+      { label: 'BODY', code: `{ "email": "user@example.com", "password": "secret123" }` },
+      { label: 'RESPONSE', code: `{ "access_token": "eyJ...", "token_type": "bearer" }` },
+    ]},
+    { method: 'GET', path: '/auth/me', desc: 'Get current user — auth required', detail: [] },
+  ]},
+  { title: 'MARKETPLACE', rows: [
+    { method: 'GET', path: '/api/plans', desc: 'List available rental plans', detail: [
+      { label: 'RESPONSE', code: `[\n  {\n    "id": 1,\n    "duration_label": "1 Hour",\n    "duration_minutes": 60,\n    "token_cap": 80000,\n    "rpm_limit": 60,\n    "price": 49.0,\n    "is_active": true\n  }\n]` },
+    ]},
+    { method: 'GET', path: '/api/active-providers', desc: 'List active AI providers', detail: [] },
+    { method: 'GET', path: '/api/rentals/active', desc: 'List your active rentals — auth required', detail: [
+      { label: 'RESPONSE', code: `[\n  {\n    "id": 42,\n    "virtual_key": "vk_abc123...",\n    "provider": "openai",\n    "status": "ACTIVE",\n    "tokens_remaining": 72000,\n    "expires_at": "2025-04-22T15:00:00Z"\n  }\n]` },
+    ]},
+  ]},
+  { title: 'PAYMENT', rows: [
+    { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session — auth required', detail: [
+      { label: 'BODY', code: `{\n  "plan_id": 1,\n  "provider": "openai",\n  "customer_phone": "9876543210"\n}` },
+      { label: 'RESPONSE', code: `{ "payment_session_id": "session_abc123..." }` },
+    ]},
+  ]},
+  { title: 'STATUS', rows: [
+    { method: 'GET', path: '/health',  desc: 'Health check — 200 OK if running', detail: [] },
+    { method: 'GET', path: '/status/', desc: 'Full system status with DB and Redis', detail: [] },
+  ]},
+];
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
@@ -114,25 +152,26 @@ function CopyButton({ text }) {
     <button onClick={handleCopy}
       style={{
         display: 'flex', alignItems: 'center', gap: '5px',
-        padding: '5px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer',
-        background: copied ? 'var(--c-accent-bg)' : 'var(--c-raised)',
-        border: `1px solid ${copied ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
-        color: copied ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
+        padding: '4px 10px', borderRadius: '2px', fontSize: '0.68rem', fontWeight: 500, cursor: 'pointer',
+        background: copied ? 'var(--nb-green-bg)' : 'var(--nb-raised)',
+        border: `1px solid ${copied ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
+        color: copied ? 'var(--nb-green)' : 'var(--nb-text-3)',
+        fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
         transition: 'all 150ms',
       }}>
-      {copied ? <Check size={11} /> : <Copy size={11} />}
-      {copied ? "Copied" : "Copy"}
+      {copied ? <Check size={10} /> : <Copy size={10} />}
+      {copied ? "COPIED" : "COPY"}
     </button>
   );
 }
 
 function CodeBlock({ code }) {
   return (
-    <div style={{ background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 12px', borderBottom: '1px solid var(--c-border)' }}>
+    <div style={{ background: 'var(--nb-bg)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 10px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-raised)' }}>
         <CopyButton text={code} />
       </div>
-      <pre style={{ fontFamily: 'monospace', fontSize: '0.825rem', color: 'var(--c-text-2)', padding: '16px', overflowX: 'auto', whiteSpace: 'pre', lineHeight: 1.6, margin: 0 }}>
+      <pre style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--nb-text-2)', padding: '16px', overflowX: 'auto', whiteSpace: 'pre', lineHeight: 1.65, margin: 0 }}>
         <code>{code}</code>
       </pre>
     </div>
@@ -143,65 +182,60 @@ function MethodBadge({ method }) {
   const isGet = method === "GET";
   return (
     <span style={{
-      fontSize: '0.7rem', fontFamily: 'monospace', fontWeight: 700, padding: '2px 7px', borderRadius: '4px',
-      background: isGet ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)',
-      border: `1px solid ${isGet ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)'}`,
-      color: isGet ? 'var(--c-accent-hi)' : '#7dd3fc',
+      fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 700, padding: '2px 7px', borderRadius: '2px', letterSpacing: '0.06em',
+      background: isGet ? 'var(--nb-green-bg)' : 'oklch(18% 0.04 230)',
+      border: `1px solid ${isGet ? 'var(--nb-green-border)' : 'oklch(28% 0.08 230)'}`,
+      color: isGet ? 'var(--nb-green)' : 'oklch(72% 0.14 230)',
     }}>
       {method}
     </span>
   );
 }
 
-function EndpointRow({ method, path, description, children }) {
+function EndpointRow({ method, path, desc, detail }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ border: '1px solid var(--nb-border)', borderRadius: '2px', overflow: 'hidden' }}>
       <button onClick={() => setOpen(o => !o)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-          transition: 'background 150ms',
+          padding: '12px 16px', background: 'var(--nb-surface)', border: 'none', cursor: 'pointer', textAlign: 'left',
+          transition: 'background 120ms',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--nb-raised)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'var(--nb-surface)'}
+      >
         <MethodBadge method={method} />
-        <code style={{ fontFamily: 'monospace', fontSize: '0.825rem', color: 'var(--c-text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</code>
-        <span style={{ color: 'var(--c-text-3)', fontSize: '0.8rem', flexShrink: 0, display: 'none' }} className="sm:block">{description}</span>
-        <span style={{ color: 'var(--c-text-3)', fontSize: '0.7rem', marginLeft: '8px', flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+        <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--nb-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</code>
+        <span style={{ color: 'var(--nb-text-3)', fontFamily: 'var(--font-body)', fontSize: '0.78rem', flexShrink: 0 }}>{desc}</span>
+        <span style={{ color: 'var(--nb-text-4)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', marginLeft: '8px', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
       </button>
-      {open && (
-        <div style={{ borderTop: '1px solid var(--c-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--c-bg)' }}>
-          <p style={{ fontSize: '0.825rem', color: 'var(--c-text-3)' }}>{description}</p>
-          {children}
+      {open && detail.length > 0 && (
+        <div style={{ borderTop: '1px solid var(--nb-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--nb-bg)' }}>
+          {detail.map(d => (
+            <div key={d.label} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em' }}>{d.label}</span>
+              <CodeBlock code={d.code} />
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function EndpointDetail({ label, code }) {
+function SectionHeader({ icon: Icon, label, index }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{label}</p>
-      <CodeBlock code={code} />
-    </div>
+    <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+      style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--nb-border)' }}
+    >
+      <div style={{ width: '32px', height: '32px', borderRadius: '2px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={14} style={{ color: 'var(--nb-green)' }} />
+      </div>
+      <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--nb-text)', letterSpacing: '-0.02em' }}>{label}</h2>
+    </motion.div>
   );
 }
-
-function SectionIcon({ icon: Icon, danger }) {
-  return (
-    <div style={{
-      width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: danger ? 'rgba(251,113,133,0.08)' : 'var(--c-accent-bg)',
-      border: `1px solid ${danger ? 'rgba(251,113,133,0.25)' : 'var(--c-accent-border)'}`,
-    }}>
-      <Icon size={16} style={{ color: danger ? '#fb7185' : 'var(--c-accent)' }} />
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ApiDocs() {
   const [activeProvider, setActiveProvider] = useState("OpenAI");
@@ -211,279 +245,254 @@ export default function ApiDocs() {
   const model        = providerInfo.models.fast;
   const snippets     = getSnippets(model);
 
-  const thStyle = { textAlign: 'left', padding: '10px 20px', fontSize: '0.7rem', color: 'var(--c-text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid var(--c-border)' };
-  const tdStyle = { padding: '14px 20px', fontSize: '0.875rem', borderBottom: '1px solid var(--c-border)' };
+  const monoLabel = { fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' };
+  const thStyle   = { textAlign: 'left', padding: '10px 20px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-3)', fontWeight: 600, letterSpacing: '0.08em', borderBottom: '1px solid var(--nb-border)' };
+  const tdStyle   = { padding: '14px 20px', fontFamily: 'var(--font-body)', fontSize: '0.875rem', borderBottom: '1px solid var(--nb-border)' };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)' }}>
       <Helmet>
-        <title>API Docs — AIRent | OpenAI-Compatible AI API Rental</title>
-        <meta name="description" content="AIRent is 100% OpenAI-compatible. Swap your API key and base URL — that's it. Supports GPT, Claude, and Gemini models. Full API reference and code examples." />
+        <title>API Docs — AIRent | OpenAI-Compatible AI Proxy</title>
+        <meta name="description" content="AIRent is 100% OpenAI-compatible. Swap your API key and base URL. Full reference for GPT, Claude, and Gemini." />
         <link rel="canonical" href="https://airent.dev/docs" />
       </Helmet>
       <Navbar />
 
-      {/* Hero */}
-      <section style={{ paddingTop: '120px', paddingBottom: '64px', paddingLeft: '20px', paddingRight: '20px', textAlign: 'center' }}>
-        <div className="max-w-3xl mx-auto">
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '8px 16px', borderRadius: '8px', marginBottom: '24px',
-            background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)',
-            color: 'var(--c-accent)', fontSize: '0.875rem', fontWeight: 500,
-          }}>
-            <BookOpen size={14} /> Developer Reference
-          </div>
-          <h1 style={{ fontSize: 'clamp(2.2rem,6vw,4rem)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--c-text)', marginBottom: '16px', lineHeight: 1.05 }}>
+      {/* ── Hero ── */}
+      <section
+        className="nb-grid-hero"
+        style={{
+          paddingTop: 'clamp(120px,16vw,180px)',
+          paddingBottom: 'clamp(48px,6vw,72px)',
+          paddingLeft: 'clamp(20px,5vw,72px)',
+          paddingRight: 'clamp(20px,5vw,72px)',
+          borderBottom: '1px solid var(--nb-border)',
+          position: 'relative',
+        }}
+      >
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ ...MAX, position: 'relative' }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" animate="show">
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
+              <span style={{ width: '18px', height: '1px', background: 'var(--nb-green)', display: 'inline-block' }} />
+              DEVELOPER REFERENCE
+            </span>
+          </motion.div>
+          <motion.h1 variants={fadeUp(0.06)} initial="hidden" animate="show"
+            style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(2.4rem,6vw,4rem)', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-text)', lineHeight: 0.98, marginBottom: '20px' }}
+          >
             API Reference
-          </h1>
-          <p style={{ fontSize: '1rem', color: 'var(--c-text-2)', lineHeight: 1.7 }}>
-            OpenAI-compatible endpoint. Drop in your virtual key and start building.
-          </p>
+          </motion.h1>
+          <motion.p variants={fadeUp(0.12)} initial="hidden" animate="show"
+            style={{ fontFamily: 'var(--font-body)', fontSize: '1rem', lineHeight: 1.75, color: 'var(--nb-text-2)', maxWidth: '44ch' }}
+          >
+            OpenAI-compatible endpoint. Swap your key and base URL. That's it.
+          </motion.p>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto" style={{ padding: '0 20px 96px', display: 'flex', flexDirection: 'column', gap: '56px' }}>
+      <div style={{ ...SP }}>
+        <div style={{ ...MAX, display: 'flex', flexDirection: 'column', gap: '64px' }}>
 
-        {/* Authentication */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <SectionIcon icon={Key} />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Authentication</h2>
-          </div>
-          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>Base URL</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '12px 16px' }}>
-                <code style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-accent-hi)' }}>{BASE_URL}/v1</code>
-                <CopyButton text={`${BASE_URL}/v1`} />
+          {/* Authentication */}
+          <section>
+            <SectionHeader icon={Key} label="Authentication" />
+            <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+              style={{ border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}
+            >
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+                <span style={monoLabel}>BASE URL</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '10px 14px' }}>
+                  <code style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--nb-green)' }}>{BASE_URL}/v1</code>
+                  <CopyButton text={`${BASE_URL}/v1`} />
+                </div>
               </div>
-            </div>
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>Authorization Header</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '12px 16px' }}>
-                <code style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-text-2)' }}>
-                  Authorization: <span style={{ color: 'var(--c-accent)' }}>Bearer vk_your_key_here</span>
-                </code>
-                <CopyButton text="Authorization: Bearer vk_your_key_here" />
-              </div>
-            </div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--c-text-3)', lineHeight: 1.6 }}>
-              Replace{" "}
-              <code style={{ color: 'var(--c-accent)', background: 'var(--c-accent-bg)', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.8rem' }}>vk_your_key_here</code>
-              {" "}with the virtual key you receive after purchase. Find it in your{" "}
-              <Link to="/dashboard" style={{ color: 'var(--c-accent)', textDecoration: 'none', fontWeight: 500 }}>Dashboard</Link>.
-            </p>
-          </div>
-        </section>
-
-        {/* Chat Completions */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <SectionIcon icon={Code2} />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Chat Completions</h2>
-          </div>
-
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '10px 16px', marginBottom: '20px' }}>
-            <MethodBadge method="POST" />
-            <code style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--c-text)' }}>/v1/chat/completions</code>
-          </div>
-
-          <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem', marginBottom: '20px', lineHeight: 1.65 }}>
-            Fully OpenAI-compatible. Works with the official OpenAI SDK — just change{" "}
-            <code style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'var(--c-raised)', padding: '1px 5px', borderRadius: '3px', color: 'var(--c-text-2)' }}>base_url</code> and{" "}
-            <code style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: 'var(--c-raised)', padding: '1px 5px', borderRadius: '3px', color: 'var(--c-text-2)' }}>api_key</code>.
-          </p>
-
-          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Provider tabs */}
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>Provider</p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {PROVIDERS.map(p => (
-                  <button key={p.id}
-                    onClick={() => { setActiveProvider(p.id); setActiveLang("Python"); }}
-                    style={{
-                      padding: '7px 16px', borderRadius: '7px', fontSize: '0.825rem', fontWeight: 500, cursor: 'pointer',
-                      background: activeProvider === p.id ? 'var(--c-accent-bg)' : 'var(--c-raised)',
-                      border: `1px solid ${activeProvider === p.id ? 'var(--c-accent-border)' : 'var(--c-border)'}`,
-                      color: activeProvider === p.id ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
-                      transition: 'all 150ms',
-                    }}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Model info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '10px 14px', fontSize: '0.825rem', color: 'var(--c-text-3)' }}>
-              <Zap size={14} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
-              <span>Model used in examples:</span>
-              <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', background: 'var(--c-accent-bg)', padding: '1px 7px', borderRadius: '4px', fontSize: '0.775rem' }}>
-                {model}
-              </code>
-              {providerInfo.models.fast !== providerInfo.models.powerful && (
-                <>
-                  <span style={{ color: 'var(--c-border-hi)' }}>or</span>
-                  <code style={{ fontFamily: 'monospace', color: 'var(--c-accent-hi)', background: 'var(--c-accent-bg)', padding: '1px 7px', borderRadius: '4px', fontSize: '0.775rem' }}>
-                    {providerInfo.models.powerful}
+              <div style={{ padding: '20px 24px', background: 'var(--nb-surface)' }}>
+                <span style={monoLabel}>AUTHORIZATION HEADER</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '10px 14px' }}>
+                  <code style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--nb-text-2)' }}>
+                    Authorization: <span style={{ color: 'var(--nb-green)' }}>Bearer vk_your_key_here</span>
                   </code>
-                </>
-              )}
-            </div>
-
-            {/* Language tabs */}
-            <div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '12px' }}>Language</p>
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', background: 'var(--c-raised)', border: '1px solid var(--c-border)', borderRadius: '8px', padding: '4px' }}>
-                {LANGUAGES.map(lang => (
-                  <button key={lang} onClick={() => setActiveLang(lang)}
-                    style={{
-                      padding: '5px 12px', borderRadius: '6px', fontSize: '0.825rem', fontWeight: 500, cursor: 'pointer',
-                      background: activeLang === lang ? 'var(--c-accent-bg)' : 'transparent',
-                      border: `1px solid ${activeLang === lang ? 'var(--c-accent-border)' : 'transparent'}`,
-                      color: activeLang === lang ? 'var(--c-accent-hi)' : 'var(--c-text-3)',
-                      transition: 'all 150ms',
-                    }}>
-                    {lang}
-                  </button>
-                ))}
+                  <CopyButton text="Authorization: Bearer vk_your_key_here" />
+                </div>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.85rem', color: 'var(--nb-text-3)', lineHeight: 1.7, marginTop: '14px' }}>
+                  Replace <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--nb-green)', fontSize: '0.78rem' }}>vk_your_key_here</code> with the key from your{' '}
+                  <Link to="/dashboard" style={{ color: 'var(--nb-text-2)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Dashboard</Link>.
+                </p>
               </div>
-            </div>
+            </motion.div>
+          </section>
 
-            <CodeBlock code={snippets[activeLang]} />
-          </div>
-        </section>
-
-        {/* REST Endpoints */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <SectionIcon icon={Globe} />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>REST Endpoints</h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {[
-              { title: 'Auth', rows: [
-                { method: 'POST', path: '/auth/register', desc: 'Create a new account',
-                  detail: [{ label: 'Body', code: `{ "email": "user@example.com", "password": "secret123" }` }, { label: 'Response', code: `{ "id": 1, "email": "user@example.com", "role": "USER" }` }] },
-                { method: 'POST', path: '/auth/login', desc: 'Get JWT access token',
-                  detail: [{ label: 'Body', code: `{ "email": "user@example.com", "password": "secret123" }` }, { label: 'Response', code: `{ "access_token": "eyJ...", "token_type": "bearer" }` }] },
-                { method: 'GET',  path: '/auth/me', desc: 'Get current user info — auth required', detail: [] },
-              ]},
-              { title: 'Marketplace', rows: [
-                { method: 'GET', path: '/api/plans', desc: 'List available rental plans',
-                  detail: [{ label: 'Response (example)', code: `[\n  {\n    "id": 1,\n    "duration_label": "1 Hour",\n    "duration_minutes": 60,\n    "token_cap": 80000,\n    "rpm_limit": 60,\n    "price": 49.0,\n    "is_active": true\n  }\n]` }] },
-                { method: 'GET', path: '/api/active-providers', desc: 'List active AI providers available for rental', detail: [] },
-                { method: 'GET', path: '/api/rentals/active', desc: 'List your active rentals — auth required',
-                  detail: [{ label: 'Response (example)', code: `[\n  {\n    "id": 42,\n    "virtual_key": "vk_abc123...",\n    "provider": "openai",\n    "status": "ACTIVE",\n    "tokens_remaining": 72000,\n    "expires_at": "2025-04-22T15:00:00Z"\n  }\n]` }] },
-              ]},
-              { title: 'Payment', rows: [
-                { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session — auth required',
-                  detail: [{ label: 'Body', code: `{\n  "plan_id": 1,\n  "provider": "openai",\n  "customer_phone": "9876543210"\n}` }, { label: 'Response', code: `{ "payment_session_id": "session_abc123..." }` }] },
-              ]},
-              { title: 'Status', rows: [
-                { method: 'GET', path: '/health',  desc: 'Health check — returns 200 OK if API is running', detail: [] },
-                { method: 'GET', path: '/status/', desc: 'Full system status including database and Redis', detail: [] },
-              ]},
-            ].map(group => (
-              <div key={group.title} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>{group.title}</h3>
-                {group.rows.map(row => (
-                  <EndpointRow key={row.path} method={row.method} path={row.path} description={row.desc}>
-                    {row.detail.map(d => <EndpointDetail key={d.label} label={d.label} code={d.code} />)}
-                  </EndpointRow>
-                ))}
+          {/* Chat Completions */}
+          <section>
+            <SectionHeader icon={Code2} label="Chat Completions" />
+            <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+              style={{ border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}
+            >
+              {/* Endpoint badge */}
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <MethodBadge method="POST" />
+                <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--nb-text)' }}>/v1/chat/completions</code>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--nb-text-3)', marginLeft: 'auto' }}>OpenAI-compatible — no code changes needed</span>
               </div>
-            ))}
-          </div>
-        </section>
 
-        {/* Supported Models */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <SectionIcon icon={Table2} />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Supported Models</h2>
-          </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--c-text-3)', marginBottom: '16px', lineHeight: 1.65 }}>
-            AIRent supports all models from the following providers. The exact model you request is forwarded directly to the provider.
-          </p>
-          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-              <thead>
-                <tr>
-                  {['Model Family', 'Provider', 'Best For'].map(h => (
-                    <th key={h} style={thStyle}>{h}</th>
+              <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--nb-bg)' }}>
+                {/* Provider tabs */}
+                <div>
+                  <span style={monoLabel}>PROVIDER</span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {PROVIDERS.map(p => (
+                      <button key={p.id}
+                        onClick={() => { setActiveProvider(p.id); setActiveLang("Python"); }}
+                        style={{
+                          padding: '6px 14px', borderRadius: '2px', fontFamily: 'var(--font-body)', fontSize: '0.825rem', fontWeight: 500, cursor: 'pointer',
+                          background: activeProvider === p.id ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
+                          border: `1px solid ${activeProvider === p.id ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
+                          color: activeProvider === p.id ? 'var(--nb-green)' : 'var(--nb-text-3)',
+                          transition: 'all 120ms',
+                        }}>
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '10px 14px', border: '1px solid var(--nb-border)', borderRadius: '4px', background: 'var(--nb-surface)' }}>
+                  <Zap size={13} style={{ color: 'var(--nb-green)', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--nb-text-3)' }}>Model in examples:</span>
+                  <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--nb-green)', background: 'var(--nb-green-bg)', padding: '1px 7px', borderRadius: '2px' }}>{model}</code>
+                  {providerInfo.models.fast !== providerInfo.models.power && (
+                    <>
+                      <span style={{ color: 'var(--nb-text-4)' }}>or</span>
+                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--nb-green)', background: 'var(--nb-green-bg)', padding: '1px 7px', borderRadius: '2px' }}>{providerInfo.models.power}</code>
+                    </>
+                  )}
+                </div>
+
+                {/* Language tabs */}
+                <div>
+                  <span style={monoLabel}>LANGUAGE</span>
+                  <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', background: 'var(--nb-surface)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '4px' }}>
+                    {LANGUAGES.map(lang => (
+                      <button key={lang} onClick={() => setActiveLang(lang)}
+                        style={{
+                          padding: '5px 12px', borderRadius: '2px', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.02em', cursor: 'pointer',
+                          background: activeLang === lang ? 'var(--nb-green-bg)' : 'transparent',
+                          border: `1px solid ${activeLang === lang ? 'var(--nb-green-border)' : 'transparent'}`,
+                          color: activeLang === lang ? 'var(--nb-green)' : 'var(--nb-text-3)',
+                          transition: 'all 120ms',
+                        }}>
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <CodeBlock code={snippets[activeLang]} />
+              </div>
+            </motion.div>
+          </section>
+
+          {/* REST Endpoints */}
+          <section>
+            <SectionHeader icon={Globe} label="REST Endpoints" />
+            <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+              style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+            >
+              {ENDPOINT_GROUPS.map(group => (
+                <div key={group.title} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', marginBottom: '6px', display: 'block' }}>{group.title}</span>
+                  {group.rows.map(row => (
+                    <EndpointRow key={row.path} method={row.method} path={row.path} desc={row.desc} detail={row.detail} />
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {MODELS.map(m => (
-                  <tr key={m.family} style={{ transition: 'background 100ms' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={tdStyle}>
-                      <span style={{ fontWeight: 600, color: 'var(--c-accent-hi)' }}>{m.family}</span>
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--c-text-2)' }}>{m.provider}</td>
-                    <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{m.best}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </div>
+              ))}
+            </motion.div>
+          </section>
 
-        {/* Error Reference */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <SectionIcon icon={AlertTriangle} danger />
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--c-text)' }}>Error Reference</h2>
-          </div>
-          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Code</th>
-                  <th style={thStyle}>Meaning</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ERRORS.map(e => (
-                  <tr key={e.code} style={{ transition: 'background 100ms' }}
-                    onMouseEnter={el => el.currentTarget.style.background = 'var(--c-raised)'}
-                    onMouseLeave={el => el.currentTarget.style.background = 'transparent'}>
-                    <td style={tdStyle}>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: '6px',
-                        fontSize: '0.775rem', fontWeight: 700, fontFamily: 'monospace',
-                        background: 'rgba(251,113,133,0.08)', color: '#fb7185', border: '1px solid rgba(251,113,133,0.25)',
-                      }}>
-                        {e.code}
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--c-text-2)' }}>{e.meaning}</td>
+          {/* Supported Models */}
+          <section>
+            <SectionHeader icon={Table2} label="Supported Models" />
+            <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+              style={{ border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--nb-surface)' }}>
+                    {['Model Family', 'Provider', 'Best For'].map(h => <th key={h} style={thStyle}>{h}</th>)}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {MODELS.map((m, i) => (
+                    <tr key={m.family}
+                      style={{ background: i % 2 === 0 ? 'var(--nb-bg)' : 'var(--nb-surface)', transition: 'background 100ms' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--nb-raised)'}
+                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--nb-bg)' : 'var(--nb-surface)'}
+                    >
+                      <td style={{ ...tdStyle, color: 'var(--nb-green)', fontFamily: 'var(--font-head)', fontWeight: 600 }}>{m.family}</td>
+                      <td style={{ ...tdStyle, color: 'var(--nb-text-2)' }}>{m.provider}</td>
+                      <td style={{ ...tdStyle, color: 'var(--nb-text-3)' }}>{m.best}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+          </section>
 
-        {/* CTA */}
-        <section>
-          <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-accent-border)', borderRadius: '10px', padding: '40px 32px', textAlign: 'center' }}>
-            <h2 style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1.3rem', marginBottom: '12px' }}>Ready to build?</h2>
-            <p style={{ color: 'var(--c-text-3)', marginBottom: '28px', maxWidth: '400px', margin: '0 auto 28px', lineHeight: 1.65, fontSize: '0.9rem' }}>
-              Purchase a plan on the marketplace, get your virtual key instantly, and start making API calls in minutes.
-            </p>
-            <Link to="/marketplace" className="btn btn-primary" style={{ display: 'inline-flex', padding: '11px 24px' }}>
-              Browse Plans <ArrowRight size={14} />
+          {/* Error Reference */}
+          <section>
+            <SectionHeader icon={AlertTriangle} label="Error Reference" />
+            <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+              style={{ border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--nb-surface)' }}>
+                    <th style={thStyle}>CODE</th>
+                    <th style={thStyle}>MEANING</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ERRORS.map((e, i) => (
+                    <tr key={e.code}
+                      style={{ background: i % 2 === 0 ? 'var(--nb-bg)' : 'var(--nb-surface)' }}
+                      onMouseEnter={el => el.currentTarget.style.background = 'var(--nb-raised)'}
+                      onMouseLeave={el => el.currentTarget.style.background = i % 2 === 0 ? 'var(--nb-bg)' : 'var(--nb-surface)'}
+                    >
+                      <td style={{ ...tdStyle, width: '100px' }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: '2px',
+                          fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                          background: 'oklch(18% 0.05 15)', color: 'oklch(68% 0.2 15)', border: '1px solid oklch(28% 0.1 15)',
+                        }}>
+                          {e.code}
+                        </span>
+                      </td>
+                      <td style={{ ...tdStyle, color: 'var(--nb-text-2)' }}>{e.meaning}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+          </section>
+
+          {/* CTA */}
+          <motion.section variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px', padding: '40px', border: '1px solid var(--nb-border)', borderRadius: '4px', background: 'var(--nb-surface)' }}
+          >
+            <div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '12px' }}>READY TO BUILD</span>
+              <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.4rem,3vw,2rem)', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--nb-text)', lineHeight: 1.1 }}>
+                Your first key is 30 seconds away.
+              </h2>
+            </div>
+            <Link to="/marketplace" className="btn btn-primary" style={{ padding: '11px 24px', flexShrink: 0 }}>
+              Browse plans <ArrowRight size={14} />
             </Link>
-          </div>
-        </section>
+          </motion.section>
 
+        </div>
       </div>
 
       <Footer />

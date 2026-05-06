@@ -4,12 +4,23 @@ import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
-import { fadeUp, staggerContainer } from '../lib/motion';
+
+const EASE = [0.22, 1, 0.36, 1];
+const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: 'var(--font-mono)',
+  fontSize: '0.6375rem',
+  color: 'var(--nb-text-3)',
+  letterSpacing: '0.08em',
+  marginBottom: '6px',
+};
 
 const PERKS = [
   'Instant API key — delivered in seconds',
-  'GPT-4o, Claude 3.5, Gemini — all models',
-  'No subscriptions, pay per rental',
+  'GPT-4o, Claude, Gemini — all frontier models',
+  'No subscriptions, pay per rental in INR',
 ];
 
 export default function Register() {
@@ -36,88 +47,97 @@ export default function Register() {
     setLoading(false);
   };
 
-  const fieldStyle = { paddingLeft: '36px' };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--c-bg)' }}>
-      <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show" style={{ width: '100%', maxWidth: '380px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)', position: 'relative' }}>
+      <div className="nb-grid-hero" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} />
 
-        {/* Logo */}
-        <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '20px' }}>
-            <img src="/logo.png" alt="AIRent" style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(250,180,0,0.4))' }} />
-            <span style={{ color: 'var(--c-text)', fontWeight: 700, fontSize: '1rem' }}>
-              AI<span style={{ color: 'var(--c-accent)' }}>Rent</span>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) 20px' }}>
+
+        {/* Wordmark + headline */}
+        <motion.div variants={fadeUp(0)} initial="hidden" animate="show" style={{ marginBottom: '32px', textAlign: 'center' }}>
+          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none', marginBottom: '24px' }}>
+            <span style={{ fontFamily: 'var(--font-head)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--nb-text)', letterSpacing: '-0.02em' }}>
+              AI<span style={{ color: 'var(--nb-green)' }}>Rent</span>
             </span>
           </Link>
-          <h1 style={{ color: 'var(--c-text)', fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '6px' }}>
-            Create your account
+          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.6rem,4vw,2.2rem)', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-text)', lineHeight: 1.1, marginBottom: '8px' }}>
+            Start building.
           </h1>
-          <p style={{ color: 'var(--c-text-3)', fontSize: '0.875rem' }}>Start renting AI in under 60 seconds</p>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--nb-text-2)' }}>Free account. First rental in 60 seconds.</p>
         </motion.div>
 
         {/* Perks */}
-        <motion.div variants={fadeUp} style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <motion.div variants={fadeUp(0.06)} initial="hidden" animate="show"
+          style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}
+        >
           {PERKS.map(p => (
-            <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--c-text-3)', fontSize: '0.825rem' }}>
-              <CheckCircle2 size={14} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
-              {p}
+            <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '16px', height: '16px', borderRadius: '2px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <CheckCircle2 size={10} style={{ color: 'var(--nb-green)' }} />
+              </div>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.825rem', color: 'var(--nb-text-2)' }}>{p}</span>
             </div>
           ))}
         </motion.div>
 
-        {/* Card */}
-        <motion.div variants={fadeUp} style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '12px', padding: '28px' }}>
+        {/* Form */}
+        <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show"
+          style={{ width: '100%', maxWidth: '400px', background: 'var(--nb-surface)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '32px' }}
+        >
           <form onSubmit={handleSubmit}>
-            {/* Email */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '7px' }}>Email address</label>
+              <label style={labelStyle}>EMAIL ADDRESS</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', pointerEvents: 'none' }} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="field" style={fieldStyle} />
+                <Mail size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="field" style={{ paddingLeft: '36px', borderRadius: '4px' }} />
               </div>
             </div>
 
-            {/* Password */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '7px' }}>Password</label>
+              <label style={labelStyle}>PASSWORD</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', pointerEvents: 'none' }} />
-                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} className="field" style={{ paddingLeft: '36px', paddingRight: '40px' }} />
-                <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
+                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} className="field" style={{ paddingLeft: '36px', paddingRight: '40px', borderRadius: '4px' }} />
+                <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
             </div>
 
-            {/* Confirm */}
-            <div style={{ marginBottom: '22px' }}>
-              <label style={{ display: 'block', color: 'var(--c-text-2)', fontSize: '0.8rem', fontWeight: 500, marginBottom: '7px' }}>Confirm password</label>
+            <div style={{ marginBottom: '28px' }}>
+              <label style={labelStyle}>CONFIRM PASSWORD</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', pointerEvents: 'none' }} />
-                <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required className="field" style={fieldStyle} />
+                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
+                <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required className="field" style={{ paddingLeft: '36px', borderRadius: '4px' }} />
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.9rem' }}>
+            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.875rem' }}>
               {loading
-                ? <span style={{ width: '16px', height: '16px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#022c22', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                : <><UserPlus size={15} /><span>Create account</span></>
+                ? <span style={{ width: '14px', height: '14px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#02180e', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                : <><UserPlus size={14} /><span>Create account</span></>
               }
             </button>
           </form>
 
-          <div style={{ height: '1px', background: 'var(--c-border)', margin: '20px 0' }} />
-          <p style={{ textAlign: 'center', color: 'var(--c-text-3)', fontSize: '0.85rem' }}>
+          <div style={{ height: '1px', background: 'var(--nb-border)', margin: '24px 0' }} />
+          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.85rem', color: 'var(--nb-text-3)' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--c-accent)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
+            <Link to="/login" style={{ color: 'var(--nb-green)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
           </p>
         </motion.div>
 
-        <motion.p variants={fadeUp} style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.8rem' }}>
-          <Link to="/" style={{ color: 'var(--c-text-3)', textDecoration: 'none' }}>← Back to home</Link>
+        <motion.p variants={fadeUp(0.16)} initial="hidden" animate="show"
+          style={{ marginTop: '24px', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em' }}
+        >
+          <Link to="/" style={{ color: 'var(--nb-text-3)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text-2)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}>
+            ← BACK TO HOME
+          </Link>
         </motion.p>
-      </motion.div>
+      </div>
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

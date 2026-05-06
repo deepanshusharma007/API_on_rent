@@ -3,213 +3,376 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   IMPECCABLE DESIGN SYSTEM
-   Commitment level: Committed
-   Base: Deep slate-indigo (tinted, not pure black)
-   Accent: Emerald (single color, used sparingly)
-   Rule: No purple gradients. No gradient text. No nested cards.
-         No glassmorphism. Tinted neutrals everywhere.
+   AIRENT — Neon-Brutalist Design System
+   Palette: Deep Navy OKLCH + Electric Green
+   Type: Geist Sans (headings) + Inter (body)
+   Grid: Visible structural lines — part of the aesthetic
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Surfaces (slate-tinted, never pure black) ── */
-  --c-bg:        #0d1117;   /* slate-950 with slight blue tint */
-  --c-surface:   #161b22;   /* one step lighter */
-  --c-raised:    #1c2128;   /* cards, inputs */
-  --c-overlay:   #222930;   /* dropdowns, hover states */
+  /* ── Navy palette (OKLCH) ── */
+  --nb-bg:          oklch(12% 0.028 255);   /* deep navy-black */
+  --nb-surface:     oklch(16% 0.032 255);   /* card surface */
+  --nb-raised:      oklch(20% 0.034 255);   /* inputs, code */
+  --nb-overlay:     oklch(24% 0.034 255);   /* hover states */
 
-  /* ── Borders ── */
-  --c-border:    #30363d;   /* subtle slate border */
-  --c-border-hi: #484f58;   /* interactive border on hover */
+  /* ── Structural grid lines ── */
+  --nb-grid:        oklch(22% 0.038 255);   /* visible column lines */
+  --nb-border:      oklch(26% 0.036 255);   /* component borders */
+  --nb-border-hi:   oklch(38% 0.04 255);    /* interactive border */
 
-  /* ── Text (tinted slate, never pure white/gray) ── */
-  --c-text:      #e6edf3;   /* primary — off-white with blue tint */
-  --c-text-2:    #8b949e;   /* secondary */
-  --c-text-3:    #484f58;   /* muted/placeholder */
+  /* ── Text ── */
+  --nb-text:        oklch(93% 0.008 255);   /* primary — cool off-white */
+  --nb-text-2:      oklch(68% 0.014 255);   /* secondary */
+  --nb-text-3:      oklch(48% 0.018 255);   /* muted */
+  --nb-text-4:      oklch(32% 0.022 255);   /* very muted / disabled */
 
-  /* ── Accent: Emerald (single, committed) ── */
-  --c-accent:    #10b981;   /* emerald-500 */
-  --c-accent-hi: #34d399;   /* emerald-400 hover */
-  --c-accent-bg: #052e16;   /* emerald tinted surface */
-  --c-accent-border: #065f46;
+  /* ── Electric green accent ── */
+  --nb-green:       oklch(78% 0.22 145);    /* primary accent — aggressive */
+  --nb-green-hi:    oklch(84% 0.2 145);     /* hover */
+  --nb-green-dim:   oklch(78% 0.22 145 / 0.12);
+  --nb-green-bg:    oklch(16% 0.06 145);    /* tinted surface */
+  --nb-green-border:oklch(30% 0.1 145);
 
   /* ── Semantic ── */
-  --c-danger:    #f85149;
-  --c-warning:   #d29922;
-  --c-info:      #58a6ff;
+  --nb-danger:      oklch(65% 0.22 25);
+  --nb-warning:     oklch(75% 0.18 75);
+  --nb-info:        oklch(68% 0.18 240);
+
+  /* ── Legacy aliases for components that still use c- vars ── */
+  --c-bg:           var(--nb-bg);
+  --c-surface:      var(--nb-surface);
+  --c-raised:       var(--nb-raised);
+  --c-overlay:      var(--nb-overlay);
+  --c-border:       var(--nb-border);
+  --c-border-hi:    var(--nb-border-hi);
+  --c-text:         var(--nb-text);
+  --c-text-2:       var(--nb-text-2);
+  --c-text-3:       var(--nb-text-3);
+  --c-accent:       var(--nb-green);
+  --c-accent-hi:    var(--nb-green-hi);
+  --c-accent-bg:    var(--nb-green-bg);
+  --c-accent-border:var(--nb-green-border);
+  --c-danger:       var(--nb-danger);
+  --c-warning:      var(--nb-warning);
+  --c-info:         var(--nb-info);
+
+  /* ── Fonts ── */
+  --font-head: 'Geist Sans', 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'GeistMono', 'Geist Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* ── Grid ── */
+  --grid-cols: 12;
+  --grid-gap:  1px;         /* the visible structural line */
 }
 
-/* ── Reset & Base ── */
+/* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; }
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--c-bg);
-  color: var(--c-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--nb-bg);
+  color: var(--nb-text);
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Subtle dot-grid texture */
-  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-  /* Page-load fade-in */
-  animation: bodyFadeIn 300ms ease both;
+  animation: bodyFadeIn 250ms ease both;
 }
 
-@keyframes bodyFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes bodyFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* ── Global focus ring ── */
+/* ── Focus ── */
 *:focus-visible {
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--nb-green);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
-/* ── Link polish ── */
-a {
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
+a { text-underline-offset: 3px; }
+
+/* ────────────────────────────────────────────────────────────────
+   VISIBLE GRID SYSTEM
+   The structural grid shows through as 1px navy lines.
+   Used on hero background and bento container.
+   ─────────────────────────────────────────────────────────────── */
+.nb-grid-bg {
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 80px 80px;
 }
 
-/* ── Typography scale (1.25× modular) ── */
-.t-xs   { font-size: 0.75rem;  line-height: 1.5;  }
-.t-sm   { font-size: 0.875rem; line-height: 1.6;  }
-.t-base { font-size: 1rem;     line-height: 1.65; }
-.t-lg   { font-size: 1.125rem; line-height: 1.5;  }
-.t-xl   { font-size: 1.25rem;  line-height: 1.4;  }
-.t-2xl  { font-size: 1.5rem;   line-height: 1.3;  font-weight: 700; }
-.t-3xl  { font-size: 1.875rem; line-height: 1.2;  font-weight: 700; letter-spacing: -0.02em; }
-.t-4xl  { font-size: 2.25rem;  line-height: 1.15; font-weight: 800; letter-spacing: -0.025em; }
-.t-5xl  { font-size: 3rem;     line-height: 1.1;  font-weight: 800; letter-spacing: -0.03em; }
-.t-6xl  { font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1.08; font-weight: 800; letter-spacing: -0.035em; }
+/* Tighter grid for hero overlay */
+.nb-grid-hero {
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-position: -1px -1px;
+}
 
-/* ── Components ── */
+/* ────────────────────────────────────────────────────────────────
+   TYPOGRAPHY
+   Geist for headings — structural, geometric, brutalist-compatible.
+   Inter for body — warm, readable.
+   ─────────────────────────────────────────────────────────────── */
 
-/* Button: Primary (emerald) */
+/* Display — hero only */
+.nb-display {
+  font-family: var(--font-head);
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--nb-text);
+}
+
+/* Headline — section titles */
+.nb-headline {
+  font-family: var(--font-head);
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--nb-text);
+}
+
+/* Title — card/bento titles */
+.nb-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--nb-text);
+}
+
+/* Body */
+.nb-body { font-family: var(--font-body); font-size: 0.9375rem; line-height: 1.72; color: var(--nb-text-2); }
+.nb-small { font-family: var(--font-body); font-size: 0.8125rem; line-height: 1.6; color: var(--nb-text-3); }
+
+/* Label — mono-style overline */
+.nb-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nb-text-3);
+}
+
+/* Eyebrow — section label, NOT green */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nb-text-3);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   BUTTONS
+   ─────────────────────────────────────────────────────────────── */
 .btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 20px;
-  font-size: 0.875rem; font-weight: 600;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 4px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
   white-space: nowrap;
+  line-height: 1;
+  text-decoration: none;
 }
-.btn:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: 2px;
-}
-.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
 .btn-primary {
-  background: var(--c-accent);
-  color: #022c22;
-  border-color: var(--c-accent);
+  background: var(--nb-green);
+  color: oklch(12% 0.04 145);
+  border-color: var(--nb-green);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
-.btn-primary:hover  { background: var(--c-accent-hi); border-color: var(--c-accent-hi); }
-.btn-primary:active { background: #059669; }
+.btn-primary:hover { background: var(--nb-green-hi); border-color: var(--nb-green-hi); }
 
 .btn-secondary {
-  background: var(--c-raised);
-  color: var(--c-text);
-  border-color: var(--c-border);
+  background: transparent;
+  color: var(--nb-text);
+  border-color: var(--nb-border);
 }
-.btn-secondary:hover { background: var(--c-overlay); border-color: var(--c-border-hi); }
-.btn-secondary:active { background: var(--c-border); }
+.btn-secondary:hover { border-color: var(--nb-border-hi); background: var(--nb-surface); }
 
 .btn-ghost {
   background: transparent;
-  color: var(--c-text-2);
+  color: var(--nb-text-2);
   border-color: transparent;
 }
-.btn-ghost:hover { color: var(--c-text); background: var(--c-raised); }
+.btn-ghost:hover { color: var(--nb-text); background: var(--nb-surface); }
 
-/* Form field */
+.btn-outline {
+  background: transparent;
+  color: var(--nb-text);
+  border-color: var(--nb-border);
+}
+.btn-outline:hover { border-color: var(--nb-border-hi); }
+
+/* ────────────────────────────────────────────────────────────────
+   CARDS — brutalist: full border, no shadow, sharp corners
+   ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--nb-surface);
+  border: 1px solid var(--nb-border);
+  border-radius: 4px;
+}
+.card:hover { border-color: var(--nb-border-hi); }
+
+/* ────────────────────────────────────────────────────────────────
+   FORM FIELDS
+   ─────────────────────────────────────────────────────────────── */
 .field {
-  display: block; width: 100%;
-  padding: 9px 13px;
-  background: var(--c-raised);
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-  color: var(--c-text);
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--nb-raised);
+  border: 1px solid var(--nb-border);
+  border-radius: 4px;
+  color: var(--nb-text);
+  font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.5;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 120ms ease;
   outline: none;
 }
-.field::placeholder { color: var(--c-text-3); }
-.field:hover  { border-color: var(--c-border-hi); }
-.field:focus  { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-.field.error  { border-color: var(--c-danger); }
-.field:focus.error { box-shadow: 0 0 0 3px rgba(248,81,73,0.15); }
+.field::placeholder { color: var(--nb-text-4); }
+.field:hover  { border-color: var(--nb-border-hi); }
+.field:focus  { border-color: var(--nb-green); box-shadow: 0 0 0 3px var(--nb-green-dim); }
+.field.error  { border-color: var(--nb-danger); }
 
-/* Card (not nested — one level only) */
-.card {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-}
-.card:hover { border-color: var(--c-border-hi); }
-
-/* Badge */
+/* ────────────────────────────────────────────────────────────────
+   BADGE
+   ─────────────────────────────────────────────────────────────── */
 .badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px;
-  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6375rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  background: var(--nb-green-bg);
+  color: var(--nb-green);
+  border: 1px solid var(--nb-green-border);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   BENTO GRID — the visible structural grid cells
+   ─────────────────────────────────────────────────────────────── */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;                       /* the gap IS the visible line */
+  background: var(--nb-grid);     /* grid color shows through gaps */
+  border: 1px solid var(--nb-grid);
   border-radius: 4px;
-  background: var(--c-accent-bg);
-  color: var(--c-accent-hi);
-  border: 1px solid var(--c-accent-border);
+  overflow: hidden;
 }
 
-/* Section label */
-.eyebrow {
-  font-size: 0.7rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--c-accent);
+.bento-cell {
+  background: var(--nb-surface);
+  padding: 28px 24px;
+  position: relative;
+  transition: background 150ms ease;
 }
+.bento-cell:hover { background: var(--nb-raised); }
 
-/* Divider */
-.divider {
-  height: 1px;
-  background: var(--c-border);
-}
+/* Cell sizing presets */
+.bento-2   { grid-column: span 2; }
+.bento-3   { grid-column: span 3; }
+.bento-4   { grid-column: span 4; }
+.bento-6   { grid-column: span 6; }
+.bento-tall { min-height: 220px; }
 
-/* Prose max-width (65ch rule) */
-.prose-width { max-width: 65ch; }
+/* ────────────────────────────────────────────────────────────────
+   SECTION RHYTHM — horizontal rules as dividers
+   ─────────────────────────────────────────────────────────────── */
+.section-rule { height: 1px; background: var(--nb-border); }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ────────────────────────────────────────────────────────────────
+   MISC UTILITIES
+   ─────────────────────────────────────────────────────────────── */
+.mono { font-family: var(--font-mono); }
+.prose-width { max-width: 62ch; }
+.divider { height: 1px; background: var(--nb-border); }
+
+/* ────────────────────────────────────────────────────────────────
+   SCROLLBAR
+   ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--c-border-hi); }
+::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--nb-border-hi); }
 
-/* ── Selection ── */
-::selection { background: rgba(16,185,129,0.25); color: var(--c-text); }
+/* ────────────────────────────────────────────────────────────────
+   SELECTION
+   ─────────────────────────────────────────────────────────────── */
+::selection { background: var(--nb-green-dim); color: var(--nb-text); }
 
-/* ── Mono font ── */
-.mono { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
+/* ────────────────────────────────────────────────────────────────
+   ANIMATIONS
+   ─────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 
-/* ── Marquee ── */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.marquee { animation: marquee 32s linear infinite; display: flex; width: max-content; gap: 0; }
+.marquee { animation: marquee 32s linear infinite; display: flex; width: max-content; }
 .marquee:hover { animation-play-state: paused; }
 
-/* ── Announcement banner marquee ── */
 @keyframes marquee-banner { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-banner { animation: marquee-banner 55s linear infinite; display: flex; width: max-content; }
 .marquee-banner:hover { animation-play-state: paused; }
 
-/* ── Fade up animation ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE BENTO COLLAPSE
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 2; }
 }
-.animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+@media (max-width: 560px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 1; }
+  .nb-display { font-size: clamp(2.4rem, 10vw, 3.5rem); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   FOOTER GRID RESPONSIVE
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   STEP ROW RESPONSIVE
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .step-row { grid-template-columns: 40px 1fr !important; }
+  .step-row-body { display: none; }
+}
