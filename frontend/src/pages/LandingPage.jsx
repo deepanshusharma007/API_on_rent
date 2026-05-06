@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,54 +11,6 @@ const EASE = [0.22, 1, 0.36, 1];
 const fadeUp   = (delay = 0) => ({ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE, delay } } });
 const fadeIn   = (delay = 0) => ({ hidden: { opacity: 0 },        show: { opacity: 1,        transition: { duration: 0.45, ease: EASE, delay } } });
 const VP       = { once: true, margin: '-60px' };
-
-/* ── Code snippets ───────────────────────────────────────────────────────── */
-const SNIPPETS = {
-  python: [
-    { t: 'kw', v: 'import openai' },
-    { t: '',   v: '' },
-    { t: 'id', v: 'client = openai.OpenAI(' },
-    { t: 'cm', v: '    # your AIRent virtual key' },
-    { t: 'st', v: '    api_key="vk_xxxxxxxxxxxxxxxxxxxx",' },
-    { t: 'st', v: '    base_url="https://api-on-rent-backend.onrender.com/v1"' },
-    { t: 'id', v: ')' },
-    { t: '',   v: '' },
-    { t: 'id', v: 'response = client.chat.completions.create(' },
-    { t: 'st', v: '    model="gpt-4o",' },
-    { t: 'st', v: '    messages=[{"role":"user","content":"Hello!"}]' },
-    { t: 'id', v: ')' },
-    { t: 'kw', v: 'print(response.choices[0].message.content)' },
-  ],
-  node: [
-    { t: 'kw', v: "import OpenAI from 'openai';" },
-    { t: '',   v: '' },
-    { t: 'kw', v: 'const client = new OpenAI({' },
-    { t: 'cm', v: '  // your AIRent virtual key' },
-    { t: 'st', v: '  apiKey: "vk_xxxxxxxxxxxxxxxxxxxx",' },
-    { t: 'st', v: '  baseURL: "https://api-on-rent-backend.onrender.com/v1"' },
-    { t: 'kw', v: '});' },
-    { t: '',   v: '' },
-    { t: 'kw', v: 'const res = await client.chat.completions.create({' },
-    { t: 'st', v: '  model: "gpt-4o",' },
-    { t: 'st', v: '  messages: [{ role: "user", content: "Hello!" }]' },
-    { t: 'kw', v: '});' },
-    { t: 'id', v: 'console.log(res.choices[0].message.content);' },
-  ],
-  curl: [
-    { t: 'kw', v: 'curl https://api-on-rent-backend.onrender.com/v1/chat/completions \\' },
-    { t: 'st', v: '  -H "Authorization: Bearer vk_xxxxxxxxxxxxxxxxxxxx" \\' },
-    { t: 'st', v: '  -H "Content-Type: application/json" \\' },
-    { t: 'id', v: "  -d '{" },
-    { t: 'st', v: '    "model": "gpt-4o",' },
-    { t: 'st', v: '    "messages": [{"role":"user","content":"Hello!"}]' },
-    { t: 'id', v: "  }'" },
-  ],
-};
-
-const tokenColor = t =>
-  t === 'kw' ? 'var(--nb-green)'  :
-  t === 'st' ? 'oklch(68% 0.14 240)' :
-  t === 'cm' ? 'var(--nb-text-3)' : 'var(--nb-text-2)';
 
 /* ── Steps ───────────────────────────────────────────────────────────────── */
 const STEPS = [
@@ -124,7 +76,6 @@ const MAX = { maxWidth: '1200px', margin: '0 auto' };
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [lang, setLang] = useState('python');
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)' }}>
@@ -259,55 +210,6 @@ export default function LandingPage() {
                 {t}{i < arr.length - 1 && <span style={{ margin: '0 14px', opacity: 0.3 }}>·</span>}
               </span>
             ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          CODE BLOCK — flat, no chrome, inside grid layout
-          ═════════════════════════════════════════════════════════════════ */}
-      <section style={{ borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
-        <div style={{ ...MAX, ...SP }}>
-          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}>
-
-            {/* Section label */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em' }}>DROP-IN REPLACEMENT</span>
-              {/* Language tabs */}
-              <div style={{ display: 'flex', gap: '0', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
-                {['python', 'node', 'curl'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setLang(t)}
-                    style={{
-                      padding: '6px 14px',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.72rem',
-                      background: lang === t ? 'var(--nb-raised)' : 'transparent',
-                      border: 'none',
-                      borderRight: t !== 'curl' ? '1px solid var(--nb-border)' : 'none',
-                      color: lang === t ? 'var(--nb-text)' : 'var(--nb-text-3)',
-                      cursor: 'pointer',
-                      transition: 'background 120ms, color 120ms',
-                    }}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Code */}
-            <div style={{ background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '24px 24px 28px', overflowX: 'auto' }}>
-              {SNIPPETS[lang].map((line, i) => (
-                <div key={i} style={{ display: 'flex', gap: '20px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', lineHeight: '1.9' }}>
-                  <span style={{ color: 'var(--nb-text-4)', width: '18px', textAlign: 'right', userSelect: 'none', flexShrink: 0 }}>
-                    {line.t !== '' ? i + 1 : ''}
-                  </span>
-                  <span style={{ color: tokenColor(line.t), whiteSpace: 'pre' }}>{line.v || ' '}</span>
-                </div>
-              ))}
-            </div>
           </motion.div>
         </div>
       </section>
