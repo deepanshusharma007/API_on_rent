@@ -3,40 +3,39 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   IMPECCABLE DESIGN SYSTEM
-   Commitment level: Committed
-   Base: Deep slate-indigo (tinted, not pure black)
-   Accent: Emerald (single color, used sparingly)
-   Rule: No purple gradients. No gradient text. No nested cards.
-         No glassmorphism. Tinted neutrals everywhere.
+   IMPECCABLE DESIGN SYSTEM — Warm Graphite Edition
+   Commitment: Committed
+   Base: Warm graphite (amber-tinted, never cold blue-slate)
+   Accent: Emerald — used sparingly and intentionally
+   Character: Editorial, warm, confident. Not generic AI-tool dark.
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Surfaces (slate-tinted, never pure black) ── */
-  --c-bg:        #0d1117;   /* slate-950 with slight blue tint */
-  --c-surface:   #161b22;   /* one step lighter */
-  --c-raised:    #1c2128;   /* cards, inputs */
-  --c-overlay:   #222930;   /* dropdowns, hover states */
+  /* ── Surfaces (warm graphite — amber-tinted, never cold) ── */
+  --c-bg:        #0e0d0b;   /* warm near-black, like a darkroom */
+  --c-surface:   #181510;   /* one step up — visible difference */
+  --c-raised:    #211e18;   /* cards, inputs — clearly elevated */
+  --c-overlay:   #2a2620;   /* dropdowns, active states */
 
-  /* ── Borders ── */
-  --c-border:    #30363d;   /* subtle slate border */
-  --c-border-hi: #484f58;   /* interactive border on hover */
+  /* ── Borders (warm, not cold slate) ── */
+  --c-border:    #38332a;   /* amber-tinted border — visible on all surfaces */
+  --c-border-hi: #52493a;   /* interactive border — noticeably brighter */
 
-  /* ── Text (tinted slate, never pure white/gray) ── */
-  --c-text:      #e6edf3;   /* primary — off-white with blue tint */
-  --c-text-2:    #8b949e;   /* secondary */
-  --c-text-3:    #636e7b;   /* muted — readable, not invisible */
+  /* ── Text (warm off-white, never clinical pure white) ── */
+  --c-text:      #f0ebe3;   /* primary — warm cream white */
+  --c-text-2:    #9e9080;   /* secondary — warm mid-tone */
+  --c-text-3:    #6e6254;   /* muted — readable, clearly muted */
 
-  /* ── Accent: Emerald (single, committed) ── */
+  /* ── Accent: Emerald (single, committed, used sparingly) ── */
   --c-accent:    #10b981;   /* emerald-500 */
   --c-accent-hi: #34d399;   /* emerald-400 hover */
-  --c-accent-bg: #052e16;   /* emerald tinted surface */
-  --c-accent-border: #065f46;
+  --c-accent-bg: #0a1f16;   /* emerald tinted warm surface */
+  --c-accent-border: #0d3d28;
 
   /* ── Semantic ── */
-  --c-danger:    #f85149;
-  --c-warning:   #d29922;
-  --c-info:      #58a6ff;
+  --c-danger:    #f87171;
+  --c-warning:   #fbbf24;
+  --c-info:      #60a5fa;
 }
 
 /* ── Reset & Base ── */
@@ -51,9 +50,9 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Subtle dot-grid texture */
-  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
+  /* Warm dot-grid — visible but not distracting */
+  background-image: radial-gradient(circle, rgba(240,220,180,0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
   /* Page-load fade-in */
   animation: bodyFadeIn 300ms ease both;
 }
@@ -109,8 +108,9 @@ a {
 
 .btn-primary {
   background: var(--c-accent);
-  color: #022c22;
+  color: #021a10;
   border-color: var(--c-accent);
+  font-weight: 700;
 }
 .btn-primary:hover  { background: var(--c-accent-hi); border-color: var(--c-accent-hi); }
 .btn-primary:active { background: #059669; }
@@ -145,16 +145,16 @@ a {
 }
 .field::placeholder { color: var(--c-text-3); }
 .field:hover  { border-color: var(--c-border-hi); }
-.field:focus  { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+.field:focus  { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
 .field.error  { border-color: var(--c-danger); }
-.field:focus.error { box-shadow: 0 0 0 3px rgba(248,81,73,0.15); }
+.field:focus.error { box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
 
-/* Card (not nested — one level only) */
+/* Card */
 .card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 .card:hover { border-color: var(--c-border-hi); }
 
@@ -172,7 +172,7 @@ a {
 /* Section label */
 .eyebrow {
   font-size: 0.7rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--c-accent);
 }
 
@@ -192,7 +192,7 @@ a {
 ::-webkit-scrollbar-thumb:hover { background: var(--c-border-hi); }
 
 /* ── Selection ── */
-::selection { background: rgba(16,185,129,0.25); color: var(--c-text); }
+::selection { background: rgba(16,185,129,0.2); color: var(--c-text); }
 
 /* ── Mono font ── */
 .mono { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
@@ -213,3 +213,10 @@ a {
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ── Section alternating background ── */
+.section-alt {
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+}
