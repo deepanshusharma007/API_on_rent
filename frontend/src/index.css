@@ -3,63 +3,68 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   AIRent Design System — Custom Theme
-   Inspired by: Linear (whitespace), Resend (editorial), Vercel (stark
-   contrast), Stripe (typographic weight), Raycast (texture + depth)
-
-   Core decisions:
-   - True ink-black base, not blue-tinted GitHub dark
-   - DM Sans body (geometric, not generic), Playfair Display for hero
-   - Emerald accent ONLY on interactive elements — not eyebrows/labels
-   - Section rhythm via thick horizontal rules, not alternating bg
-   - Grain texture overlay for depth (not glassmorphism)
+   AIRENT — Neon-Brutalist Design System
+   Palette: Deep Navy OKLCH + Electric Green
+   Type: Geist Sans (headings) + Inter (body)
+   Grid: Visible structural lines — part of the aesthetic
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Ink palette (warm black — like printed paper, not a screen) ── */
-  --ink-0:   #080808;   /* true near-black */
-  --ink-1:   #111111;   /* card surfaces */
-  --ink-2:   #1a1a1a;   /* raised elements */
-  --ink-3:   #242424;   /* hover, overlay */
-  --ink-4:   #2e2e2e;   /* borders — strong */
-  --ink-5:   #3d3d3d;   /* borders — interactive */
-  --ink-6:   #525252;   /* muted text low */
-  --ink-7:   #888888;   /* muted text mid */
-  --ink-8:   #b0b0b0;   /* secondary text */
-  --ink-9:   #e8e2d9;   /* primary text — warm off-white, like #f5f0e8 toned down */
-  --ink-10:  #f5f0e8;   /* display text — warm cream for big headings */
+  /* ── Navy palette (OKLCH) ── */
+  --nb-bg:          oklch(12% 0.028 255);   /* deep navy-black */
+  --nb-surface:     oklch(16% 0.032 255);   /* card surface */
+  --nb-raised:      oklch(20% 0.034 255);   /* inputs, code */
+  --nb-overlay:     oklch(24% 0.034 255);   /* hover states */
 
-  /* ── CSS custom property aliases (used throughout components) ── */
-  --c-bg:        var(--ink-0);
-  --c-surface:   var(--ink-1);
-  --c-raised:    var(--ink-2);
-  --c-overlay:   var(--ink-3);
-  --c-border:    var(--ink-4);
-  --c-border-hi: var(--ink-5);
-  --c-text:      var(--ink-9);
-  --c-text-2:    var(--ink-8);
-  --c-text-3:    var(--ink-7);
+  /* ── Structural grid lines ── */
+  --nb-grid:        oklch(22% 0.038 255);   /* visible column lines */
+  --nb-border:      oklch(26% 0.036 255);   /* component borders */
+  --nb-border-hi:   oklch(38% 0.04 255);    /* interactive border */
 
-  /* ── Accent: emerald — used ONLY on CTAs and interactive states ── */
-  --c-accent:        #10b981;
-  --c-accent-hi:     #34d399;
-  --c-accent-dim:    rgba(16,185,129,0.08);
-  --c-accent-bg:     #051a0f;
-  --c-accent-border: #0a3320;
+  /* ── Text ── */
+  --nb-text:        oklch(93% 0.008 255);   /* primary — cool off-white */
+  --nb-text-2:      oklch(68% 0.014 255);   /* secondary */
+  --nb-text-3:      oklch(48% 0.018 255);   /* muted */
+  --nb-text-4:      oklch(32% 0.022 255);   /* very muted / disabled */
+
+  /* ── Electric green accent ── */
+  --nb-green:       oklch(78% 0.22 145);    /* primary accent — aggressive */
+  --nb-green-hi:    oklch(84% 0.2 145);     /* hover */
+  --nb-green-dim:   oklch(78% 0.22 145 / 0.12);
+  --nb-green-bg:    oklch(16% 0.06 145);    /* tinted surface */
+  --nb-green-border:oklch(30% 0.1 145);
 
   /* ── Semantic ── */
-  --c-danger:  #ef4444;
-  --c-warning: #f59e0b;
-  --c-info:    #3b82f6;
+  --nb-danger:      oklch(65% 0.22 25);
+  --nb-warning:     oklch(75% 0.18 75);
+  --nb-info:        oklch(68% 0.18 240);
 
-  /* ── Typography ── */
-  --font-sans:    'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-mono:    'DM Mono', 'Fira Code', ui-monospace, monospace;
+  /* ── Legacy aliases for components that still use c- vars ── */
+  --c-bg:           var(--nb-bg);
+  --c-surface:      var(--nb-surface);
+  --c-raised:       var(--nb-raised);
+  --c-overlay:      var(--nb-overlay);
+  --c-border:       var(--nb-border);
+  --c-border-hi:    var(--nb-border-hi);
+  --c-text:         var(--nb-text);
+  --c-text-2:       var(--nb-text-2);
+  --c-text-3:       var(--nb-text-3);
+  --c-accent:       var(--nb-green);
+  --c-accent-hi:    var(--nb-green-hi);
+  --c-accent-bg:    var(--nb-green-bg);
+  --c-accent-border:var(--nb-green-border);
+  --c-danger:       var(--nb-danger);
+  --c-warning:      var(--nb-warning);
+  --c-info:         var(--nb-info);
 
-  /* ── Spacing rhythm ── */
-  --space-section: clamp(72px, 10vw, 120px);
-  --space-component: clamp(40px, 6vw, 64px);
+  /* ── Fonts ── */
+  --font-head: 'Geist Sans', 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'GeistMono', 'Geist Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* ── Grid ── */
+  --grid-cols: 12;
+  --grid-gap:  1px;         /* the visible structural line */
 }
 
 /* ── Reset ── */
@@ -67,18 +72,13 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--ink-0);
-  color: var(--ink-9);
-  font-family: var(--font-sans);
+  background: var(--nb-bg);
+  color: var(--nb-text);
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
-  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Film grain texture — subtle, adds craft */
-  background-image:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
   animation: bodyFadeIn 250ms ease both;
 }
 
@@ -86,238 +86,257 @@ body {
 
 /* ── Focus ── */
 *:focus-visible {
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--nb-green);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
-/* ── Links ── */
-a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a { text-underline-offset: 3px; }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
+   VISIBLE GRID SYSTEM
+   The structural grid shows through as 1px navy lines.
+   Used on hero background and bento container.
+   ─────────────────────────────────────────────────────────────── */
+.nb-grid-bg {
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* Tighter grid for hero overlay */
+.nb-grid-hero {
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-position: -1px -1px;
+}
+
+/* ────────────────────────────────────────────────────────────────
    TYPOGRAPHY
-   Rule: DM Sans for UI/body. Playfair Display ONLY for hero h1.
-   Numbers: tabular-nums everywhere they're data.
-   ─────────────────────────────────────────────────────────────────── */
+   Geist for headings — structural, geometric, brutalist-compatible.
+   Inter for body — warm, readable.
+   ─────────────────────────────────────────────────────────────── */
 
-/* Display — hero headlines only */
-.t-display {
-  font-family: var(--font-display);
-  font-size: clamp(2.8rem, 7vw, 5.2rem);
-  line-height: 1.04;
-  letter-spacing: -0.01em;
-  color: var(--ink-10);
-  font-weight: 800;
+/* Display — hero only */
+.nb-display {
+  font-family: var(--font-head);
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--nb-text);
 }
 
-/* Editorial — section headings */
-.t-headline {
-  font-family: var(--font-sans);
-  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+/* Headline — section titles */
+.nb-headline {
+  font-family: var(--font-head);
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.025em;
-  font-weight: 700;
-  color: var(--ink-10);
+  color: var(--nb-text);
 }
 
-/* Subheading */
-.t-title {
-  font-family: var(--font-sans);
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
+/* Title — card/bento titles */
+.nb-title {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.015em;
-  font-weight: 600;
-  color: var(--ink-9);
+  color: var(--nb-text);
 }
 
 /* Body */
-.t-body { font-size: 0.9375rem; line-height: 1.75; color: var(--ink-8); }
-.t-small { font-size: 0.8125rem; line-height: 1.6; color: var(--ink-7); }
+.nb-body { font-family: var(--font-body); font-size: 0.9375rem; line-height: 1.72; color: var(--nb-text-2); }
+.nb-small { font-family: var(--font-body); font-size: 0.8125rem; line-height: 1.6; color: var(--nb-text-3); }
 
-/* Label / overline — NO accent color. Use ink-7. */
-.t-label {
+/* Label — mono-style overline */
+.nb-label {
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-7);
+  color: var(--nb-text-3);
 }
 
-/* ────────────────────────────────────────────────────────────────────
-   EYEBROW — replaces .eyebrow
-   Key difference: NOT emerald. Ink-7. Accent is reserved for actions.
-   ─────────────────────────────────────────────────────────────────── */
+/* Eyebrow — section label, NOT green */
 .eyebrow {
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-7);
+  color: var(--nb-text-3);
 }
 
-/* ────────────────────────────────────────────────────────────────────
-   SECTION RHYTHM
-   Linear/Resend approach: full-width horizontal rule as divider.
-   No alternating backgrounds — stark rule is the separator.
-   ─────────────────────────────────────────────────────────────────── */
-.section {
-  padding: var(--space-section) clamp(20px, 5vw, 80px);
-}
-
-.section-rule {
-  border: none;
-  border-top: 1px solid var(--ink-4);
-  margin: 0;
-}
-
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    BUTTONS
-   Primary: full emerald bg. Secondary: ink-2 bg. Ghost: transparent.
-   No gradient. No glow. Weight and contrast do the work.
-   ─────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
   white-space: nowrap;
   line-height: 1;
-  letter-spacing: -0.01em;
   text-decoration: none;
 }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
 .btn-primary {
-  background: var(--c-accent);
-  color: #02180e;
-  border-color: var(--c-accent);
+  background: var(--nb-green);
+  color: oklch(12% 0.04 145);
+  border-color: var(--nb-green);
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
-.btn-primary:hover  { background: var(--c-accent-hi); border-color: var(--c-accent-hi); }
-.btn-primary:active { opacity: 0.85; }
+.btn-primary:hover { background: var(--nb-green-hi); border-color: var(--nb-green-hi); }
 
 .btn-secondary {
-  background: var(--ink-2);
-  color: var(--ink-9);
-  border-color: var(--ink-4);
+  background: transparent;
+  color: var(--nb-text);
+  border-color: var(--nb-border);
 }
-.btn-secondary:hover { background: var(--ink-3); border-color: var(--ink-5); }
-.btn-secondary:active { opacity: 0.8; }
+.btn-secondary:hover { border-color: var(--nb-border-hi); background: var(--nb-surface); }
 
 .btn-ghost {
   background: transparent;
-  color: var(--ink-8);
+  color: var(--nb-text-2);
   border-color: transparent;
 }
-.btn-ghost:hover { color: var(--ink-9); background: var(--ink-2); }
+.btn-ghost:hover { color: var(--nb-text); background: var(--nb-surface); }
 
 .btn-outline {
   background: transparent;
-  color: var(--ink-9);
-  border-color: var(--ink-4);
+  color: var(--nb-text);
+  border-color: var(--nb-border);
 }
-.btn-outline:hover { border-color: var(--ink-5); background: var(--ink-1); }
+.btn-outline:hover { border-color: var(--nb-border-hi); }
 
-/* ────────────────────────────────────────────────────────────────────
-   CARDS
-   Vercel/Linear approach: very subtle elevation via border only.
-   Shadow is barely visible — borders do the structural work.
-   ─────────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────────
+   CARDS — brutalist: full border, no shadow, sharp corners
+   ─────────────────────────────────────────────────────────────── */
 .card {
-  background: var(--ink-1);
-  border: 1px solid var(--ink-4);
-  border-radius: 10px;
+  background: var(--nb-surface);
+  border: 1px solid var(--nb-border);
+  border-radius: 4px;
 }
-.card:hover { border-color: var(--ink-5); }
-.card-raised {
-  background: var(--ink-2);
-  border: 1px solid var(--ink-4);
-  border-radius: 10px;
-}
+.card:hover { border-color: var(--nb-border-hi); }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    FORM FIELDS
-   ─────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────── */
 .field {
   display: block;
   width: 100%;
   padding: 8px 12px;
-  background: var(--ink-1);
-  border: 1px solid var(--ink-4);
-  border-radius: 6px;
-  color: var(--ink-9);
-  font-family: var(--font-sans);
+  background: var(--nb-raised);
+  border: 1px solid var(--nb-border);
+  border-radius: 4px;
+  color: var(--nb-text);
+  font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.5;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color 120ms ease;
   outline: none;
 }
-.field::placeholder { color: var(--ink-6); }
-.field:hover  { border-color: var(--ink-5); }
-.field:focus  { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
-.field.error  { border-color: var(--c-danger); }
+.field::placeholder { color: var(--nb-text-4); }
+.field:hover  { border-color: var(--nb-border-hi); }
+.field:focus  { border-color: var(--nb-green); box-shadow: 0 0 0 3px var(--nb-green-dim); }
+.field.error  { border-color: var(--nb-danger); }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    BADGE
-   ─────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 2px 8px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
+  font-family: var(--font-mono);
+  font-size: 0.6375rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: 4px;
-  background: var(--c-accent-bg);
-  color: var(--c-accent-hi);
-  border: 1px solid var(--c-accent-border);
+  border-radius: 2px;
+  background: var(--nb-green-bg);
+  color: var(--nb-green);
+  border: 1px solid var(--nb-green-border);
 }
 
-/* ────────────────────────────────────────────────────────────────────
-   DIVIDERS
-   ─────────────────────────────────────────────────────────────────── */
-.divider { height: 1px; background: var(--ink-4); }
+/* ────────────────────────────────────────────────────────────────
+   BENTO GRID — the visible structural grid cells
+   ─────────────────────────────────────────────────────────────── */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;                       /* the gap IS the visible line */
+  background: var(--nb-grid);     /* grid color shows through gaps */
+  border: 1px solid var(--nb-grid);
+  border-radius: 4px;
+  overflow: hidden;
+}
 
-/* ────────────────────────────────────────────────────────────────────
-   MONO
-   ─────────────────────────────────────────────────────────────────── */
+.bento-cell {
+  background: var(--nb-surface);
+  padding: 28px 24px;
+  position: relative;
+  transition: background 150ms ease;
+}
+.bento-cell:hover { background: var(--nb-raised); }
+
+/* Cell sizing presets */
+.bento-2   { grid-column: span 2; }
+.bento-3   { grid-column: span 3; }
+.bento-4   { grid-column: span 4; }
+.bento-6   { grid-column: span 6; }
+.bento-tall { min-height: 220px; }
+
+/* ────────────────────────────────────────────────────────────────
+   SECTION RHYTHM — horizontal rules as dividers
+   ─────────────────────────────────────────────────────────────── */
+.section-rule { height: 1px; background: var(--nb-border); }
+
+/* ────────────────────────────────────────────────────────────────
+   MISC UTILITIES
+   ─────────────────────────────────────────────────────────────── */
 .mono { font-family: var(--font-mono); }
-
-/* ────────────────────────────────────────────────────────────────────
-   PROSE
-   ─────────────────────────────────────────────────────────────────── */
 .prose-width { max-width: 62ch; }
+.divider { height: 1px; background: var(--nb-border); }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    SCROLLBAR
-   ─────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--ink-4); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-5); }
+::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--nb-border-hi); }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    SELECTION
-   ─────────────────────────────────────────────────────────────────── */
-::selection { background: rgba(16,185,129,0.18); color: var(--ink-10); }
+   ─────────────────────────────────────────────────────────────── */
+::selection { background: var(--nb-green-dim); color: var(--nb-text); }
 
-/* ────────────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────
    ANIMATIONS
-   ─────────────────────────────────────────────────────────────────── */
+   ─────────────────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-up { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee { animation: marquee 32s linear infinite; display: flex; width: max-content; }
@@ -327,81 +346,33 @@ a { text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .marquee-banner { animation: marquee-banner 55s linear infinite; display: flex; width: max-content; }
 .marquee-banner:hover { animation-play-state: paused; }
 
-/* ────────────────────────────────────────────────────────────────────
-   NAVBAR — Resend/Linear style: borderless until scrolled
-   ─────────────────────────────────────────────────────────────────── */
-.nav-scrolled {
-  background: rgba(8,8,8,0.92);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border-bottom: 1px solid var(--ink-4);
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE BENTO COLLAPSE
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 2; }
+}
+@media (max-width: 560px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 1; }
+  .nb-display { font-size: clamp(2.4rem, 10vw, 3.5rem); }
 }
 
-/* ────────────────────────────────────────────────────────────────────
-   CODE BLOCK — Raycast-style: ink-1 with mono, real syntax feel
-   ─────────────────────────────────────────────────────────────────── */
-.code-block {
-  background: var(--ink-1);
-  border: 1px solid var(--ink-4);
-  border-radius: 10px;
-  overflow: hidden;
+/* ────────────────────────────────────────────────────────────────
+   FOOTER GRID RESPONSIVE
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr 1fr !important; }
 }
-.code-block-header {
-  background: var(--ink-2);
-  border-bottom: 1px solid var(--ink-4);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.code-block-dots {
-  display: flex;
-  gap: 5px;
-}
-.code-block-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
-.code-block-body {
-  padding: 20px 20px 24px;
-  overflow-x: auto;
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr !important; }
 }
 
-/* ────────────────────────────────────────────────────────────────────
-   HERO RULE — thick horizontal accent line above hero headings
-   Inspired by Stripe's editorial section breaks
-   ─────────────────────────────────────────────────────────────────── */
-.hero-rule {
-  display: block;
-  width: 36px;
-  height: 2px;
-  background: var(--c-accent);
-  margin-bottom: 20px;
-}
-
-/* ────────────────────────────────────────────────────────────────────
-   STEP NUMBER — large tabular numerals, no cards around them
-   ─────────────────────────────────────────────────────────────────── */
-.step-number {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--ink-6);
-  letter-spacing: 0.04em;
-  margin-bottom: 14px;
-}
-
-/* ────────────────────────────────────────────────────────────────────
-   FEATURE ROW — asymmetric, no cards, just rule-separated rows
-   ─────────────────────────────────────────────────────────────────── */
-.feature-row {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 48px;
-  align-items: start;
-  padding: 40px 0;
-  border-top: 1px solid var(--ink-4);
-}
+/* ────────────────────────────────────────────────────────────────
+   STEP ROW RESPONSIVE
+   ─────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .feature-row { grid-template-columns: 1fr; gap: 12px; }
+  .step-row { grid-template-columns: 40px 1fr !important; }
+  .step-row-body { display: none; }
 }

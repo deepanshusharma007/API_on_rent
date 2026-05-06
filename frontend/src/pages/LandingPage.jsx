@@ -2,24 +2,30 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { fadeUp, fadeLeft, fadeRight, staggerContainer, scaleIn, viewport } from '../lib/motion';
 
+/* ── Motion presets ──────────────────────────────────────────────────────── */
+const EASE = [0.22, 1, 0.36, 1];
+const fadeUp   = (delay = 0) => ({ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE, delay } } });
+const fadeIn   = (delay = 0) => ({ hidden: { opacity: 0 },        show: { opacity: 1,        transition: { duration: 0.45, ease: EASE, delay } } });
+const VP       = { once: true, margin: '-60px' };
+
+/* ── Code snippets ───────────────────────────────────────────────────────── */
 const SNIPPETS = {
   python: [
     { t: 'kw', v: 'import openai' },
     { t: '',   v: '' },
     { t: 'id', v: 'client = openai.OpenAI(' },
-    { t: 'cm', v: '    # paste your AIRent virtual key here' },
+    { t: 'cm', v: '    # your AIRent virtual key' },
     { t: 'st', v: '    api_key="vk_xxxxxxxxxxxxxxxxxxxx",' },
     { t: 'st', v: '    base_url="https://api-on-rent-backend.onrender.com/v1"' },
     { t: 'id', v: ')' },
     { t: '',   v: '' },
     { t: 'id', v: 'response = client.chat.completions.create(' },
     { t: 'st', v: '    model="gpt-4o",' },
-    { t: 'st', v: '    messages=[{"role": "user", "content": "Hello!"}]' },
+    { t: 'st', v: '    messages=[{"role":"user","content":"Hello!"}]' },
     { t: 'id', v: ')' },
     { t: 'kw', v: 'print(response.choices[0].message.content)' },
   ],
@@ -27,7 +33,7 @@ const SNIPPETS = {
     { t: 'kw', v: "import OpenAI from 'openai';" },
     { t: '',   v: '' },
     { t: 'kw', v: 'const client = new OpenAI({' },
-    { t: 'cm', v: '  // paste your AIRent virtual key here' },
+    { t: 'cm', v: '  // your AIRent virtual key' },
     { t: 'st', v: '  apiKey: "vk_xxxxxxxxxxxxxxxxxxxx",' },
     { t: 'st', v: '  baseURL: "https://api-on-rent-backend.onrender.com/v1"' },
     { t: 'kw', v: '});' },
@@ -44,39 +50,17 @@ const SNIPPETS = {
     { t: 'st', v: '  -H "Content-Type: application/json" \\' },
     { t: 'id', v: "  -d '{" },
     { t: 'st', v: '    "model": "gpt-4o",' },
-    { t: 'st', v: '    "messages": [{"role": "user", "content": "Hello!"}]' },
+    { t: 'st', v: '    "messages": [{"role":"user","content":"Hello!"}]' },
     { t: 'id', v: "  }'" },
   ],
 };
 
 const tokenColor = t =>
-  t === 'kw' ? '#10b981' :
-  t === 'st' ? '#60a5fa' :
-  t === 'cm' ? '#525252' : '#888888';
+  t === 'kw' ? 'var(--nb-green)'  :
+  t === 'st' ? 'oklch(68% 0.14 240)' :
+  t === 'cm' ? 'var(--nb-text-3)' : 'var(--nb-text-2)';
 
-const FEATURES = [
-  {
-    label: 'Instant delivery',
-    title: 'Key in under 10 seconds',
-    body: 'Payment clears, virtual key lands in your dashboard and email immediately. No manual review, no approval queue.',
-  },
-  {
-    label: 'Privacy by default',
-    title: 'Secure at every layer',
-    body: 'Each key is IP-pinned after first use. Prompts pass through a PII filter and AI safety scanner on every request. Nothing is stored.',
-  },
-  {
-    label: 'OpenAI-compatible',
-    title: 'Three providers, one interface',
-    body: 'GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro. All reachable from one endpoint. Switch models with a single parameter change.',
-  },
-  {
-    label: 'Zero overage risk',
-    title: 'Hard cost protection',
-    body: 'Token caps and circuit breakers are enforced server-side. Accidental overspend is not possible. Your budget is the limit.',
-  },
-];
-
+/* ── Steps ───────────────────────────────────────────────────────────────── */
 const STEPS = [
   { n: '01', title: 'Pick a plan',    body: 'Choose a model family and rental window. 15 minutes to 24 hours.' },
   { n: '02', title: 'Pay in INR',     body: 'UPI, card, or net banking via Cashfree. No foreign currency fees.' },
@@ -84,151 +68,240 @@ const STEPS = [
   { n: '04', title: 'Start building', body: 'Drop the key into any OpenAI SDK. Tokens tracked in real time.' },
 ];
 
-const PLANS = [
-  { label: '15 min',   tokens: '20K',  price: null },
-  { label: '30 min',   tokens: '40K',  price: null },
-  { label: '1 hour',   tokens: '80K',  price: null, popular: true },
-  { label: '24 hours', tokens: '1.2M', price: null },
+/* ── Bento features ──────────────────────────────────────────────────────── */
+const BENTO = [
+  {
+    span: 'bento-3 bento-tall',
+    n: '01',
+    title: 'Key in under 10 seconds',
+    body: 'Payment clears, virtual key lands in your dashboard and email immediately. No manual review, no approval queue.',
+    accent: true,
+  },
+  {
+    span: 'bento-3 bento-tall',
+    n: '02',
+    title: 'Three providers, one endpoint',
+    body: 'GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro. OpenAI-compatible API. Switch models by changing a single parameter.',
+  },
+  {
+    span: 'bento-2',
+    n: '03',
+    title: 'IP-pinned keys',
+    body: 'Every virtual key locks to your IP after the first request. Misuse is structurally prevented.',
+  },
+  {
+    span: 'bento-2',
+    n: '04',
+    title: 'PII filter',
+    body: 'Personal data is stripped from every prompt before it reaches the model. Nothing is stored.',
+  },
+  {
+    span: 'bento-2',
+    n: '05',
+    title: 'Hard token caps',
+    body: 'Server-side limits. Accidental overspend is not possible.',
+  },
+  {
+    span: 'bento-6',
+    n: '06',
+    title: 'Pay in INR via UPI',
+    body: 'No foreign currency fees. No minimum spend. Cashfree handles the transaction — your bank sees a domestic payment.',
+    wide: true,
+  },
 ];
+
+/* ── Plans ───────────────────────────────────────────────────────────────── */
+const PLANS = [
+  { label: '15 min',   tokens: '20K',  popular: false },
+  { label: '30 min',   tokens: '40K',  popular: false },
+  { label: '1 hour',   tokens: '80K',  popular: true  },
+  { label: '24 hours', tokens: '1.2M', popular: false },
+];
+
+/* ── Shared section padding ── */
+const SP = { padding: 'clamp(64px,10vw,112px) clamp(20px,5vw,72px)' };
+const MAX = { maxWidth: '1200px', margin: '0 auto' };
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [lang, setLang] = useState('python');
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ink-0)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)' }}>
       <Helmet>
-        <title>AIRent — Rent AI APIs by the Minute | AI on Rent, API on Rent</title>
-        <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your virtual API key in under 10 seconds." />
+        <title>AIRent — Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
+        <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your API key in under 10 seconds." />
         <link rel="canonical" href="https://airent.dev/" />
       </Helmet>
 
       <Navbar />
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section style={{
-        paddingTop: 'clamp(120px, 18vw, 180px)',
-        paddingBottom: 'clamp(64px, 10vw, 96px)',
-        paddingLeft: 'clamp(20px, 5vw, 80px)',
-        paddingRight: 'clamp(20px, 5vw, 80px)',
-        maxWidth: '1120px',
-        margin: '0 auto',
-        width: '100%',
-      }}>
-        <motion.div variants={staggerContainer(0.07)} initial="hidden" animate="show">
+      {/* ═══════════════════════════════════════════════════════════════════
+          HERO — text-only, visible grid background
+          ═════════════════════════════════════════════════════════════════ */}
+      <section
+        className="nb-grid-hero"
+        style={{
+          paddingTop: 'clamp(130px, 18vw, 200px)',
+          paddingBottom: 'clamp(72px, 10vw, 112px)',
+          paddingLeft: 'clamp(20px, 5vw, 72px)',
+          paddingRight: 'clamp(20px, 5vw, 72px)',
+          borderBottom: '1px solid var(--nb-border)',
+          position: 'relative',
+        }}
+      >
+        {/* Fade gradient over grid at bottom */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
 
-          {/* Overline — no accent color, just muted mono label */}
-          <motion.div variants={fadeUp} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
-            <span style={{ display: 'block', width: '24px', height: '1px', background: 'var(--c-accent)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em' }}>
+        <div style={{ ...MAX, position: 'relative' }}>
+          <motion.div variants={fadeIn(0)} initial="hidden" animate="show">
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.6875rem',
+              letterSpacing: '0.12em',
+              color: 'var(--nb-green)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '32px',
+            }}>
+              <span style={{ display: 'inline-block', width: '18px', height: '1px', background: 'var(--nb-green)' }} />
               AI API MARKETPLACE
             </span>
           </motion.div>
 
-          {/* Hero headline — Playfair Display, not DM Sans */}
+          {/* Display heading — Geist, brutalist tight leading */}
           <motion.h1
-            variants={fadeUp}
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(2.8rem, 7vw, 5.6rem)',
-              fontWeight: 800,
-              lineHeight: 1.04,
-              letterSpacing: '-0.01em',
-              color: 'var(--ink-10)',
-              marginBottom: '28px',
-              maxWidth: '14ch',
-            }}
+            className="nb-display"
+            variants={fadeUp(0.05)}
+            initial="hidden"
+            animate="show"
+            style={{ marginBottom: '12px' }}
           >
-            Rent AI APIs.<br />
-            <em style={{ fontStyle: 'italic', color: 'var(--ink-8)' }}>Pay in INR.</em><br />
+            Rent AI APIs.
+          </motion.h1>
+          <motion.h1
+            className="nb-display"
+            variants={fadeUp(0.1)}
+            initial="hidden"
+            animate="show"
+            style={{ color: 'var(--nb-text-2)', marginBottom: '12px' }}
+          >
+            Pay in INR.
+          </motion.h1>
+          <motion.h1
+            className="nb-display"
+            variants={fadeUp(0.15)}
+            initial="hidden"
+            animate="show"
+            style={{ marginBottom: '40px' }}
+          >
             Ship today.
           </motion.h1>
 
           <motion.p
-            variants={fadeUp}
+            variants={fadeUp(0.22)}
+            initial="hidden"
+            animate="show"
             style={{
-              fontSize: '1rem',
-              lineHeight: 1.75,
-              color: 'var(--ink-7)',
-              marginBottom: '40px',
-              maxWidth: '44ch',
+              fontFamily: 'var(--font-body)',
+              fontSize: 'clamp(1rem, 2vw, 1.125rem)',
+              lineHeight: 1.7,
+              color: 'var(--nb-text-2)',
+              maxWidth: '48ch',
+              marginBottom: '44px',
             }}
           >
             Time-bound virtual keys for GPT-4o, Claude, and Gemini.
-            No subscription. One payment, one key, instant access.
+            No subscription, no lock-in, no forex fees.
+            One payment, one key, instant access.
           </motion.p>
 
-          <motion.div variants={fadeUp} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '48px' }}>
+          <motion.div
+            variants={fadeUp(0.28)}
+            initial="hidden"
+            animate="show"
+            style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '56px' }}
+          >
             <button
               className="btn btn-primary"
-              style={{ padding: '10px 22px', fontSize: '0.875rem' }}
+              style={{ padding: '11px 24px', fontSize: '0.9rem' }}
               onClick={() => navigate('/register')}
             >
               Get started free <ArrowRight size={14} />
             </button>
             <button
-              className="btn btn-outline"
-              style={{ padding: '10px 18px', fontSize: '0.875rem' }}
+              className="btn btn-secondary"
+              style={{ padding: '11px 20px', fontSize: '0.9rem' }}
               onClick={() => navigate('/pricing')}
             >
               See pricing
             </button>
+            <Link
+              to="/docs"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--nb-text-3)', fontSize: '0.875rem', textDecoration: 'none', fontFamily: 'var(--font-body)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text-2)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
+            >
+              Read the docs <ArrowUpRight size={13} />
+            </Link>
           </motion.div>
 
-          {/* Trust signals — inline text, no cards, no icons */}
-          <motion.div variants={fadeUp} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 28px' }}>
-            {['No subscription', 'Pay via UPI', 'Key in 10 seconds', 'OpenAI-compatible'].map(t => (
-              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--ink-6)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
-                <CheckCircle2 size={11} style={{ color: 'var(--c-accent)', flexShrink: 0 }} />
-                {t}
+          {/* Inline trust signals — mono, small, no icons */}
+          <motion.div
+            variants={fadeUp(0.34)}
+            initial="hidden"
+            animate="show"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 0' }}
+          >
+            {['No subscription', 'UPI payment', 'Key in 10 seconds', 'OpenAI-compatible', 'INR only', 'No KYC'].map((t, i, arr) => (
+              <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.06em' }}>
+                {t}{i < arr.length - 1 && <span style={{ margin: '0 14px', opacity: 0.3 }}>·</span>}
               </span>
             ))}
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* ── CODE BLOCK — full width, editorial ─────────────────────────────── */}
-      <section style={{
-        borderTop: '1px solid var(--ink-4)',
-        borderBottom: '1px solid var(--ink-4)',
-        background: 'var(--ink-1)',
-        padding: 'clamp(40px,6vw,64px) clamp(20px,5vw,80px)',
-      }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em', marginBottom: '20px' }}>
-              DROP-IN REPLACEMENT
-            </p>
+      {/* ═══════════════════════════════════════════════════════════════════
+          CODE BLOCK — flat, no chrome, inside grid layout
+          ═════════════════════════════════════════════════════════════════ */}
+      <section style={{ borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+        <div style={{ ...MAX, ...SP }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}>
 
-            {/* Language tabs */}
-            <div style={{ display: 'flex', gap: '0', marginBottom: '0', borderBottom: '1px solid var(--ink-4)' }}>
-              {['python', 'node', 'curl'].map(t => (
-                <button
-                  key={t}
-                  onClick={() => setLang(t)}
-                  style={{
-                    padding: '8px 16px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.75rem',
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: lang === t ? '2px solid var(--c-accent)' : '2px solid transparent',
-                    color: lang === t ? 'var(--ink-9)' : 'var(--ink-6)',
-                    cursor: 'pointer',
-                    marginBottom: '-1px',
-                    transition: 'color 120ms',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
+            {/* Section label */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em' }}>DROP-IN REPLACEMENT</span>
+              {/* Language tabs */}
+              <div style={{ display: 'flex', gap: '0', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                {['python', 'node', 'curl'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setLang(t)}
+                    style={{
+                      padding: '6px 14px',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.72rem',
+                      background: lang === t ? 'var(--nb-raised)' : 'transparent',
+                      border: 'none',
+                      borderRight: t !== 'curl' ? '1px solid var(--nb-border)' : 'none',
+                      color: lang === t ? 'var(--nb-text)' : 'var(--nb-text-3)',
+                      cursor: 'pointer',
+                      transition: 'background 120ms, color 120ms',
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Code */}
-            <div style={{ padding: '24px 0', overflowX: 'auto' }}>
+            <div style={{ background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '24px 24px 28px', overflowX: 'auto' }}>
               {SNIPPETS[lang].map((line, i) => (
-                <div key={i} style={{ display: 'flex', gap: '20px', fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', lineHeight: '1.85' }}>
-                  <span style={{ color: 'var(--ink-5)', width: '20px', textAlign: 'right', userSelect: 'none', flexShrink: 0 }}>
+                <div key={i} style={{ display: 'flex', gap: '20px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', lineHeight: '1.9' }}>
+                  <span style={{ color: 'var(--nb-text-4)', width: '18px', textAlign: 'right', userSelect: 'none', flexShrink: 0 }}>
                     {line.t !== '' ? i + 1 : ''}
                   </span>
                   <span style={{ color: tokenColor(line.t), whiteSpace: 'pre' }}>{line.v || ' '}</span>
@@ -239,154 +312,187 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section) clamp(20px,5vw,80px)' }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} style={{ marginBottom: '56px' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em', marginBottom: '16px' }}>HOW IT WORKS</p>
-            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.022em', color: 'var(--ink-10)', lineHeight: 1.2 }}>
-              Up and running in 3 minutes
-            </h2>
+      {/* ═══════════════════════════════════════════════════════════════════
+          HOW IT WORKS — numbered rule rows
+          ═════════════════════════════════════════════════════════════════ */}
+      <section style={{ borderBottom: '1px solid var(--nb-border)' }}>
+        <div style={{ ...MAX, ...SP }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP} style={{ marginBottom: '48px' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '18px' }}>HOW IT WORKS</span>
+            <h2 className="nb-headline">Up and running in 3 minutes</h2>
           </motion.div>
 
-          {/* Steps — rule-separated, no cards */}
-          <motion.div variants={staggerContainer(0.08)} initial="hidden" whileInView="show" viewport={viewport}>
+          <div>
             {STEPS.map((s, i) => (
               <motion.div
                 key={s.n}
-                variants={fadeUp}
+                variants={fadeUp(0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={VP}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '80px 1fr 1fr',
-                  gap: '32px',
+                  gridTemplateColumns: '56px 1fr 1fr',
+                  gap: '24px 40px',
                   alignItems: 'start',
-                  padding: '28px 0',
-                  borderTop: '1px solid var(--ink-3)',
+                  padding: '24px 0',
+                  borderTop: '1px solid var(--nb-border)',
                 }}
-                className="step-responsive"
+                className="step-row"
               >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-5)', letterSpacing: '0.04em', paddingTop: '3px' }}>{s.n}</span>
-                <h3 style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--ink-9)', letterSpacing: '-0.01em' }}>{s.title}</h3>
-                <p style={{ fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--ink-7)' }}>{s.body}</p>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-green)', letterSpacing: '0.06em', paddingTop: '3px' }}>{s.n}</span>
+                <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.9375rem', color: 'var(--nb-text)', letterSpacing: '-0.01em', lineHeight: 1.4 }}>{s.title}</h3>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--nb-text-2)' }} className="step-row-body">{s.body}</p>
               </motion.div>
             ))}
-            <div style={{ borderTop: '1px solid var(--ink-3)', height: '1px' }} />
-          </motion.div>
+            <div style={{ borderTop: '1px solid var(--nb-border)' }} />
+          </div>
         </div>
       </section>
 
-      {/* ── FEATURES — rule-row layout, Resend-style ───────────────────────── */}
-      <section style={{ padding: 'var(--space-section) clamp(20px,5vw,80px)', borderTop: '1px solid var(--ink-4)', borderBottom: '1px solid var(--ink-4)', background: 'var(--ink-1)' }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} style={{ marginBottom: '56px' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em', marginBottom: '16px' }}>BUILT RIGHT</p>
-            <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.022em', color: 'var(--ink-10)', lineHeight: 1.2, maxWidth: '22ch' }}>
-              Infrastructure that earns your trust.
-            </h2>
+      {/* ═══════════════════════════════════════════════════════════════════
+          FEATURE BENTO — asymmetric visible grid
+          ═════════════════════════════════════════════════════════════════ */}
+      <section style={{ borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+        <div style={{ ...MAX, ...SP }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP} style={{ marginBottom: '40px' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '18px' }}>BUILT RIGHT</span>
+            <h2 className="nb-headline" style={{ maxWidth: '24ch' }}>Infrastructure that earns your trust.</h2>
           </motion.div>
 
-          <motion.div variants={staggerContainer(0.07)} initial="hidden" whileInView="show" viewport={viewport}>
-            {FEATURES.map((f, i) => (
+          {/* Bento — uses CSS grid gap as visible structural lines */}
+          <div className="bento-grid">
+            {BENTO.map((cell, i) => (
               <motion.div
-                key={f.title}
-                variants={fadeUp}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '200px 1fr 1fr',
-                  gap: '32px',
-                  alignItems: 'start',
-                  padding: '32px 0',
-                  borderTop: '1px solid var(--ink-3)',
-                }}
+                key={cell.n}
+                className={`bento-cell ${cell.span}`}
+                variants={fadeUp(0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={VP}
+                transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
+                style={cell.wide ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '40px', flexWrap: 'wrap' } : {}}
               >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-5)', letterSpacing: '0.04em', paddingTop: '4px' }}>{f.label.toUpperCase()}</span>
-                <h3 style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--ink-9)', letterSpacing: '-0.01em', lineHeight: 1.4 }}>{f.title}</h3>
-                <p style={{ fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--ink-7)' }}>{f.body}</p>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: cell.accent ? 'var(--nb-green)' : 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'block', marginBottom: cell.wide ? '0' : '20px' }}>
+                  {cell.n}
+                </span>
+                <div style={cell.wide ? { flex: 1 } : {}}>
+                  <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: cell.wide ? '1rem' : '0.9375rem', color: 'var(--nb-text)', letterSpacing: '-0.015em', lineHeight: 1.3, marginBottom: '10px' }}>
+                    {cell.title}
+                  </h3>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8375rem', lineHeight: 1.7, color: 'var(--nb-text-2)', maxWidth: cell.wide ? '52ch' : undefined }}>
+                    {cell.body}
+                  </p>
+                </div>
+                {cell.accent && (
+                  <div style={{ position: 'absolute', top: '20px', right: '20px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--nb-green)' }} />
+                )}
               </motion.div>
             ))}
-            <div style={{ borderTop: '1px solid var(--ink-3)' }} />
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ── PRICING PREVIEW ─────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section) clamp(20px,5vw,80px)' }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '40px' }}>
+      {/* ═══════════════════════════════════════════════════════════════════
+          PRICING — linear table rows
+          ═════════════════════════════════════════════════════════════════ */}
+      <section style={{ borderBottom: '1px solid var(--nb-border)' }}>
+        <div style={{ ...MAX, ...SP }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', marginBottom: '40px' }}>
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em', marginBottom: '14px' }}>PRICING</p>
-              <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 700, letterSpacing: '-0.022em', color: 'var(--ink-10)', lineHeight: 1.2 }}>
-                Pay for the time you use.
-              </h2>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '18px' }}>PRICING</span>
+              <h2 className="nb-headline">Pay for the time you use.</h2>
             </div>
-            <Link to="/pricing" style={{ color: 'var(--ink-7)', fontSize: '0.8375rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--ink-9)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--ink-7)'}
+            <Link
+              to="/pricing"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--nb-text-3)', fontSize: '0.8125rem', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text-2)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
             >
-              All plans <ArrowRight size={12} />
+              ALL PLANS <ArrowUpRight size={12} />
             </Link>
           </motion.div>
 
-          {/* Plan cards — horizontal rule table, not grid cards */}
-          <motion.div variants={staggerContainer(0.07)} initial="hidden" whileInView="show" viewport={viewport}>
+          <div>
             {PLANS.map((p, i) => (
               <motion.div
                 key={p.label}
-                variants={fadeUp}
+                variants={fadeUp(0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={VP}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '160px 1fr auto',
-                  gap: '32px',
+                  gridTemplateColumns: '140px 1fr auto',
+                  gap: '24px 40px',
                   alignItems: 'center',
                   padding: '20px 0',
-                  borderTop: '1px solid var(--ink-3)',
+                  borderTop: '1px solid var(--nb-border)',
                 }}
               >
-                <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: p.popular ? 'var(--ink-10)' : 'var(--ink-8)', letterSpacing: '-0.01em' }}>
+                <span style={{
+                  fontFamily: 'var(--font-head)',
+                  fontWeight: 600,
+                  fontSize: '0.9375rem',
+                  color: p.popular ? 'var(--nb-text)' : 'var(--nb-text-2)',
+                  letterSpacing: '-0.01em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
                   {p.label}
-                  {p.popular && <span style={{ marginLeft: '10px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--c-accent)', letterSpacing: '0.08em' }}>POPULAR</span>}
+                  {p.popular && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--nb-green)', letterSpacing: '0.1em', border: '1px solid var(--nb-green-border)', padding: '1px 6px', borderRadius: '2px' }}>
+                      POPULAR
+                    </span>
+                  )}
                 </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--ink-6)' }}>{p.tokens} tokens included</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--nb-text-3)' }}>
+                  {p.tokens} tokens included
+                </span>
                 <button
-                  className="btn btn-outline"
-                  style={{ fontSize: '0.8125rem', padding: '6px 14px' }}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '7px 16px' }}
                   onClick={() => navigate('/marketplace')}
                 >
                   Rent now
                 </button>
               </motion.div>
             ))}
-            <div style={{ borderTop: '1px solid var(--ink-3)' }} />
-          </motion.div>
+            <div style={{ borderTop: '1px solid var(--nb-border)' }} />
+          </div>
         </div>
       </section>
 
-      {/* ── FOUNDER NOTE ─────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section) clamp(20px,5vw,80px)', borderTop: '1px solid var(--ink-4)', background: 'var(--ink-1)' }}>
-        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-6)', letterSpacing: '0.08em', marginBottom: '32px' }}>WHY THIS EXISTS</p>
+      {/* ═══════════════════════════════════════════════════════════════════
+          FOUNDER QUOTE — Playfair italic, no card
+          ═════════════════════════════════════════════════════════════════ */}
+      <section style={{ borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+        <div style={{ maxWidth: '760px', margin: '0 auto', ...SP }}>
+          <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '32px' }}>WHY THIS EXISTS</span>
             <blockquote style={{ margin: 0, padding: 0, border: 'none' }}>
               <p style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: "'Playfair Display', Georgia, serif",
                 fontStyle: 'italic',
-                fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
-                color: 'var(--ink-8)',
-                lineHeight: 1.7,
+                fontSize: 'clamp(1.15rem, 2.5vw, 1.5rem)',
+                color: 'var(--nb-text-2)',
+                lineHeight: 1.68,
                 marginBottom: '32px',
+                maxWidth: '62ch',
               }}>
-                "I built AIRent because I was tired of hitting rate limits, waiting for API approvals,
-                and paying in USD with forex fees just to test a model for a side project.
-                If you are a student or indie developer in India who wants to experiment with
-                frontier AI without the overhead — this is for you."
+                "I built AIRent because I was tired of hitting rate limits, waiting for API
+                approvals, and paying in USD with forex fees just to test a model for a side
+                project. If you are a student or indie developer in India who wants to experiment
+                with frontier AI without the overhead, this is for you."
               </p>
               <footer style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--ink-3)', border: '1px solid var(--ink-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink-8)', flexShrink: 0 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '2px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-head)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--nb-text-2)', flexShrink: 0 }}>
                   D
                 </div>
                 <div>
-                  <div style={{ color: 'var(--ink-8)', fontWeight: 500, fontSize: '0.8375rem' }}>Deepanshu Sharma</div>
-                  <div style={{ color: 'var(--ink-6)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>Founder, AIRent</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: '0.875rem', color: 'var(--nb-text-2)' }}>Deepanshu Sharma</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--nb-text-3)', letterSpacing: '0.06em' }}>FOUNDER, AIRENT</div>
                 </div>
               </footer>
             </blockquote>
@@ -394,37 +500,45 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA CLOSE ────────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'var(--space-section) clamp(20px,5vw,80px)', borderTop: '1px solid var(--ink-4)' }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}>
+      {/* ═══════════════════════════════════════════════════════════════════
+          CTA CLOSE — full-width row: left headline, right buttons
+          ═════════════════════════════════════════════════════════════════ */}
+      <section>
+        <div style={{ ...MAX, ...SP }}>
+          <motion.div
+            variants={fadeUp(0)}
+            initial="hidden"
+            whileInView="show"
+            viewport={VP}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}
+          >
             <div>
-              <h2 style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 3rem)',
-                fontWeight: 800,
-                letterSpacing: '-0.01em',
-                color: 'var(--ink-10)',
-                lineHeight: 1.1,
-                marginBottom: '12px',
-              }}>
-                Ready to ship?
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--nb-text-3)', letterSpacing: '0.1em', display: 'block', marginBottom: '18px' }}>READY TO SHIP</span>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-head)',
+                  fontSize: 'clamp(1.8rem, 4vw, 3.2rem)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.03em',
+                  color: 'var(--nb-text)',
+                  lineHeight: 1.08,
+                  maxWidth: '18ch',
+                }}
+              >
+                Account in 30 seconds. Start building.
               </h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--ink-7)', lineHeight: 1.65 }}>
-                Account in 30 seconds. No credit card required.
-              </p>
             </div>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
               <button
                 className="btn btn-primary"
-                style={{ padding: '11px 24px', fontSize: '0.875rem' }}
+                style={{ padding: '12px 28px', fontSize: '0.9rem' }}
                 onClick={() => navigate('/register')}
               >
                 Get your API key <ArrowRight size={14} />
               </button>
               <button
                 className="btn btn-ghost"
-                style={{ padding: '11px 18px', fontSize: '0.875rem', color: 'var(--ink-7)' }}
+                style={{ padding: '10px 16px', fontSize: '0.875rem', color: 'var(--nb-text-3)' }}
                 onClick={() => navigate('/docs')}
               >
                 Read the docs
