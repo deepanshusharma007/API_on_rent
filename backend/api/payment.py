@@ -105,6 +105,17 @@ async def create_checkout_session(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
+    # Idempotency lock: prevent duplicate orders for same user+plan+provider within 5 minutes.
+    # Uses SET NX (set-if-not-exists) with 300s TTL so the lock auto-expires.
+    lock_key = f"checkout_lock:{current_user.id}:{request.plan_id}:{request.provider}"
+    redis = await redis_manager.get_client()
+    acquired = await redis.set(lock_key, "1", nx=True, ex=300)
+    if not acquired:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="A payment for this plan is already in progress. Please complete or wait 5 minutes before trying again.",
+        )
+
     # Capacity check before accepting payment
     capacity_mgr = CapacityManager(redis_manager)
     capacity_check = await capacity_mgr.can_sell_plan(

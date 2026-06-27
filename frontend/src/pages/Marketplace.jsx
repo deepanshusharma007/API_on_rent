@@ -64,6 +64,7 @@ export default function Marketplace() {
 
   const handlePurchase = async () => {
     if (!selectedPlan || !selectedProvider) { toast.error('Please complete all steps'); return; }
+    if (purchasing) return; // guard against rapid double-clicks before state update
     setPurchasing(true);
     try {
       const response = await paymentAPI.createCheckoutSession(selectedPlan.id, selectedProvider);
@@ -71,12 +72,14 @@ export default function Marketplace() {
       if (window.Cashfree) {
         const cashfree = window.Cashfree({ mode: import.meta.env.VITE_CASHFREE_ENV || 'sandbox' });
         cashfree.checkout({ paymentSessionId: payment_session_id, redirectTarget: '_self' });
+        // page navigates away on success — no need to reset purchasing
       } else {
         toast.error('Payment SDK not loaded. Please refresh.');
         setPurchasing(false);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to initiate payment');
+      const msg = error.response?.data?.detail || 'Failed to initiate payment';
+      toast.error(msg);
       setPurchasing(false);
     }
   };
@@ -319,7 +322,7 @@ export default function Marketplace() {
                             <button
                               onClick={handlePurchase} disabled={purchasing}
                               className="btn btn-primary"
-                              style={{ width: '100%', justifyContent: 'center', padding: '11px 20px', opacity: purchasing ? 0.6 : 1 }}
+                              style={{ width: '100%', justifyContent: 'center', padding: '11px 20px', opacity: purchasing ? 0.6 : 1, cursor: purchasing ? 'not-allowed' : 'pointer', pointerEvents: purchasing ? 'none' : 'auto' }}
                             >
                               {purchasing
                                 ? <span style={{ width: '14px', height: '14px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#02180e', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />

@@ -43,6 +43,7 @@ class ProviderKeyCreate(BaseModel):
 class ProviderKeyUpdate(BaseModel):
     provider: Optional[str] = None
     is_active: Optional[bool] = None
+    token_budget: Optional[int] = None
 
 
 class CapacityConfig(BaseModel):
@@ -341,7 +342,10 @@ async def add_provider_key(
     return {
         "message": f"Added {provider_enum.value} API key",
         "id": provider_key.id,
-        "provider": provider_enum.value
+        "provider": provider_enum.value,
+        "is_active": provider_key.is_active,
+        "token_budget": provider_key.token_budget,
+        "tokens_consumed": provider_key.tokens_consumed,
     }
 
 
@@ -371,6 +375,8 @@ async def update_provider_key(
             key.provider = new_provider
         if key_data.is_active is not None:
             key.is_active = key_data.is_active
+        if key_data.token_budget is not None:
+            key.token_budget = key_data.token_budget
         db.commit()
         db.refresh(key)
         return key
@@ -383,6 +389,8 @@ async def update_provider_key(
         "id": key.id,
         "provider": key.provider.value if hasattr(key.provider, 'value') else key.provider,
         "is_active": key.is_active,
+        "token_budget": key.token_budget,
+        "tokens_consumed": key.tokens_consumed,
     }
 
 

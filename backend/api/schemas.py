@@ -76,6 +76,7 @@ class PlanResponse(BaseModel):
 class RentalPurchase(BaseModel):
     """Purchase rental request."""
     plan_id: int
+    provider: Optional[str] = None        # e.g. "openai", "gemini", "anthropic"
     payment_method_id: str = "direct"  # legacy field, not used in Cashfree flow
 
 

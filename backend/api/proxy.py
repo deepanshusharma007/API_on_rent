@@ -243,12 +243,13 @@ async def chat_completions(
 
     response = None
     last_error = None
+    used_api_key = None  # track which key served the request for token deduction
 
     for fallback in fallback_list:
         provider = fallback["provider"]
         fallback_model = fallback["model"]
 
-        # Try DB key rotation first (offloaded — sync DB query + commit)
+        # Try DB key rotation first (load-balanced by remaining token budget)
         api_key = await asyncio.get_event_loop().run_in_executor(
             None, lambda: key_rotation.get_next_key(provider)
         )
@@ -258,6 +259,8 @@ async def chat_completions(
                 last_error = f"No API keys configured for {provider}"
                 continue
             api_key = keys[0]
+
+        used_api_key = api_key
 
         try:
             if stream:
@@ -297,7 +300,7 @@ async def chat_completions(
                             credits = int(total_tokens * drain_rate)
                             await redis_manager.deduct_tokens(rental_id, credits)
 
-                            def _log_stream(_total_tokens=total_tokens, _credits=credits, _model=fallback_model):
+                            def _log_stream(_total_tokens=total_tokens, _credits=credits, _model=fallback_model, _key=used_api_key):
                                 usage_log = UsageLog(
                                     rental_id=rental_id,
                                     model=_model,
@@ -308,6 +311,8 @@ async def chat_completions(
                                 )
                                 db.add(usage_log)
                                 db.commit()
+                                if _key:
+                                    key_rotation.deduct_tokens(_key, _total_tokens)
 
                             await asyncio.get_event_loop().run_in_executor(None, _log_stream)
 
@@ -345,8 +350,8 @@ async def chat_completions(
 
                 await redis_manager.deduct_tokens(rental_id, credits)
 
-                # Update rental stats and log usage — offloaded to thread pool
-                def _persist_usage(_tokens=tokens_used, _credits=credits, _model=fallback_model):
+                # Update rental stats, log usage, deduct from provider key budget
+                def _persist_usage(_tokens=tokens_used, _credits=credits, _model=fallback_model, _key=used_api_key):
                     rental = db.query(Rental).filter(Rental.id == rental_id).first()
                     if rental:
                         rental.tokens_used += _tokens
@@ -361,6 +366,8 @@ async def chat_completions(
                     )
                     db.add(usage_log)
                     db.commit()
+                    if _key:
+                        key_rotation.deduct_tokens(_key, _tokens)
 
                 await asyncio.get_event_loop().run_in_executor(None, _persist_usage)
 

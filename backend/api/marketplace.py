@@ -87,7 +87,7 @@ async def purchase_rental(
 
     # Create rental
     try:
-        rental = await create_rental(user_id, plan.id, db, redis_manager)
+        rental = await create_rental(user_id, plan.id, db, redis_manager, provider=purchase_data.provider)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

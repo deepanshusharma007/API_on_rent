@@ -109,7 +109,9 @@ class ProviderKey(Base):
     provider = Column(SQLEnum(ProviderType), nullable=False)
     api_key = Column(String(500), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    usage_count = Column(Integer, default=0, nullable=False)  # For round-robin tracking
+    usage_count = Column(Integer, default=0, nullable=False)
+    token_budget = Column(Integer, default=0, nullable=False)   # Admin-set monthly token budget (0 = unlimited)
+    tokens_consumed = Column(Integer, default=0, nullable=False)  # Tokens used against this key
     last_used_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
