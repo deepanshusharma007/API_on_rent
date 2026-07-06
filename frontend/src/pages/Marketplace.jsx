@@ -32,12 +32,12 @@ const DURATION_LABELS = { 15: '15 min', 30: '30 min', 60: '1 hour', 1440: '24 hr
 function StepNum({ n, done }) {
   return (
     <div style={{
-      width: '22px', height: '22px', borderRadius: '2px', flexShrink: 0,
+      width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em',
-      background: done ? 'var(--nb-green-bg)' : 'var(--nb-raised)',
+      fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.04em',
+      background: done ? 'var(--nb-green-bg)' : 'oklch(1 0 0 / 0.05)',
       border: `1px solid ${done ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
-      color: done ? 'var(--nb-green)' : 'var(--nb-text-3)',
+      color: done ? 'var(--mint)' : 'var(--nb-text-3)',
     }}>
       {String(n).padStart(2, '0')}
     </div>
@@ -92,7 +92,7 @@ export default function Marketplace() {
 
       {/* ── Hero ── */}
       <section
-        className="nb-grid-hero"
+        className="grid-lines"
         style={{
           paddingTop: 'clamp(120px,16vw,180px)',
           paddingBottom: 'clamp(32px,4vw,48px)',
@@ -102,7 +102,8 @@ export default function Marketplace() {
           position: 'relative',
         }}
       >
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '100px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '300px', pointerEvents: 'none', background: 'radial-gradient(ellipse at center, oklch(0.5 0.14 168 / 0.14), transparent 70%)', filter: 'blur(40px)' }} />
         <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
           <div>
             <motion.span variants={fadeUp(0)} initial="hidden" animate="show"
@@ -164,21 +165,21 @@ export default function Marketplace() {
                     NO PROVIDERS AVAILABLE — CHECK BACK SOON
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gap: '1px', gridTemplateColumns: `repeat(${Math.min(activeProviders.length, 4)}, 1fr)`, background: 'var(--nb-grid)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: `repeat(${Math.min(activeProviders.length, 4)}, 1fr)` }}>
                     {activeProviders.map(providerId => {
                       const meta = getProviderMeta(providerId);
                       const isSelected = selectedProvider === providerId;
                       return (
                         <button key={providerId}
                           onClick={() => { setSelectedProvider(providerId); setSelectedPlan(null); }}
+                          className="bento-card"
                           style={{
                             textAlign: 'left', padding: '24px',
-                            background: isSelected ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
-                            border: 'none', cursor: 'pointer', position: 'relative',
-                            transition: 'background 120ms',
+                            background: isSelected ? 'oklch(0.22 0.06 160 / 0.35)' : undefined,
+                            border: isSelected ? '1px solid var(--nb-green-border)' : undefined,
+                            cursor: 'pointer', position: 'relative',
+                            transition: 'border-color 120ms, background 120ms',
                           }}
-                          onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-raised)'; }}
-                          onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-surface)'; }}
                         >
                           {isSelected && (
                             <div style={{ position: 'absolute', top: '10px', right: '10px', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--nb-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -220,21 +221,22 @@ export default function Marketplace() {
                     {plans.length === 0 ? (
                       <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--nb-text-3)', letterSpacing: '0.06em' }}>NO PLANS AVAILABLE YET</div>
                     ) : (
-                      <div style={{ display: 'grid', gap: '1px', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)`, background: 'var(--nb-grid)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)` }}>
                         {plans.map(plan => {
                           const isSelected = selectedPlan?.id === plan.id;
                           const durationText = DURATION_LABELS[plan.duration_minutes] || formatDuration(plan);
                           return (
                             <button key={plan.id}
                               onClick={() => setSelectedPlan(plan)}
+                              className="bento-card"
                               style={{
                                 textAlign: 'left', padding: '24px',
-                                background: isSelected ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
-                                border: 'none', cursor: 'pointer', position: 'relative',
-                                transition: 'background 120ms',
+                                background: isSelected ? 'oklch(0.22 0.06 160 / 0.35)' : undefined,
+                                border: isSelected ? '1px solid var(--nb-green-border)' : undefined,
+                                cursor: 'pointer', position: 'relative',
+                                boxShadow: isSelected ? 'var(--shadow-glow)' : undefined,
+                                transition: 'border-color 120ms',
                               }}
-                              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-raised)'; }}
-                              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--nb-surface)'; }}
                             >
                               {isSelected && (
                                 <div style={{ position: 'absolute', top: '10px', right: '10px', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--nb-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -268,7 +270,7 @@ export default function Marketplace() {
                         </div>
                       </div>
 
-                      <div style={{ border: '1px solid var(--nb-green-border)', borderRadius: '4px', overflow: 'hidden', background: 'var(--nb-green-bg)' }}>
+                      <div className="bento-card" style={{ border: '1px solid var(--nb-green-border)', background: 'oklch(0.2 0.05 160 / 0.25)', boxShadow: 'var(--shadow-glow)' }}>
                         <div style={{ padding: '28px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '32px' }}>
                           {/* Left: Details */}
                           <div style={{ flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -283,7 +285,7 @@ export default function Marketplace() {
                             </div>
 
                             {/* Stats row */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--nb-border)', border: '1px solid var(--nb-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--nb-border)', border: '1px solid var(--nb-border)', borderRadius: '12px', overflow: 'hidden' }}>
                               {[
                                 { icon: Zap,   label: 'TOKEN CAP', value: formatTokens(selectedPlan.token_cap) },
                                 { icon: Clock, label: 'DURATION',  value: durationText },

@@ -3,43 +3,49 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   AIRENT — Neon-Brutalist Design System
-   Palette: Deep Navy OKLCH + Electric Green
-   Type: Geist Sans (headings) + Inter (body)
-   Grid: Visible structural lines — part of the aesthetic
+   AIRENT — "Neon Mint" Design System
+   Palette: Deep navy-ink + Mint accent (OKLCH)
+   Type: Space Grotesk (display) · DM Sans (body) · JetBrains Mono
+   Lovable-matched design tokens
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Navy palette (OKLCH) ── */
-  --nb-bg:          oklch(12% 0.028 255);   /* deep navy-black */
-  --nb-surface:     oklch(16% 0.032 255);   /* card surface */
-  --nb-raised:      oklch(20% 0.034 255);   /* inputs, code */
-  --nb-overlay:     oklch(24% 0.034 255);   /* hover states */
+  /* ── Core palette ── */
+  --ink:            oklch(0.16 0.03 240);       /* deep navy-ink — body bg */
+  --forest:         oklch(0.32 0.06 160);        /* deep forest green */
+  --mint:           oklch(0.82 0.15 168);        /* mint — primary accent */
+  --mint-glow:      oklch(0.9 0.16 158);         /* bright mint — hover/glow */
 
-  /* ── Structural grid lines ── */
-  --nb-grid:        oklch(22% 0.038 255);   /* visible column lines */
-  --nb-border:      oklch(26% 0.036 255);   /* component borders */
-  --nb-border-hi:   oklch(38% 0.04 255);    /* interactive border */
+  /* ── Surfaces ── */
+  --surface:        oklch(0.21 0.03 235);
+  --surface-2:      oklch(0.25 0.035 220);
 
-  /* ── Text ── */
-  --nb-text:        oklch(93% 0.008 255);   /* primary — cool off-white */
-  --nb-text-2:      oklch(68% 0.014 255);   /* secondary */
-  --nb-text-3:      oklch(48% 0.018 255);   /* muted */
-  --nb-text-4:      oklch(32% 0.022 255);   /* very muted / disabled */
+  /* ── Semantic tokens ── */
+  --nb-bg:          var(--ink);
+  --nb-surface:     var(--surface);
+  --nb-raised:      var(--surface-2);
+  --nb-overlay:     oklch(0.28 0.04 225);
 
-  /* ── Electric green accent ── */
-  --nb-green:       oklch(78% 0.22 145);    /* primary accent — aggressive */
-  --nb-green-hi:    oklch(84% 0.2 145);     /* hover */
-  --nb-green-dim:   oklch(78% 0.22 145 / 0.12);
-  --nb-green-bg:    oklch(16% 0.06 145);    /* tinted surface */
-  --nb-green-border:oklch(30% 0.1 145);
+  --nb-border:      oklch(1 0 0 / 0.08);
+  --nb-border-hi:   oklch(1 0 0 / 0.18);
+  --nb-grid:        oklch(1 0 0 / 0.04);
 
-  /* ── Semantic ── */
-  --nb-danger:      oklch(65% 0.22 25);
-  --nb-warning:     oklch(75% 0.18 75);
-  --nb-info:        oklch(68% 0.18 240);
+  --nb-text:        oklch(0.97 0.01 160);
+  --nb-text-2:      oklch(0.68 0.02 200);
+  --nb-text-3:      oklch(0.52 0.02 210);
+  --nb-text-4:      oklch(0.38 0.015 220);
 
-  /* ── Legacy aliases for components that still use c- vars ── */
+  --nb-green:       var(--mint);
+  --nb-green-hi:    var(--mint-glow);
+  --nb-green-dim:   oklch(0.82 0.15 168 / 0.15);
+  --nb-green-bg:    oklch(0.82 0.15 168 / 0.08);
+  --nb-green-border:oklch(0.82 0.15 168 / 0.3);
+
+  --nb-danger:      oklch(0.65 0.22 25);
+  --nb-warning:     oklch(0.75 0.18 75);
+  --nb-info:        oklch(0.68 0.18 240);
+
+  /* ── Legacy c- aliases (used by existing components) ── */
   --c-bg:           var(--nb-bg);
   --c-surface:      var(--nb-surface);
   --c-raised:       var(--nb-raised);
@@ -58,13 +64,22 @@
   --c-info:         var(--nb-info);
 
   /* ── Fonts ── */
-  --font-head: 'Geist Sans', 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'GeistMono', 'Geist Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-head: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-head);
 
-  /* ── Grid ── */
-  --grid-cols: 12;
-  --grid-gap:  1px;         /* the visible structural line */
+  /* ── Radius ── */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  /* ── Shadows ── */
+  --shadow-glow: 0 0 0 1px oklch(0.82 0.15 168 / 0.2), 0 20px 60px -20px oklch(0.82 0.15 168 / 0.4);
+  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 20px 40px -20px oklch(0 0 0 / 0.6);
 }
 
 /* ── Reset ── */
@@ -72,13 +87,18 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--nb-bg);
+  background-color: var(--nb-bg);
   color: var(--nb-text);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Lovable ambient radial gradients */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.32 0.09 165 / 0.35), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, oklch(0.5 0.14 168 / 0.15), transparent 60%);
+  background-attachment: fixed;
   animation: bodyFadeIn 250ms ease both;
 }
 
@@ -86,47 +106,49 @@ body {
 
 /* ── Focus ── */
 *:focus-visible {
-  outline: 2px solid var(--nb-green);
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 a { text-underline-offset: 3px; }
 
-/* ────────────────────────────────────────────────────────────────
-   VISIBLE GRID SYSTEM
-   The structural grid shows through as 1px navy lines.
-   Used on hero background and bento container.
-   ─────────────────────────────────────────────────────────────── */
-.nb-grid-bg {
-  background-image:
-    linear-gradient(var(--nb-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
-  background-size: 80px 80px;
-}
+/* ── Selection ── */
+::selection { background: var(--nb-green-dim); color: var(--nb-text); }
 
-/* Tighter grid for hero overlay */
-.nb-grid-hero {
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--nb-border-hi); }
+
+/* ────────────────────────────────────────────────────────────────
+   GRID TEXTURE — Lovable's subtle 1% opacity lines
+   ─────────────────────────────────────────────────────────────── */
+.nb-grid-bg,
+.nb-grid-hero,
+.grid-lines {
   background-image:
-    linear-gradient(var(--nb-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
-  background-size: 60px 60px;
-  background-position: -1px -1px;
+    linear-gradient(to right,  oklch(1 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
 /* ────────────────────────────────────────────────────────────────
    TYPOGRAPHY
-   Geist for headings — structural, geometric, brutalist-compatible.
-   Inter for body — warm, readable.
    ─────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  letter-spacing: -0.02em;
+}
 
 /* Display — hero only */
 .nb-display {
   font-family: var(--font-head);
-  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-size: clamp(3rem, 8vw, 6rem);
   font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   color: var(--nb-text);
 }
 
@@ -136,11 +158,11 @@ a { text-underline-offset: 3px; }
   font-size: clamp(1.5rem, 3vw, 2.4rem);
   font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   color: var(--nb-text);
 }
 
-/* Title — card/bento titles */
+/* Title */
 .nb-title {
   font-family: var(--font-head);
   font-size: 1rem;
@@ -150,12 +172,10 @@ a { text-underline-offset: 3px; }
   color: var(--nb-text);
 }
 
-/* Body */
-.nb-body { font-family: var(--font-body); font-size: 0.9375rem; line-height: 1.72; color: var(--nb-text-2); }
-.nb-small { font-family: var(--font-body); font-size: 0.8125rem; line-height: 1.6; color: var(--nb-text-3); }
+.nb-body  { font-family: var(--font-body);  font-size: 0.9375rem; line-height: 1.72; color: var(--nb-text-2); }
+.nb-small { font-family: var(--font-body);  font-size: 0.8125rem; line-height: 1.6;  color: var(--nb-text-3); }
 
-/* Label — mono-style overline */
-.nb-label {
+.nb-label, .eyebrow {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
@@ -164,15 +184,59 @@ a { text-underline-offset: 3px; }
   color: var(--nb-text-3);
 }
 
-/* Eyebrow — section label, NOT green */
-.eyebrow {
+/* Mono utility */
+.mono {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--nb-text-3);
+  font-feature-settings: "zero", "ss01";
 }
+
+/* ────────────────────────────────────────────────────────────────
+   GRADIENT TEXT — Lovable's mint gradient heading treatment
+   ─────────────────────────────────────────────────────────────── */
+.text-gradient-mint {
+  background: linear-gradient(180deg, oklch(0.97 0.02 160) 0%, oklch(0.82 0.15 168) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   BENTO CARD — Lovable's rounded, blurred, shadowed card style
+   ─────────────────────────────────────────────────────────────── */
+.bento-card,
+.card {
+  position: relative;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--nb-border);
+  background: linear-gradient(180deg, oklch(0.22 0.03 230 / 0.7), oklch(0.18 0.025 235 / 0.7));
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.bento-card:hover,
+.card:hover {
+  border-color: oklch(1 0 0 / 0.14);
+}
+
+/* Bento grid layout (legacy) */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+.bento-cell {
+  padding: 28px 24px;
+  position: relative;
+}
+
+.bento-2   { grid-column: span 2; }
+.bento-3   { grid-column: span 3; }
+.bento-4   { grid-column: span 4; }
+.bento-6   { grid-column: span 6; }
+.bento-tall { min-height: 220px; }
 
 /* ────────────────────────────────────────────────────────────────
    BUTTONS
@@ -181,14 +245,14 @@ a { text-underline-offset: 3px; }
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 18px;
+  padding: 10px 20px;
   font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: filter 120ms ease, border-color 120ms ease, background 120ms ease;
   white-space: nowrap;
   line-height: 1;
   text-decoration: none;
@@ -196,20 +260,20 @@ a { text-underline-offset: 3px; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
 .btn-primary {
-  background: var(--nb-green);
-  color: oklch(12% 0.04 145);
-  border-color: var(--nb-green);
+  background: var(--mint);
+  color: oklch(0.14 0.03 240);
+  border-color: var(--mint);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  box-shadow: var(--shadow-glow);
 }
-.btn-primary:hover { background: var(--nb-green-hi); border-color: var(--nb-green-hi); }
+.btn-primary:hover { filter: brightness(1.1); }
 
 .btn-secondary {
-  background: transparent;
+  background: oklch(0.22 0.03 230 / 0.5);
   color: var(--nb-text);
   border-color: var(--nb-border);
 }
-.btn-secondary:hover { border-color: var(--nb-border-hi); background: var(--nb-surface); }
+.btn-secondary:hover { border-color: oklch(0.82 0.15 168 / 0.5); }
 
 .btn-ghost {
   background: transparent;
@@ -226,35 +290,25 @@ a { text-underline-offset: 3px; }
 .btn-outline:hover { border-color: var(--nb-border-hi); }
 
 /* ────────────────────────────────────────────────────────────────
-   CARDS — brutalist: full border, no shadow, sharp corners
-   ─────────────────────────────────────────────────────────────── */
-.card {
-  background: var(--nb-surface);
-  border: 1px solid var(--nb-border);
-  border-radius: 4px;
-}
-.card:hover { border-color: var(--nb-border-hi); }
-
-/* ────────────────────────────────────────────────────────────────
    FORM FIELDS
    ─────────────────────────────────────────────────────────────── */
 .field {
   display: block;
   width: 100%;
-  padding: 8px 12px;
-  background: var(--nb-raised);
+  padding: 9px 13px;
+  background: oklch(1 0 0 / 0.06);
   border: 1px solid var(--nb-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   color: var(--nb-text);
   font-family: var(--font-body);
   font-size: 0.875rem;
   line-height: 1.5;
-  transition: border-color 120ms ease;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
   outline: none;
 }
 .field::placeholder { color: var(--nb-text-4); }
 .field:hover  { border-color: var(--nb-border-hi); }
-.field:focus  { border-color: var(--nb-green); box-shadow: 0 0 0 3px var(--nb-green-dim); }
+.field:focus  { border-color: var(--mint); box-shadow: 0 0 0 3px var(--nb-green-dim); }
 .field.error  { border-color: var(--nb-danger); }
 
 /* ────────────────────────────────────────────────────────────────
@@ -270,64 +324,18 @@ a { text-underline-offset: 3px; }
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--nb-green-bg);
-  color: var(--nb-green);
+  color: var(--mint);
   border: 1px solid var(--nb-green-border);
 }
 
 /* ────────────────────────────────────────────────────────────────
-   BENTO GRID — the visible structural grid cells
-   ─────────────────────────────────────────────────────────────── */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1px;                       /* the gap IS the visible line */
-  background: var(--nb-grid);     /* grid color shows through gaps */
-  border: 1px solid var(--nb-grid);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bento-cell {
-  background: var(--nb-surface);
-  padding: 28px 24px;
-  position: relative;
-  transition: background 150ms ease;
-}
-.bento-cell:hover { background: var(--nb-raised); }
-
-/* Cell sizing presets */
-.bento-2   { grid-column: span 2; }
-.bento-3   { grid-column: span 3; }
-.bento-4   { grid-column: span 4; }
-.bento-6   { grid-column: span 6; }
-.bento-tall { min-height: 220px; }
-
-/* ────────────────────────────────────────────────────────────────
-   SECTION RHYTHM — horizontal rules as dividers
+   SECTION UTILITIES
    ─────────────────────────────────────────────────────────────── */
 .section-rule { height: 1px; background: var(--nb-border); }
-
-/* ────────────────────────────────────────────────────────────────
-   MISC UTILITIES
-   ─────────────────────────────────────────────────────────────── */
-.mono { font-family: var(--font-mono); }
-.prose-width { max-width: 62ch; }
-.divider { height: 1px; background: var(--nb-border); }
-
-/* ────────────────────────────────────────────────────────────────
-   SCROLLBAR
-   ─────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--nb-border-hi); }
-
-/* ────────────────────────────────────────────────────────────────
-   SELECTION
-   ─────────────────────────────────────────────────────────────── */
-::selection { background: var(--nb-green-dim); color: var(--nb-text); }
+.divider      { height: 1px; background: var(--nb-border); }
+.prose-width  { max-width: 62ch; }
 
 /* ────────────────────────────────────────────────────────────────
    ANIMATIONS
@@ -347,14 +355,22 @@ a { text-underline-offset: 3px; }
 .marquee-banner:hover { animation-play-state: paused; }
 
 /* ────────────────────────────────────────────────────────────────
-   RESPONSIVE BENTO COLLAPSE
+   NAVBAR
+   ─────────────────────────────────────────────────────────────── */
+nav, header {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE BENTO
    ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 2; }
 }
 @media (max-width: 560px) {
-  .bento-grid { grid-template-columns: 1fr; }
+  .bento-grid { grid-template-columns: 1fr; gap: 10px; }
   .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 1; }
   .nb-display { font-size: clamp(2.4rem, 10vw, 3.5rem); }
 }

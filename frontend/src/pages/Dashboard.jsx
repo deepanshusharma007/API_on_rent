@@ -39,14 +39,15 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
 
   return (
     <motion.div variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}>
-      <div style={{
-        border: `1px solid ${isActive && !isHistory ? 'var(--nb-green-border)' : 'var(--nb-border)'}`,
-        borderRadius: '4px', overflow: 'hidden',
-        background: isActive && !isHistory ? 'var(--nb-green-bg)' : 'var(--nb-surface)',
-        opacity: isHistory ? 0.85 : 1,
+      <div className="bento-card" style={{
+        border: isActive && !isHistory ? '1px solid var(--nb-green-border)' : undefined,
+        background: isActive && !isHistory ? 'oklch(0.2 0.05 160 / 0.25)' : undefined,
+        boxShadow: isActive && !isHistory ? 'var(--shadow-glow)' : undefined,
+        opacity: isHistory ? 0.8 : 1,
+        overflow: 'hidden',
       }}>
         {/* Card header */}
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-raised)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid oklch(1 0 0 / 0.06)', background: 'oklch(1 0 0 / 0.03)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isActive && !isHistory ? 'var(--nb-green)' : 'var(--nb-text-4)', flexShrink: 0 }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.08em', color: isActive && !isHistory ? 'var(--nb-green)' : 'var(--nb-text-3)' }}>
@@ -61,7 +62,7 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
         </div>
 
         {/* Virtual Key row */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid oklch(1 0 0 / 0.06)' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6375rem', color: 'var(--nb-text-3)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>VIRTUAL API KEY</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ flex: 1, padding: '8px 12px', borderRadius: '2px', background: 'var(--nb-raised)', border: '1px solid var(--nb-border)', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--nb-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -78,7 +79,7 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--nb-grid)', borderBottom: '1px solid var(--nb-border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'oklch(1 0 0 / 0.05)', borderTop: '1px solid oklch(1 0 0 / 0.06)', borderBottom: '1px solid oklch(1 0 0 / 0.06)' }}>
           {isHistory ? (
             <StatCell icon={Clock} label="EXPIRED" value={new Date(rental.expires_at).toLocaleDateString()} />
           ) : (
@@ -97,12 +98,12 @@ function RentalCard({ rental, isHistory, onExpire, onCopy, onInvoice }) {
         </div>
 
         {/* Progress */}
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--nb-border)', background: 'var(--nb-surface)' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid oklch(1 0 0 / 0.06)' }}>
           <TokenProgressBar used={rental.tokens_used} remaining={rental.tokens_remaining} size={isHistory ? 'sm' : 'md'} />
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '12px 20px', background: 'var(--nb-raised)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '12px 20px', background: 'oklch(1 0 0 / 0.03)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {rental.created_at && (
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--nb-text-4)', letterSpacing: '0.04em' }}>
               {new Date(rental.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
@@ -214,7 +215,7 @@ export default function Dashboard() {
 
       {/* ── Hero ── */}
       <section
-        className="nb-grid-hero"
+        className="grid-lines"
         style={{
           paddingTop: 'clamp(120px,16vw,180px)',
           paddingBottom: 'clamp(32px,4vw,48px)',
@@ -224,14 +225,15 @@ export default function Dashboard() {
           position: 'relative',
         }}
       >
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '100px', background: 'linear-gradient(to bottom, transparent, var(--nb-bg))', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '300px', pointerEvents: 'none', background: 'radial-gradient(ellipse at center, oklch(0.5 0.14 168 / 0.12), transparent 70%)', filter: 'blur(40px)' }} />
         <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
           {/* Payment success banner */}
           <AnimatePresence>
             {paymentSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '4px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)' }}
+                style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '12px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', backdropFilter: 'blur(8px)' }}
               >
                 <CheckCircle2 size={16} style={{ color: 'var(--nb-green)', flexShrink: 0 }} />
                 <div>
@@ -301,13 +303,13 @@ export default function Dashboard() {
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="dash-grid">
                 {[1, 2].map(n => (
-                  <div key={n} style={{ height: '280px', background: 'var(--nb-surface)', borderRadius: '4px', border: '1px solid var(--nb-border)', animation: 'nb-pulse 1.5s infinite' }} />
+                  <div key={n} className="bento-card" style={{ height: '280px', animation: 'nb-pulse 1.5s infinite' }} />
                 ))}
               </motion.div>
             ) : currentRentals.length === 0 ? (
               <motion.div key="empty" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 style={{ textAlign: 'center', padding: '80px 0' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '2px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                   <ShoppingBag size={18} style={{ color: 'var(--nb-green)' }} />
                 </div>
                 <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--nb-text)', letterSpacing: '-0.02em', marginBottom: '8px' }}>
