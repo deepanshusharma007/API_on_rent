@@ -9,6 +9,7 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
+  --header-h: 100px; /* banner(40) + navbar(60) — JS overrides once Navbar mounts */
   /* ── Surface scale (tonal layering) ── */
   --surface-lowest:   #060e20;   /* deepest bg */
   --surface-dim:      #0b1326;   /* base bg */

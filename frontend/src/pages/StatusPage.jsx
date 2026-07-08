@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Activity, AlertCircle, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -71,12 +71,12 @@ export default function StatusPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Status — AIRent</title>
+        <title>Status â€” AIRent</title>
         <meta name="description" content="Real-time status of the AIRent API rental platform." />
       </Helmet>
       <Navbar />
 
-      <main style={{ flex: 1, paddingTop: '60px' }}>
+      <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
         {/* Hero */}
         <section style={{ padding: 'clamp(56px,8vw,96px) clamp(20px,5vw,56px) clamp(40px,5vw,64px)', background: '#0d1017' }}>
@@ -181,3 +181,4 @@ export default function StatusPage() {
     </div>
   );
 }
+

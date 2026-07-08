@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Eye, CheckCircle2, Zap, Github } from 'lucide-react';
@@ -35,8 +35,14 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass,        setShowPass]        = useState(false);
   const [loading,         setLoading]         = useState(false);
+  const [bannerUp,        setBannerUp]        = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
   const navigate = useNavigate();
   const register = useAuthStore(s => s.register);
+
+  useEffect(() => {
+    const id = setInterval(() => setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
+    return () => clearInterval(id);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,6 +61,8 @@ export default function Register() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0b1120', position: 'relative', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
+
+      {bannerUp && <div style={{ height: '40px', flexShrink: 0 }} />}
 
       {/* Dot-grid */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(192,193,255,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />

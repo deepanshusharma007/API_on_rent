@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Copy, Check, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
@@ -54,25 +54,25 @@ const ENDPOINT_GROUPS = [
       { label: 'BODY',     code: `{ "email": "user@example.com", "password": "secret123" }` },
       { label: 'RESPONSE', code: `{ "access_token": "eyJ...", "token_type": "bearer" }` },
     ]},
-    { method: 'GET', path: '/auth/me', desc: 'Get current user — auth required', detail: [] },
+    { method: 'GET', path: '/auth/me', desc: 'Get current user â€” auth required', detail: [] },
   ]},
   { title: 'MARKETPLACE', icon: Globe, rows: [
     { method: 'GET', path: '/api/plans', desc: 'List available rental plans', detail: [
       { label: 'RESPONSE', code: `[\n  {\n    "id": 1,\n    "duration_label": "1 Hour",\n    "duration_minutes": 60,\n    "token_cap": 80000,\n    "rpm_limit": 60,\n    "price": 149.0,\n    "is_active": true\n  }\n]` },
     ]},
     { method: 'GET',  path: '/api/active-providers', desc: 'List active AI providers', detail: [] },
-    { method: 'GET',  path: '/api/rentals/active',   desc: 'Your active rentals — auth required', detail: [
+    { method: 'GET',  path: '/api/rentals/active',   desc: 'Your active rentals â€” auth required', detail: [
       { label: 'RESPONSE', code: `[\n  {\n    "id": 42,\n    "virtual_key": "vk_abc123...",\n    "provider": "openai",\n    "status": "ACTIVE",\n    "tokens_remaining": 72000,\n    "expires_at": "2025-04-22T15:00:00Z"\n  }\n]` },
     ]},
   ]},
   { title: 'PAYMENT', icon: Zap, rows: [
-    { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session — auth required', detail: [
+    { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session â€” auth required', detail: [
       { label: 'BODY',     code: `{\n  "plan_id": 1,\n  "provider": "openai"\n}` },
       { label: 'RESPONSE', code: `{ "payment_session_id": "session_abc123..." }` },
     ]},
   ]},
   { title: 'STATUS', icon: AlertTriangle, rows: [
-    { method: 'GET', path: '/health',  desc: 'Health check — 200 OK if running', detail: [] },
+    { method: 'GET', path: '/health',  desc: 'Health check â€” 200 OK if running', detail: [] },
     { method: 'GET', path: '/status/', desc: 'Full system status with DB and Redis', detail: [] },
   ]},
 ];
@@ -119,7 +119,7 @@ function EndpointRow({ method, path, desc, detail }) {
         <MethodBadge method={method} />
         <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#e8edf8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</code>
         <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-3)', flexShrink: 0 }}>{desc}</span>
-        <span style={{ color: 'var(--on-surface-4)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', marginLeft: '4px', flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'var(--on-surface-4)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', marginLeft: '4px', flexShrink: 0 }}>{open ? 'â–²' : 'â–¼'}</span>
       </button>
       {open && detail.length > 0 && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)' }}>
@@ -146,12 +146,12 @@ export default function ApiDocs() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Docs — AIRent API Reference</title>
+        <title>Docs â€” AIRent API Reference</title>
         <meta name="description" content="AIRent API documentation. OpenAI-compatible endpoint for GPT, Claude, and Gemini. Quick start in Python, JavaScript, Node.js, cURL, and PHP." />
       </Helmet>
       <Navbar />
 
-      <main style={{ flex: 1, paddingTop: '60px' }}>
+      <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
         {/* Hero */}
         <section style={{ padding: 'clamp(64px,9vw,96px) clamp(20px,5vw,56px) clamp(40px,5vw,56px)', background: '#0d1017' }}>
@@ -166,7 +166,7 @@ export default function ApiDocs() {
               <span style={{ color: 'var(--secondary)' }}>Drop-in replacement.</span>
             </motion.h1>
             <motion.p initial="hidden" animate="show" variants={fadeUp(0.12)} style={{ fontFamily: 'var(--font-body)', fontSize: '0.9375rem', color: 'var(--on-surface-2)', lineHeight: 1.7, maxWidth: '520px' }}>
-              Change two lines in your existing code — <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>api_key</code> and <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>base_url</code>. Everything else stays the same.
+              Change two lines in your existing code â€” <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>api_key</code> and <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>base_url</code>. Everything else stays the same.
             </motion.p>
           </div>
         </section>
@@ -291,3 +291,4 @@ export default function ApiDocs() {
     </div>
   );
 }
+

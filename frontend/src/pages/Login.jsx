@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Zap, Github } from 'lucide-react';
@@ -13,8 +13,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [bannerUp, setBannerUp] = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
   const navigate = useNavigate();
   const login    = useAuthStore(s => s.login);
+
+  useEffect(() => {
+    const id = setInterval(() => setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
+    return () => clearInterval(id);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,6 +41,8 @@ export default function Login() {
       background: '#0b1120', position: 'relative', overflow: 'hidden',
       fontFamily: 'var(--font-body)',
     }}>
+
+      {bannerUp && <div style={{ height: '40px', flexShrink: 0 }} />}
 
       {/* Dot-grid background */}
       <div style={{

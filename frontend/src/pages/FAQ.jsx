@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, ArrowRight } from 'lucide-react';
@@ -13,26 +13,26 @@ const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, 
 const FAQ_DATA = [
   { category: 'Getting Started', items: [
     { q: 'What is AIRent?',                            a: 'A marketplace to rent time-limited virtual API keys for top AI models. Pay once, get a key instantly, use any OpenAI-compatible client.' },
-    { q: 'Do I need an OpenAI or Anthropic account?',  a: 'No. AIRent provides everything. Your virtual key works with any OpenAI-compatible SDK — no accounts with the underlying providers required.' },
+    { q: 'Do I need an OpenAI or Anthropic account?',  a: 'No. AIRent provides everything. Your virtual key works with any OpenAI-compatible SDK â€” no accounts with the underlying providers required.' },
     { q: 'How fast do I get access after payment?',    a: 'Instantly. Key appears in your dashboard and is emailed to you within seconds of payment confirmation.' },
-    { q: 'Do I need a credit card?',                   a: 'No. We accept UPI, net banking, debit/credit cards, and wallets via Cashfree — all major Indian payment methods.' },
+    { q: 'Do I need a credit card?',                   a: 'No. We accept UPI, net banking, debit/credit cards, and wallets via Cashfree â€” all major Indian payment methods.' },
   ]},
   { category: 'Plans & Tokens', items: [
     { q: 'How do token caps work?',                    a: 'Each plan includes a maximum token budget (input + output per request). Different models drain at different rates.' },
-    { q: 'What happens when tokens run out?',          a: 'Your key stops accepting requests. Buy a new plan anytime to continue — it activates as a separate rental.' },
-    { q: 'What happens when rental time expires?',     a: 'The key deactivates at the end of the window even if tokens remain. Time and tokens are independent — whichever runs out first ends the rental.' },
+    { q: 'What happens when tokens run out?',          a: 'Your key stops accepting requests. Buy a new plan anytime to continue â€” it activates as a separate rental.' },
+    { q: 'What happens when rental time expires?',     a: 'The key deactivates at the end of the window even if tokens remain. Time and tokens are independent â€” whichever runs out first ends the rental.' },
     { q: 'Are there bulk or enterprise plans?',        a: 'Yes. Email deepanshu2210sharma@gmail.com for custom pricing on high-volume or team usage.' },
   ]},
   { category: 'Using the API', items: [
-    { q: 'How do I use my virtual key in code?',       a: 'Set your API key to the virtual key and base_url to your AIRent endpoint. Any OpenAI SDK works — Python, Node.js, cURL — no other changes needed.' },
-    { q: 'Can I use Claude or Gemini models?',         a: 'Yes. All plans include all supported providers. Specify the model name in your request — the model determines the drain rate.' },
+    { q: 'How do I use my virtual key in code?',       a: 'Set your API key to the virtual key and base_url to your AIRent endpoint. Any OpenAI SDK works â€” Python, Node.js, cURL â€” no other changes needed.' },
+    { q: 'Can I use Claude or Gemini models?',         a: 'Yes. All plans include all supported providers. Specify the model name in your request â€” the model determines the drain rate.' },
     { q: 'Does AIRent support streaming?',             a: 'Yes. Pass stream: true just as with the standard OpenAI API. SSE streaming is fully supported.' },
     { q: 'Is my IP locked to the key?',                a: 'After the first request, the key is pinned to that IP to prevent theft. Contact us to reset if you change networks.' },
   ]},
   { category: 'Payments & Refunds', items: [
     { q: 'How is my payment secured?',                 a: 'Payments are processed by Cashfree Payments, a PCI DSS-compliant gateway. We never see or store your card details.' },
-    { q: 'Can I get a refund?',                        a: 'Yes — within 24 hours of purchase if you have made zero API calls. See the full Refund Policy for details.' },
-    { q: 'Payment went through but no key?',           a: 'Email deepanshu2210sharma@gmail.com with your payment reference — resolved within 2 business hours.' },
+    { q: 'Can I get a refund?',                        a: 'Yes â€” within 24 hours of purchase if you have made zero API calls. See the full Refund Policy for details.' },
+    { q: 'Payment went through but no key?',           a: 'Email deepanshu2210sharma@gmail.com with your payment reference â€” resolved within 2 business hours.' },
     { q: 'Do you provide invoices?',                   a: 'Yes. Download a PDF invoice from your dashboard after purchase.' },
   ]},
   { category: 'Privacy & Security', items: [
@@ -75,12 +75,12 @@ export default function FAQ() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>FAQ — AIRent | Common Questions About AI API Rental</title>
-        <meta name="description" content="Answers to common questions about renting AI APIs — how it works, pricing, supported models, refunds, and security." />
+        <title>FAQ â€” AIRent | Common Questions About AI API Rental</title>
+        <meta name="description" content="Answers to common questions about renting AI APIs â€” how it works, pricing, supported models, refunds, and security." />
       </Helmet>
       <Navbar />
 
-      <main style={{ flex: 1, paddingTop: '60px' }}>
+      <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
         {/* Hero */}
         <section style={{ padding: 'clamp(64px,9vw,104px) clamp(20px,5vw,56px) clamp(40px,5vw,60px)', background: '#0d1017' }}>
@@ -170,3 +170,4 @@ export default function FAQ() {
     </div>
   );
 }
+

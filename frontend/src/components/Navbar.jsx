@@ -36,6 +36,12 @@ export default function Navbar() {
 
   const isActive = (to) => location.pathname === to;
   const navTop = bannerUp ? `${BANNER_HEIGHT}px` : '0px';
+  const NAV_HEIGHT = 60;
+  // Let pages consume total fixed header height via CSS variable
+  useEffect(() => {
+    const total = (bannerUp ? BANNER_HEIGHT : 0) + NAV_HEIGHT;
+    document.documentElement.style.setProperty('--header-h', `${total}px`);
+  }, [bannerUp]);
 
   return (
     <nav style={{
