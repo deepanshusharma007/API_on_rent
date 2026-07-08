@@ -106,28 +106,37 @@ async def create_checkout_session(
         raise HTTPException(status_code=404, detail="Plan not found")
 
     # Idempotency lock: prevent duplicate orders for same user+plan+provider within 5 minutes.
-    # Uses SET NX (set-if-not-exists) with 300s TTL so the lock auto-expires.
     lock_key = f"checkout_lock:{current_user.id}:{request.plan_id}:{request.provider}"
-    redis = await redis_manager.get_client()
-    acquired = await redis.set(lock_key, "1", nx=True, ex=300)
-    if not acquired:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="A payment for this plan is already in progress. Please complete or wait 5 minutes before trying again.",
-        )
+    try:
+        redis = await redis_manager.get_client()
+        acquired = await redis.set(lock_key, "1", nx=True, ex=300)
+        if not acquired:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="A payment for this plan is already in progress. Please complete or wait 5 minutes before trying again.",
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Redis lock unavailable, proceeding without idempotency guard: {e}")
 
     # Capacity check before accepting payment
-    capacity_mgr = CapacityManager(redis_manager)
-    capacity_check = await capacity_mgr.can_sell_plan(
-        token_cap=plan.token_cap,
-        rpm_limit=plan.rpm_limit,
-        estimated_cost=plan.price * 0.4
-    )
-    if not capacity_check["allowed"]:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"This plan is temporarily sold out. {capacity_check['reason']}"
+    try:
+        capacity_mgr = CapacityManager(redis_manager)
+        capacity_check = await capacity_mgr.can_sell_plan(
+            token_cap=plan.token_cap,
+            rpm_limit=plan.rpm_limit,
+            estimated_cost=plan.price * 0.4
         )
+        if not capacity_check["allowed"]:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"This plan is temporarily sold out. {capacity_check['reason']}"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Capacity check failed, proceeding: {e}")
 
     order_id = _make_order_id(plan.id, current_user.id, request.provider)
     frontend_base = settings.FRONTEND_URL
@@ -165,17 +174,31 @@ async def create_checkout_session(
             )
 
         data = resp.json()
+        if "payment_session_id" not in data:
+            logger.error(f"Cashfree response missing payment_session_id: {data}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Payment service returned unexpected response: {data.get('message', str(data))}"
+            )
         return CheckoutResponse(
             payment_session_id=data["payment_session_id"],
-            order_id=data["order_id"],
-            cf_order_id=data["cf_order_id"],
+            order_id=data.get("order_id", order_id),
+            cf_order_id=data.get("cf_order_id", ""),
         )
 
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Cashfree request error: {e}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Payment service unavailable"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected checkout error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Checkout failed: {str(e)}"
         )
 
 
