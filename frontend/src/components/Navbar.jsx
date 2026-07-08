@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, LayoutDashboard, ShieldCheck, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, ShieldCheck, ArrowRight } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 const NAV_LINKS = [
-  { label: 'Pricing',  to: '/pricing'  },
-  { label: 'Docs',     to: '/docs'     },
-  { label: 'About',    to: '/about'    },
-  { label: 'Status',   to: '/status'   },
+  { label: 'Pricing', to: '/pricing' },
+  { label: 'Docs',    to: '/docs'    },
+  { label: 'About',   to: '/about'   },
+  { label: 'Status',  to: '/status'  },
 ];
 
+const BANNER_HEIGHT = 40;
+
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled,   setScrolled]   = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+  const [bannerUp,  setBannerUp]  = useState(
+    () => sessionStorage.getItem('banner_dismissed') !== 'true'
+  );
   const { isAuthenticated, logout, user } = useAuthStore();
   const isAdmin  = user?.role === 'admin';
   const location = useLocation();
@@ -25,54 +28,79 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  useEffect(() => setMobileOpen(false), [location.pathname]);
+  useEffect(() => {
+    const id = setInterval(() =>
+      setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
+    return () => clearInterval(id);
+  }, []);
 
   const isActive = (to) => location.pathname === to;
+  const navTop = bannerUp ? `${BANNER_HEIGHT}px` : '0px';
 
   return (
     <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      transition: 'background 200ms ease, border-color 200ms ease',
-      background: scrolled ? 'oklch(0.16 0.03 240 / 0.85)' : 'oklch(0.16 0.03 240 / 0.4)',
-      backdropFilter: 'blur(20px) saturate(1.5)',
-      WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
-      borderBottom: scrolled ? '1px solid oklch(1 0 0 / 0.08)' : '1px solid transparent',
+      position: 'fixed',
+      top: navTop,
+      left: 0,
+      right: 0,
+      zIndex: 90,
+      transition: 'top 200ms ease, background 200ms ease',
+      background: scrolled ? 'rgba(11,19,38,0.96)' : 'rgba(11,19,38,0.72)',
+      backdropFilter: 'blur(24px) saturate(1.5)',
+      WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+      borderBottom: '1px solid rgba(70,69,84,0.5)',
     }}>
       <div style={{
-        maxWidth: '1200px', margin: '0 auto',
+        maxWidth: '1200px',
+        margin: '0 auto',
         padding: '0 clamp(16px, 4vw, 48px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '60px',
+        gap: '8px',
       }}>
 
         {/* Logo */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <div style={{
-            width: '28px', height: '28px', borderRadius: '8px', background: 'var(--mint)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            width: '28px', height: '28px', borderRadius: '8px',
+            background: 'var(--primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, color: 'oklch(0.14 0.03 240)' }}>AI</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 700, color: 'var(--on-primary)', letterSpacing: '-0.01em' }}>AI</span>
           </div>
-          <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.0625rem', letterSpacing: '-0.03em', color: 'var(--nb-text)' }}>
-            AI<span style={{ color: 'var(--mint)' }}>Rent</span>
+          <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.0625rem', letterSpacing: '-0.03em', color: 'var(--on-surface)' }}>
+            AI<span style={{ color: 'var(--primary)' }}>Rent</span>
           </span>
         </Link>
 
-        {/* Desktop nav — pill container */}
-        <div className="hidden md:flex items-center" style={{
-          gap: '2px', background: 'oklch(1 0 0 / 0.04)',
-          border: '1px solid oklch(1 0 0 / 0.07)', borderRadius: '999px', padding: '4px',
-        }}>
+        {/* Nav links — always visible, wrap on very small screens */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexWrap: 'wrap' }}>
           {NAV_LINKS.map(link => (
-            <Link key={link.to} to={link.to} style={{
-              padding: '5px 14px', borderRadius: '999px',
-              fontFamily: 'var(--font-body)', fontSize: '0.8375rem',
-              fontWeight: isActive(link.to) ? 600 : 400, textDecoration: 'none',
-              color: isActive(link.to) ? 'var(--nb-text)' : 'var(--nb-text-3)',
-              background: isActive(link.to) ? 'oklch(1 0 0 / 0.08)' : 'transparent',
-              transition: 'color 120ms, background 120ms',
-            }}
-              onMouseEnter={e => { if (!isActive(link.to)) { e.currentTarget.style.color = 'var(--nb-text-2)'; e.currentTarget.style.background = 'oklch(1 0 0 / 0.04)'; } }}
-              onMouseLeave={e => { if (!isActive(link.to)) { e.currentTarget.style.color = 'var(--nb-text-3)'; e.currentTarget.style.background = 'transparent'; } }}
+            <Link
+              key={link.to}
+              to={link.to}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.875rem',
+                fontWeight: isActive(link.to) ? 600 : 400,
+                textDecoration: 'none',
+                color: isActive(link.to) ? 'var(--on-surface)' : 'var(--on-surface-2)',
+                background: isActive(link.to) ? 'rgba(255,255,255,0.08)' : 'transparent',
+                transition: 'color 120ms, background 120ms',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--on-surface)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = isActive(link.to) ? 'var(--on-surface)' : 'var(--on-surface-2)';
+                e.currentTarget.style.background = isActive(link.to) ? 'rgba(255,255,255,0.08)' : 'transparent';
+              }}
             >
               {link.label}
             </Link>
@@ -80,36 +108,39 @@ export default function Navbar() {
         </div>
 
         {/* Auth area */}
-        <div className="hidden md:flex items-center" style={{ gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           {isAuthenticated ? (
             <>
               {isAdmin && (
                 <Link to="/admin" style={{
                   textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8125rem',
-                  color: 'var(--mint)', borderRadius: '8px', fontWeight: 500,
-                  background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)',
+                  padding: '6px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8375rem',
+                  color: 'var(--secondary)', borderRadius: '8px', fontWeight: 600,
+                  background: 'var(--secondary-bg)', border: '1px solid var(--secondary-border)',
+                  whiteSpace: 'nowrap',
                 }}>
-                  <ShieldCheck size={13} /> Admin
+                  <ShieldCheck size={14} /> Admin
                 </Link>
               )}
               <Link to="/dashboard" style={{
                 textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '5px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8125rem',
-                color: 'var(--nb-text-3)', borderRadius: '8px', transition: 'color 120ms',
+                padding: '6px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8375rem',
+                color: 'var(--on-surface-2)', borderRadius: '8px', transition: 'color 120ms',
+                whiteSpace: 'nowrap',
               }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-2)'}
               >
-                <LayoutDashboard size={13} /> Dashboard
+                <LayoutDashboard size={14} /> Dashboard
               </Link>
               <button onClick={() => { logout(); navigate('/'); }} style={{
-                padding: '5px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8125rem',
-                color: 'var(--nb-text-4)', background: 'none', border: 'none', cursor: 'pointer',
-                borderRadius: '8px', transition: 'color 120ms',
+                padding: '6px 12px', fontFamily: 'var(--font-body)', fontSize: '0.8375rem',
+                color: 'var(--on-surface-3)', background: 'none', border: 'none',
+                cursor: 'pointer', borderRadius: '8px', transition: 'color 120ms',
+                whiteSpace: 'nowrap',
               }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-4)'}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface-2)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}
               >
                 Logout
               </button>
@@ -118,83 +149,32 @@ export default function Navbar() {
             <>
               <Link to="/login" style={{
                 textDecoration: 'none', padding: '6px 14px', fontFamily: 'var(--font-body)',
-                fontSize: '0.8375rem', color: 'var(--nb-text-3)', borderRadius: '8px', transition: 'color 120ms',
+                fontSize: '0.8375rem', color: 'var(--on-surface-2)', borderRadius: '8px',
+                transition: 'color 120ms', whiteSpace: 'nowrap',
               }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-2)'}
               >
                 Sign in
               </Link>
               <Link to="/register" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '7px 18px', fontFamily: 'var(--font-body)', fontSize: '0.8375rem',
-                fontWeight: 600, color: 'oklch(0.14 0.03 240)', background: 'var(--mint)',
+                padding: '8px 18px', fontFamily: 'var(--font-body)', fontSize: '0.875rem',
+                fontWeight: 700, color: 'var(--on-primary)', background: 'var(--primary)',
                 borderRadius: '999px', textDecoration: 'none',
-                boxShadow: '0 0 0 1px oklch(0.82 0.15 168 / 0.4), 0 4px 12px -4px oklch(0.82 0.15 168 / 0.5)',
-                transition: 'filter 120ms',
+                boxShadow: 'var(--shadow-primary)',
+                transition: 'filter 120ms', whiteSpace: 'nowrap',
               }}
-                onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
+                onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.08)'}
                 onMouseLeave={e => e.currentTarget.style.filter = 'none'}
               >
-                Rent a key <ArrowRight size={13} />
+                Rent a key <ArrowRight size={14} />
               </Link>
             </>
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button className="md:hidden" onClick={() => setMobileOpen(o => !o)} style={{
-          padding: '6px', background: 'oklch(1 0 0 / 0.06)', border: '1px solid oklch(1 0 0 / 0.08)',
-          borderRadius: '8px', cursor: 'pointer', color: 'var(--nb-text-3)', display: 'flex', alignItems: 'center',
-        }}>
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
       </div>
-
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            style={{
-              background: 'oklch(0.18 0.03 235 / 0.95)', borderTop: '1px solid oklch(1 0 0 / 0.08)',
-              backdropFilter: 'blur(20px)', overflow: 'hidden',
-            }}
-          >
-            <div style={{ padding: '12px 20px 24px' }}>
-              {NAV_LINKS.map(link => (
-                <Link key={link.to} to={link.to} style={{
-                  display: 'block', padding: '10px 4px', fontFamily: 'var(--font-body)',
-                  fontSize: '0.9375rem', textDecoration: 'none',
-                  color: isActive(link.to) ? 'var(--nb-text)' : 'var(--nb-text-3)',
-                  borderBottom: '1px solid oklch(1 0 0 / 0.05)',
-                }}>
-                  {link.label}
-                </Link>
-              ))}
-              <div style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {isAuthenticated ? (
-                  <>
-                    {isAdmin && <Link to="/admin" className="btn btn-secondary" style={{ justifyContent: 'center' }}>Admin Panel</Link>}
-                    <Link to="/dashboard" className="btn btn-secondary" style={{ justifyContent: 'center' }}>Dashboard</Link>
-                    <button onClick={() => { logout(); navigate('/'); }} className="btn btn-ghost" style={{ justifyContent: 'center' }}>Logout</button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" className="btn btn-outline" style={{ justifyContent: 'center' }}>Sign in</Link>
-                    <Link to="/register" className="btn btn-primary" style={{ justifyContent: 'center' }}>
-                      Rent a key <ArrowRight size={14} />
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
 }

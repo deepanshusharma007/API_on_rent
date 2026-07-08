@@ -3,83 +3,106 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════════
-   AIRENT — "Neon Mint" Design System
-   Palette: Deep navy-ink + Mint accent (OKLCH)
-   Type: Space Grotesk (display) · DM Sans (body) · JetBrains Mono
-   Lovable-matched design tokens
+   AIRENT — Official Design System (from DESIGN.md / Stitch spec)
+   Palette: Deep Navy + Electric Violet (primary) + Emerald (secondary)
+   Type: Sora (display) · Inter (body) · JetBrains Mono (code/labels)
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Core palette ── */
-  --ink:            oklch(0.16 0.03 240);       /* deep navy-ink — body bg */
-  --forest:         oklch(0.32 0.06 160);        /* deep forest green */
-  --mint:           oklch(0.82 0.15 168);        /* mint — primary accent */
-  --mint-glow:      oklch(0.9 0.16 158);         /* bright mint — hover/glow */
+  /* ── Surface scale (tonal layering) ── */
+  --surface-lowest:   #060e20;   /* deepest bg */
+  --surface-dim:      #0b1326;   /* base bg */
+  --surface:          #0b1326;
+  --surface-low:      #131b2e;
+  --surface-container:#171f33;
+  --surface-high:     #222a3d;
+  --surface-highest:  #2d3449;
+  --surface-bright:   #31394d;
 
-  /* ── Surfaces ── */
-  --surface:        oklch(0.21 0.03 235);
-  --surface-2:      oklch(0.25 0.035 220);
+  /* ── On-surface text ── */
+  --on-surface:        #dae2fd;
+  --on-surface-2:      #c7c4d7;
+  --on-surface-3:      #908fa0;
+  --on-surface-4:      #464554;
 
-  /* ── Semantic tokens ── */
-  --nb-bg:          var(--ink);
-  --nb-surface:     var(--surface);
-  --nb-raised:      var(--surface-2);
-  --nb-overlay:     oklch(0.28 0.04 225);
+  /* ── Primary — Electric Violet ── */
+  --primary:           #c0c1ff;
+  --primary-dim:       #8083ff;
+  --primary-container: #8083ff;
+  --on-primary:        #1000a9;
+  --on-primary-fixed:  #07006c;
+  --primary-bg:        rgba(192, 193, 255, 0.08);
+  --primary-border:    rgba(192, 193, 255, 0.2);
+  --primary-glow:      0 0 40px -10px rgba(192, 193, 255, 0.35);
 
-  --nb-border:      oklch(1 0 0 / 0.08);
-  --nb-border-hi:   oklch(1 0 0 / 0.18);
-  --nb-grid:        oklch(1 0 0 / 0.04);
+  /* ── Secondary — Emerald Green ── */
+  --secondary:         #4edea3;
+  --secondary-dim:     #00a572;
+  --on-secondary:      #003824;
+  --secondary-bg:      rgba(78, 222, 163, 0.08);
+  --secondary-border:  rgba(78, 222, 163, 0.2);
+  --secondary-glow:    0 0 40px -10px rgba(78, 222, 163, 0.3);
 
-  --nb-text:        oklch(0.97 0.01 160);
-  --nb-text-2:      oklch(0.68 0.02 200);
-  --nb-text-3:      oklch(0.52 0.02 210);
-  --nb-text-4:      oklch(0.38 0.015 220);
+  /* ── Tertiary — Soft Purple ── */
+  --tertiary:          #d0bcff;
+  --on-tertiary:       #3c0091;
+  --tertiary-bg:       rgba(208, 188, 255, 0.08);
+  --tertiary-border:   rgba(208, 188, 255, 0.2);
 
-  --nb-green:       var(--mint);
-  --nb-green-hi:    var(--mint-glow);
-  --nb-green-dim:   oklch(0.82 0.15 168 / 0.15);
-  --nb-green-bg:    oklch(0.82 0.15 168 / 0.08);
-  --nb-green-border:oklch(0.82 0.15 168 / 0.3);
+  /* ── Semantic ── */
+  --error:             #ffb4ab;
+  --on-error:          #690005;
+  --outline:           #908fa0;
+  --outline-variant:   #464554;
 
-  --nb-danger:      oklch(0.65 0.22 25);
-  --nb-warning:     oklch(0.75 0.18 75);
-  --nb-info:        oklch(0.68 0.18 240);
-
-  /* ── Legacy c- aliases (used by existing components) ── */
-  --c-bg:           var(--nb-bg);
-  --c-surface:      var(--nb-surface);
-  --c-raised:       var(--nb-raised);
-  --c-overlay:      var(--nb-overlay);
-  --c-border:       var(--nb-border);
-  --c-border-hi:    var(--nb-border-hi);
-  --c-text:         var(--nb-text);
-  --c-text-2:       var(--nb-text-2);
-  --c-text-3:       var(--nb-text-3);
-  --c-accent:       var(--nb-green);
-  --c-accent-hi:    var(--nb-green-hi);
-  --c-accent-bg:    var(--nb-green-bg);
-  --c-accent-border:var(--nb-green-border);
-  --c-danger:       var(--nb-danger);
-  --c-warning:      var(--nb-warning);
-  --c-info:         var(--nb-info);
+  /* ── Legacy aliases for existing components ── */
+  --nb-bg:             var(--surface-dim);
+  --nb-surface:        var(--surface-container);
+  --nb-raised:         var(--surface-high);
+  --nb-overlay:        var(--surface-highest);
+  --nb-border:         rgba(70, 69, 84, 0.6);
+  --nb-border-hi:      rgba(144, 143, 160, 0.4);
+  --nb-grid:           rgba(70, 69, 84, 0.3);
+  --nb-text:           var(--on-surface);
+  --nb-text-2:         var(--on-surface-2);
+  --nb-text-3:         var(--on-surface-3);
+  --nb-text-4:         var(--on-surface-4);
+  --nb-green:          var(--secondary);
+  --nb-green-hi:       var(--secondary-dim);
+  --nb-green-dim:      var(--secondary-bg);
+  --nb-green-bg:       var(--secondary-bg);
+  --nb-green-border:   var(--secondary-border);
+  --nb-danger:         var(--error);
+  --c-accent:          var(--primary);
+  --c-bg:              var(--surface-dim);
+  --c-surface:         var(--surface-container);
+  --c-border:          var(--nb-border);
+  --c-text:            var(--on-surface);
+  --c-text-2:          var(--on-surface-2);
+  --c-text-3:          var(--on-surface-3);
 
   /* ── Fonts ── */
-  --font-head: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --font-display: var(--font-head);
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-head:    'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-body:    'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  /* ── Radius ── */
-  --radius: 0.75rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  /* ── Radius (Modern Rounded from spec) ── */
+  --radius-sm:   0.25rem;   /* 4px  — tags, small chips */
+  --radius:      0.5rem;    /* 8px  — buttons, inputs, standard cards */
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;   /* 12px — medium bento */
+  --radius-xl:   1rem;      /* 16px — large bento cards */
+  --radius-2xl:  1rem;
+  --radius-full: 9999px;    /* pills */
 
-  /* ── Shadows ── */
-  --shadow-glow: 0 0 0 1px oklch(0.82 0.15 168 / 0.2), 0 20px 60px -20px oklch(0.82 0.15 168 / 0.4);
-  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 20px 40px -20px oklch(0 0 0 / 0.6);
+  /* ── Shadows / glows ── */
+  --shadow-card:    0 1px 0 0 rgba(255,255,255,0.03) inset, 0 4px 24px -8px rgba(0,0,0,0.6);
+  --shadow-primary: 0 0 0 1px rgba(192,193,255,0.25), 0 8px 32px -8px rgba(192,193,255,0.4);
+  --shadow-secondary:0 0 0 1px rgba(78,222,163,0.2), 0 8px 32px -8px rgba(78,222,163,0.3);
+  /* mint alias — keeps old shadow-glow refs working */
+  --shadow-glow:    var(--shadow-primary);
+  --mint:           var(--primary);
 }
 
 /* ── Reset ── */
@@ -87,52 +110,42 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: var(--nb-bg);
-  color: var(--nb-text);
+  background-color: var(--surface-lowest);
+  color: var(--on-surface);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Lovable ambient radial gradients */
+  /* Ambient violet glow — top center, secondary teal — bottom right */
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.32 0.09 165 / 0.35), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, oklch(0.5 0.14 168 / 0.15), transparent 60%);
+    radial-gradient(ellipse 70% 40% at 50% -5%, rgba(192,193,255,0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 95% 105%, rgba(78,222,163,0.08) 0%, transparent 60%);
   background-attachment: fixed;
-  animation: bodyFadeIn 250ms ease both;
 }
 
-@keyframes bodyFadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* ── Dot-grid hero texture (from Stitch design) ── */
+.grid-lines,
+.nb-grid-bg,
+.nb-grid-hero {
+  background-image: radial-gradient(rgba(144,143,160,0.18) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}
 
 /* ── Focus ── */
 *:focus-visible {
-  outline: 2px solid var(--mint);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
-
 a { text-underline-offset: 3px; }
-
-/* ── Selection ── */
-::selection { background: var(--nb-green-dim); color: var(--nb-text); }
+::selection { background: rgba(192,193,255,0.2); color: var(--on-surface); }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--nb-border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--nb-border-hi); }
-
-/* ────────────────────────────────────────────────────────────────
-   GRID TEXTURE — Lovable's subtle 1% opacity lines
-   ─────────────────────────────────────────────────────────────── */
-.nb-grid-bg,
-.nb-grid-hero,
-.grid-lines {
-  background-image:
-    linear-gradient(to right,  oklch(1 0 0 / 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / 0.04) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
+::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--outline); }
 
 /* ────────────────────────────────────────────────────────────────
    TYPOGRAPHY
@@ -142,74 +155,55 @@ h1, h2, h3, h4 {
   letter-spacing: -0.02em;
 }
 
-/* Display — hero only */
 .nb-display {
-  font-family: var(--font-head);
-  font-size: clamp(3rem, 8vw, 6rem);
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  color: var(--nb-text);
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
 }
 
-/* Headline — section titles */
 .nb-headline {
   font-family: var(--font-head);
-  font-size: clamp(1.5rem, 3vw, 2.4rem);
-  font-weight: 600;
-  line-height: 1.15;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
   letter-spacing: -0.02em;
-  color: var(--nb-text);
+  color: var(--on-surface);
 }
 
-/* Title */
 .nb-title {
   font-family: var(--font-head);
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.015em;
-  color: var(--nb-text);
+  line-height: 1.4;
+  color: var(--on-surface);
 }
 
-.nb-body  { font-family: var(--font-body);  font-size: 0.9375rem; line-height: 1.72; color: var(--nb-text-2); }
-.nb-small { font-family: var(--font-body);  font-size: 0.8125rem; line-height: 1.6;  color: var(--nb-text-3); }
+.nb-body  { font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--on-surface-2); }
+.nb-small { font-family: var(--font-body); font-size: 0.875rem; line-height: 1.5; color: var(--on-surface-3); }
 
 .nb-label, .eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--nb-text-3);
+  color: var(--on-surface-3);
 }
 
-/* Mono utility */
-.mono {
-  font-family: var(--font-mono);
-  font-feature-settings: "zero", "ss01";
-}
+.mono { font-family: var(--font-mono); }
 
 /* ────────────────────────────────────────────────────────────────
-   GRADIENT TEXT — Lovable's mint gradient heading treatment
-   ─────────────────────────────────────────────────────────────── */
-.text-gradient-mint {
-  background: linear-gradient(180deg, oklch(0.97 0.02 160) 0%, oklch(0.82 0.15 168) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ────────────────────────────────────────────────────────────────
-   BENTO CARD — Lovable's rounded, blurred, shadowed card style
+   BENTO CARD — tonal layer card (Level 1 from spec)
    ─────────────────────────────────────────────────────────────── */
 .bento-card,
 .card {
   position: relative;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--nb-border);
-  background: linear-gradient(180deg, oklch(0.22 0.03 230 / 0.7), oklch(0.18 0.025 235 / 0.7));
-  backdrop-filter: blur(8px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(70, 69, 84, 0.6);
+  background: var(--surface-container);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -217,25 +211,31 @@ h1, h2, h3, h4 {
 
 .bento-card:hover,
 .card:hover {
-  border-color: oklch(1 0 0 / 0.14);
+  border-color: rgba(144, 143, 160, 0.35);
 }
 
-/* Bento grid layout (legacy) */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+/* Dev-card (flat, sharper — for data-dense rows) */
+.dev-card {
+  background: var(--surface-dim);
+  border: 1px solid rgba(70, 69, 84, 0.6);
+  border-radius: var(--radius);
+  transition: border-color 150ms ease;
+}
+.dev-card:hover { border-color: rgba(144,143,160,0.4); }
+
+/* Active rental glow — emerald pulsing border */
+.card-active {
+  border-color: var(--secondary-border);
+  box-shadow: var(--shadow-secondary);
 }
 
-.bento-cell {
-  padding: 28px 24px;
-  position: relative;
-}
-
-.bento-2   { grid-column: span 2; }
-.bento-3   { grid-column: span 3; }
-.bento-4   { grid-column: span 4; }
-.bento-6   { grid-column: span 6; }
+/* Legacy bento grid classes */
+.bento-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 16px; }
+.bento-cell { padding: 28px 24px; position: relative; }
+.bento-2 { grid-column: span 2; }
+.bento-3 { grid-column: span 3; }
+.bento-4 { grid-column: span 4; }
+.bento-6 { grid-column: span 6; }
 .bento-tall { min-height: 220px; }
 
 /* ────────────────────────────────────────────────────────────────
@@ -248,46 +248,47 @@ h1, h2, h3, h4 {
   padding: 10px 20px;
   font-family: var(--font-body);
   font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: var(--radius-md);
+  font-weight: 700;
+  border-radius: var(--radius);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: filter 120ms ease, border-color 120ms ease, background 120ms ease;
+  transition: filter 120ms ease, border-color 120ms ease, background 120ms ease, transform 80ms ease;
   white-space: nowrap;
   line-height: 1;
   text-decoration: none;
+  letter-spacing: 0.02em;
 }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.btn:active { transform: translateY(1px); }
 
 .btn-primary {
-  background: var(--mint);
-  color: oklch(0.14 0.03 240);
-  border-color: var(--mint);
-  font-weight: 700;
-  box-shadow: var(--shadow-glow);
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-primary);
 }
 .btn-primary:hover { filter: brightness(1.1); }
 
 .btn-secondary {
-  background: oklch(0.22 0.03 230 / 0.5);
-  color: var(--nb-text);
-  border-color: var(--nb-border);
+  background: var(--secondary-bg);
+  color: var(--secondary);
+  border-color: var(--secondary-border);
 }
-.btn-secondary:hover { border-color: oklch(0.82 0.15 168 / 0.5); }
+.btn-secondary:hover { background: rgba(78,222,163,0.14); }
 
 .btn-ghost {
   background: transparent;
-  color: var(--nb-text-2);
+  color: var(--on-surface-2);
   border-color: transparent;
 }
-.btn-ghost:hover { color: var(--nb-text); background: var(--nb-surface); }
+.btn-ghost:hover { color: var(--on-surface); background: var(--surface-high); }
 
 .btn-outline {
   background: transparent;
-  color: var(--nb-text);
-  border-color: var(--nb-border);
+  color: var(--on-surface);
+  border-color: rgba(70,69,84,0.7);
 }
-.btn-outline:hover { border-color: var(--nb-border-hi); }
+.btn-outline:hover { border-color: var(--outline); }
 
 /* ────────────────────────────────────────────────────────────────
    FORM FIELDS
@@ -295,24 +296,24 @@ h1, h2, h3, h4 {
 .field {
   display: block;
   width: 100%;
-  padding: 9px 13px;
-  background: oklch(1 0 0 / 0.06);
-  border: 1px solid var(--nb-border);
-  border-radius: var(--radius-md);
-  color: var(--nb-text);
-  font-family: var(--font-body);
+  padding: 10px 13px;
+  background: var(--surface-high);
+  border: 1px solid rgba(70,69,84,0.7);
+  border-radius: var(--radius);
+  color: var(--on-surface);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
   line-height: 1.5;
   transition: border-color 120ms ease, box-shadow 120ms ease;
   outline: none;
 }
-.field::placeholder { color: var(--nb-text-4); }
-.field:hover  { border-color: var(--nb-border-hi); }
-.field:focus  { border-color: var(--mint); box-shadow: 0 0 0 3px var(--nb-green-dim); }
-.field.error  { border-color: var(--nb-danger); }
+.field::placeholder { color: var(--on-surface-4); }
+.field:hover  { border-color: var(--outline); }
+.field:focus  { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(192,193,255,0.15); }
+.field.error  { border-color: var(--error); }
 
 /* ────────────────────────────────────────────────────────────────
-   BADGE
+   BADGE / CHIP
    ─────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
@@ -320,21 +321,34 @@ h1, h2, h3, h4 {
   gap: 5px;
   padding: 2px 8px;
   font-family: var(--font-mono);
-  font-size: 0.6375rem;
-  font-weight: 500;
+  font-size: 0.625rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: var(--radius-sm);
-  background: var(--nb-green-bg);
-  color: var(--mint);
-  border: 1px solid var(--nb-green-border);
+  border-radius: var(--radius-full);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.badge-secondary {
+  background: var(--secondary-bg);
+  color: var(--secondary);
+  border-color: var(--secondary-border);
+}
+
+/* Status dot */
+.status-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
 }
 
 /* ────────────────────────────────────────────────────────────────
-   SECTION UTILITIES
+   SECTION / DIVIDERS
    ─────────────────────────────────────────────────────────────── */
-.section-rule { height: 1px; background: var(--nb-border); }
-.divider      { height: 1px; background: var(--nb-border); }
+.section-rule { height: 1px; background: rgba(70,69,84,0.5); }
+.divider      { height: 1px; background: rgba(70,69,84,0.5); }
 .prose-width  { max-width: 62ch; }
 
 /* ────────────────────────────────────────────────────────────────
@@ -346,6 +360,12 @@ h1, h2, h3, h4 {
 }
 .animate-fade-up { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.pulse { animation: pulse-dot 2s ease-in-out infinite; }
+
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee { animation: marquee 32s linear infinite; display: flex; width: max-content; }
 .marquee:hover { animation-play-state: paused; }
@@ -353,6 +373,9 @@ h1, h2, h3, h4 {
 @keyframes marquee-banner { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-banner { animation: marquee-banner 55s linear infinite; display: flex; width: max-content; }
 .marquee-banner:hover { animation-play-state: paused; }
+
+@keyframes nb-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ────────────────────────────────────────────────────────────────
    NAVBAR
@@ -363,31 +386,54 @@ nav, header {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   RESPONSIVE BENTO
+   SEGMENTED PROGRESS BAR (BIOS-style from spec)
+   ─────────────────────────────────────────────────────────────── */
+.progress-segments {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+}
+.progress-segments .seg {
+  flex: 1;
+  border-radius: 1px;
+  background: var(--surface-highest);
+}
+.progress-segments .seg.filled { background: var(--secondary); }
+.progress-segments .seg.filled-warn { background: #f59e0b; }
+.progress-segments .seg.filled-danger { background: var(--error); }
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE
    ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 2; }
+  .bento-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
+  .bento-2,.bento-3,.bento-4,.bento-6 { grid-column: span 2; }
+  .steps-grid         { grid-template-columns: repeat(2, 1fr) !important; }
+  .bento-feature-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .plans-grid         { grid-template-columns: repeat(2, 1fr) !important; }
+  .flow-grid          { grid-template-columns: 1fr !important; }
+  .feat-grid          { grid-template-columns: 1fr !important; }
+  .feat-grid > *:first-child { grid-row: auto !important; }
+  .pricing-bento      { grid-template-columns: 1fr !important; }
+  .plan-cards-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .plan-cards-grid    { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 560px) {
   .bento-grid { grid-template-columns: 1fr; gap: 10px; }
-  .bento-2, .bento-3, .bento-4, .bento-6 { grid-column: span 1; }
-  .nb-display { font-size: clamp(2.4rem, 10vw, 3.5rem); }
+  .bento-2,.bento-3,.bento-4,.bento-6 { grid-column: span 1; }
+  .steps-grid         { grid-template-columns: 1fr !important; }
+  .bento-feature-grid { grid-template-columns: 1fr !important; }
+  .plans-grid         { grid-template-columns: repeat(2, 1fr) !important; }
 }
-
-/* ────────────────────────────────────────────────────────────────
-   FOOTER GRID RESPONSIVE
-   ─────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .footer-grid { grid-template-columns: 1fr 1fr !important; }
 }
 @media (max-width: 480px) {
   .footer-grid { grid-template-columns: 1fr !important; }
+  .plans-grid  { grid-template-columns: 1fr !important; }
 }
-
-/* ────────────────────────────────────────────────────────────────
-   STEP ROW RESPONSIVE
-   ─────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .step-row { grid-template-columns: 40px 1fr !important; }
   .step-row-body { display: none; }

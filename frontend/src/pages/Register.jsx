@@ -1,27 +1,33 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Mail, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Lock, Eye, CheckCircle2, Zap, Github } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
 const EASE = [0.22, 1, 0.36, 1];
 const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
 
-const labelStyle = {
-  display: 'block',
-  fontFamily: 'var(--font-mono)',
-  fontSize: '0.6375rem',
-  color: 'var(--nb-text-3)',
-  letterSpacing: '0.08em',
-  marginBottom: '6px',
+const PERKS = [
+  'Virtual key in under 60 seconds',
+  'Access OpenAI, Anthropic and Google',
+  'No subscriptions — pay per rental in INR',
+];
+
+const inputStyle = {
+  width: '100%', padding: '13px 40px 13px 16px',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '10px', outline: 'none',
+  fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#e8edf8',
+  boxSizing: 'border-box', transition: 'border-color 150ms',
 };
 
-const PERKS = [
-  'Instant API key — delivered in seconds',
-  'GPT-4o, Claude, Gemini — all frontier models',
-  'No subscriptions, pay per rental in INR',
-];
+const labelStyle = {
+  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+  fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
+  marginBottom: '8px',
+};
 
 export default function Register() {
   const [email,           setEmail]           = useState('');
@@ -35,11 +41,11 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) { toast.error('Passwords do not match'); return; }
-    if (password.length < 8)          { toast.error('Password must be at least 8 characters'); return; }
+    if (password.length < 8)          { toast.error('Min. 8 characters required'); return; }
     setLoading(true);
     const result = await register(email, password);
     if (result.success) {
-      toast.success('Account created! Please sign in.');
+      toast.success('Account created! Sign in to continue.');
       navigate('/login');
     } else {
       toast.error(result.error || 'Registration failed');
@@ -48,97 +54,148 @@ export default function Register() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--nb-bg)', position: 'relative' }}>
-      <div className="nb-grid-hero" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0b1120', position: 'relative', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
 
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) 20px' }}>
+      {/* Dot-grid */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(192,193,255,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(78,222,163,0.06) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-        {/* Wordmark + headline */}
-        <motion.div variants={fadeUp(0)} initial="hidden" animate="show" style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <Link to="/" style={{ display: 'inline-block', textDecoration: 'none', marginBottom: '24px' }}>
-            <span style={{ fontFamily: 'var(--font-head)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--nb-text)', letterSpacing: '-0.02em' }}>
-              AI<span style={{ color: 'var(--nb-green)' }}>Rent</span>
-            </span>
-          </Link>
-          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.6rem,4vw,2.2rem)', fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--nb-text)', lineHeight: 1.1, marginBottom: '8px' }}>
-            Start building.
-          </h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--nb-text-2)' }}>Free account. First rental in 60 seconds.</p>
-        </motion.div>
-
-        {/* Perks */}
-        <motion.div variants={fadeUp(0.06)} initial="hidden" animate="show"
-          style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}
-        >
-          {PERKS.map(p => (
-            <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '2px', background: 'var(--nb-green-bg)', border: '1px solid var(--nb-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <CheckCircle2 size={10} style={{ color: 'var(--nb-green)' }} />
-              </div>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.825rem', color: 'var(--nb-text-2)' }}>{p}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Form */}
-        <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show"
-          style={{ width: '100%', maxWidth: '400px', background: 'var(--nb-surface)', border: '1px solid var(--nb-border)', borderRadius: '4px', padding: '32px' }}
-        >
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>EMAIL ADDRESS</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required className="field" style={{ paddingLeft: '36px', borderRadius: '4px' }} />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '14px' }}>
-              <label style={labelStyle}>PASSWORD</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
-                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} className="field" style={{ paddingLeft: '36px', paddingRight: '40px', borderRadius: '4px' }} />
-                <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>
-                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '28px' }}>
-              <label style={labelStyle}>CONFIRM PASSWORD</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--nb-text-3)', pointerEvents: 'none' }} />
-                <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required className="field" style={{ paddingLeft: '36px', borderRadius: '4px' }} />
-              </div>
-            </div>
-
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: '0.875rem' }}>
-              {loading
-                ? <span style={{ width: '14px', height: '14px', border: '2px solid rgba(2,44,34,0.3)', borderTopColor: '#02180e', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-                : <><UserPlus size={14} /><span>Create account</span></>
-              }
-            </button>
-          </form>
-
-          <div style={{ height: '1px', background: 'var(--nb-border)', margin: '24px 0' }} />
-          <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.85rem', color: 'var(--nb-text-3)' }}>
-            Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--nb-green)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
-          </p>
-        </motion.div>
-
-        <motion.p variants={fadeUp(0.16)} initial="hidden" animate="show"
-          style={{ marginTop: '24px', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--nb-text-3)', letterSpacing: '0.04em' }}
-        >
-          <Link to="/" style={{ color: 'var(--nb-text-3)', textDecoration: 'none' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--nb-text-2)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--nb-text-3)'}>
-            ← BACK TO HOME
-          </Link>
-        </motion.p>
+      {/* Status text */}
+      <div style={{ position: 'fixed', top: '20px', left: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7, color: 'rgba(192,193,255,0.25)', letterSpacing: '0.04em', pointerEvents: 'none' }}>
+        AUTH_MODULE_v1.0.2 // NEW_ACCOUNT_FLOW<br />
+        STATUS: INITIALIZING_IDENTITY
+      </div>
+      <div style={{ position: 'fixed', bottom: '20px', right: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7, color: 'rgba(192,193,255,0.2)', letterSpacing: '0.04em', textAlign: 'right', pointerEvents: 'none' }}>
+        ENCRYPTION: AES-256-GCM<br />NODE: IN-MUM-01
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      {/* Navbar */}
+      <nav style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(20px,4vw,40px)', height: '56px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <Link to="/" style={{ textDecoration: 'none', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8', letterSpacing: '-0.02em' }}>
+          AI<span style={{ color: 'var(--primary)' }}>Rent</span>
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          {['Marketplace', 'Docs', 'Pricing', 'About'].map(l => (
+            <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', transition: 'color 120ms' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#e8edf8'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+            >{l}</Link>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link to="/login" style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Login</Link>
+          <Link to="/register" style={{ padding: '7px 18px', borderRadius: '8px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, background: 'var(--primary)', color: 'var(--on-primary)' }}>Sign Up</Link>
+        </div>
+      </nav>
+
+      {/* Main */}
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+
+          <motion.div variants={fadeUp(0.04)} initial="hidden" animate="show" style={{
+            background: 'rgba(13,18,30,0.9)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '16px', padding: 'clamp(28px,5vw,40px)', backdropFilter: 'blur(12px)',
+          }}>
+            <div style={{ marginBottom: '28px' }}>
+              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.8rem,4vw,2.4rem)', lineHeight: 1.1, letterSpacing: '-0.03em', color: '#e8edf8', marginBottom: '8px' }}>
+                Join the<br />Network
+              </h1>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Free account. First rental in 60 seconds.</p>
+            </div>
+
+            {/* Perks */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+              {PERKS.map(p => (
+                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle2 size={14} color="var(--secondary)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.825rem', color: 'var(--on-surface-2)' }}>{p}</span>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              {/* Email */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>SYSTEM.USER_EMAIL</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>SYSTEM.ACCESS_KEY</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required minLength={8} style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  />
+                  <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.25)', lineHeight: 1 }}>
+                    {showPass ? <Eye size={15} /> : <Lock size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={labelStyle}>CONFIRM.ACCESS_KEY</label>
+                <input type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                />
+              </div>
+
+              <button type="submit" disabled={loading} style={{
+                width: '100%', padding: '14px', borderRadius: '10px', border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                background: loading ? 'rgba(78,222,163,0.2)' : 'linear-gradient(135deg, #2ab87a 0%, #4edea3 100%)',
+                color: loading ? 'rgba(255,255,255,0.4)' : '#003824',
+                fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                boxShadow: loading ? 'none' : '0 4px 24px -6px rgba(78,222,163,0.4)',
+                opacity: loading ? 0.7 : 1, transition: 'filter 150ms',
+              }}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.07)'; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
+              >
+                {loading
+                  ? <span style={{ width: '16px', height: '16px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#003824', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                  : <>Initialize Account <Zap size={16} fill="currentColor" /></>}
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)' }}>OR OAUTH2_PROVIDER</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+            </div>
+
+            <button type="button" onClick={() => toast('GitHub OAuth coming soon')} style={{
+              width: '100%', padding: '13px', borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)',
+              cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem', fontWeight: 500,
+              color: '#e8edf8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              transition: 'background 150ms, border-color 150ms',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+            >
+              <Github size={16} /> Continue with GitHub
+            </button>
+
+            <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.35)', marginTop: '24px' }}>
+              Already have an account?{' '}
+              <Link to="/login" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input::placeholder { color: rgba(255,255,255,0.2); }
+      `}</style>
     </div>
   );
 }
