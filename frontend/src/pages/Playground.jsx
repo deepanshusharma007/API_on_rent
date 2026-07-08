@@ -31,6 +31,12 @@ export default function Playground() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
+  const [bannerUp,     setBannerUp]     = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
+
+  useEffect(() => {
+    const id = setInterval(() => setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
@@ -96,7 +102,7 @@ export default function Playground() {
     <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)' }}>
 
       {/* ── SIDEBAR ── */}
-      <aside style={{ width: '220px', flexShrink: 0, background: '#0d1017', borderRight: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50, overflowY: 'auto' }}>
+      <aside style={{ width: '220px', flexShrink: 0, background: '#0d1017', borderRight: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, overflowY: 'auto', transition: 'top 200ms ease' }}>
         <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.75rem', color: 'var(--on-primary)' }}>
@@ -136,7 +142,7 @@ export default function Playground() {
       </aside>
 
       {/* ── MAIN ── */}
-      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0 }}>
+      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
           {/* Header */}

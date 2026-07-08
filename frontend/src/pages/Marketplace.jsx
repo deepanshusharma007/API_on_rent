@@ -152,6 +152,12 @@ export default function Marketplace() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
+  const [bannerUp,     setBannerUp]     = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
+
+  useEffect(() => {
+    const id = setInterval(() => setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
@@ -194,7 +200,7 @@ export default function Marketplace() {
         width: '220px', flexShrink: 0, background: '#0d1017',
         borderRight: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', flexDirection: 'column',
-        position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
+        position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, transition: 'top 200ms ease',
         overflowY: 'auto',
       }}>
         {/* Logo / user */}
@@ -259,7 +265,7 @@ export default function Marketplace() {
       </aside>
 
       {/* ══ MAIN ══ */}
-      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0 }}>
+      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
           {/* Page header */}

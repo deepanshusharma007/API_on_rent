@@ -20,7 +20,16 @@ const publicClient = axios.create({
 
 // Add auth token to requests
 apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem('auth_token');
+    // Primary: direct token set on login
+    let token = localStorage.getItem('auth_token');
+    // Fallback: token persisted inside Zustand auth-storage (survives refreshes)
+    if (!token) {
+        try {
+            const stored = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+            token = stored?.state?.token || null;
+            if (token) localStorage.setItem('auth_token', token); // re-sync
+        } catch (_) {}
+    }
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
