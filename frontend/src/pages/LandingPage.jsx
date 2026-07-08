@@ -1,8 +1,8 @@
-﻿import React from 'react';
+﻿﻿import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Zap, IndianRupee, CheckCircle, Video } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, IndianRupee, CheckCircle, Video, Bot, CreditCard, KeyRound, Rocket, Clock, Globe } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -15,19 +15,19 @@ const VP = { once: true, margin: '-50px' };
 
 const FLOW_STEPS = [
   {
-    icon: 'ðŸ¤–',
+    Icon: Bot,
     num: '1.',
     title: 'Pick Provider',
     body: 'Choose from OpenAI, Anthropic, or Google. All providers are available on every plan with no lock-in.',
   },
   {
-    icon: 'ðŸ’³',
+    Icon: CreditCard,
     num: '2.',
     title: 'Pay via UPI',
     body: 'Scan QR or use your favorite UPI app. Instant INR settlement without international transaction fees.',
   },
   {
-    icon: 'ðŸ”‘',
+    Icon: KeyRound,
     num: '3.',
     title: 'Use Instantly',
     body: 'Get your temporary API key immediately. Start coding with 100% uptime guaranteed by our infrastructure.',
@@ -35,10 +35,10 @@ const FLOW_STEPS = [
 ];
 
 const PLANS = [
-  { icon: 'âš¡', model: '15 Minutes', duration: '20K tokens Â· all providers', price: 'â‚¹49',  popular: false },
-  { icon: 'ðŸ¤–', model: '30 Minutes', duration: '40K tokens Â· all providers', price: 'â‚¹89',  popular: false },
-  { icon: 'ðŸš€', model: '1 Hour',     duration: '80K tokens Â· all providers', price: 'â‚¹149', popular: true  },
-  { icon: 'ðŸŒ', model: '24 Hours',   duration: '120K tokens Â· all providers', price: 'â‚¹499', popular: false },
+  { Icon: Zap,    model: '15 Minutes', duration: '20K tokens · all providers', price: '₹49',  popular: false },
+  { Icon: Bot,    model: '30 Minutes', duration: '40K tokens · all providers', price: '₹89',  popular: false },
+  { Icon: Rocket, model: '1 Hour',     duration: '80K tokens · all providers', price: '₹149', popular: true  },
+  { Icon: Globe,  model: '24 Hours',   duration: '120K tokens · all providers', price: '₹499', popular: false },
 ];
 
 export default function LandingPage() {
@@ -47,7 +47,7 @@ export default function LandingPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>AIRent â€” Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
+        <title>AIRent â€" Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
         <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your API key in under 60 seconds." />
         <link rel="canonical" href="https://airent.dev/" />
       </Helmet>
@@ -56,7 +56,7 @@ export default function LandingPage() {
 
       <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
-        {/* â”€â”€ HERO â”€â”€ */}
+        {/* â"€â"€ HERO â"€â"€ */}
         <section style={{
           minHeight: '520px',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -146,7 +146,7 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* â”€â”€ INSTANT DEPLOYMENT FLOW â”€â”€ */}
+        {/* â"€â"€ INSTANT DEPLOYMENT FLOW â"€â"€ */}
         <section style={{ background: '#0d1017', padding: 'clamp(64px, 8vw, 96px) clamp(16px, 5vw, 48px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -166,9 +166,9 @@ export default function LandingPage() {
                       width: '52px', height: '52px', borderRadius: '50%',
                       background: i === 0 ? 'rgba(192,193,255,0.15)' : i === 1 ? 'rgba(78,222,163,0.15)' : 'rgba(208,188,255,0.15)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 20px', fontSize: '1.5rem',
+                      margin: '0 auto 20px',
                     }}>
-                      {s.icon}
+                      <s.Icon size={22} color={i === 0 ? 'var(--primary)' : i === 1 ? 'var(--secondary)' : '#d0bcff'} />
                     </div>
                     <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.0625rem', color: '#e8edf8', marginBottom: '10px' }}>
                       {s.num} {s.title}
@@ -183,11 +183,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* â”€â”€ BENTO FEATURE GRID â”€â”€ */}
+        {/* â"€â"€ BENTO FEATURE GRID â"€â"€ */}
         <section style={{ background: '#0a0d14', padding: 'clamp(48px, 6vw, 80px) clamp(16px, 5vw, 48px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: '16px' }} className="feat-grid">
 
-            {/* IP Security â€” wide left, spans 2 rows */}
+            {/* IP Security â€" wide left, spans 2 rows */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ gridRow: 'span 2' }}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -204,7 +204,7 @@ export default function LandingPage() {
                     Lock your API key to specific server IPs. Prevents unauthorized usage even if your key is leaked in a codebase.
                   </p>
                 </div>
-                {/* World map graphic â€” CSS grid dots */}
+                {/* World map graphic â€" CSS grid dots */}
                 <div style={{
                   marginTop: '28px', borderRadius: '10px', overflow: 'hidden',
                   background: 'rgba(78,222,163,0.04)', border: '1px solid rgba(78,222,163,0.1)',
@@ -222,7 +222,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Instant Delivery â€” top right */}
+            {/* Instant Delivery â€" top right */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.08)}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -244,7 +244,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Cost Control â€” bottom right */}
+            {/* Cost Control â€" bottom right */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.12)}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -269,7 +269,7 @@ export default function LandingPage() {
 
           </div>
 
-          {/* Second bento row: Transparent INR Pricing â€” full width */}
+          {/* Second bento row: Transparent INR Pricing â€" full width */}
           <div style={{ maxWidth: '960px', margin: '16px auto 0' }}>
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.08)}>
               <div style={{
@@ -309,7 +309,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* â”€â”€ COMPUTE PACKAGES / PRICING â”€â”€ */}
+        {/* â"€â"€ COMPUTE PACKAGES / PRICING â"€â"€ */}
         <section style={{ background: '#0d1017', padding: 'clamp(64px, 8vw, 96px) clamp(16px, 5vw, 48px)' }}>
           <div style={{ maxWidth: '720px', margin: '0 auto' }}>
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ textAlign: 'center', marginBottom: '40px' }}>
@@ -349,7 +349,7 @@ export default function LandingPage() {
                       background: plan.popular ? 'rgba(78,222,163,0.12)' : 'rgba(255,255,255,0.06)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
-                      {plan.icon}
+                      <plan.Icon size={18} color={plan.popular ? 'var(--secondary)' : 'var(--on-surface-2)'} />
                     </div>
 
                     {/* Name + duration */}

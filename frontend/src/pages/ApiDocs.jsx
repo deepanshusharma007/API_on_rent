@@ -1,7 +1,7 @@
 ﻿import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Copy, Check, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe } from "lucide-react";
+import { Copy, Check, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe, ChevronDown, ChevronUp } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
@@ -119,7 +119,7 @@ function EndpointRow({ method, path, desc, detail }) {
         <MethodBadge method={method} />
         <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#e8edf8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path}</code>
         <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-3)', flexShrink: 0 }}>{desc}</span>
-        <span style={{ color: 'var(--on-surface-4)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', marginLeft: '4px', flexShrink: 0 }}>{open ? 'â–²' : 'â–¼'}</span>
+        <span style={{ color: 'var(--on-surface-4)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', marginLeft: '4px', flexShrink: 0 }}>{open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</span>
       </button>
       {open && detail.length > 0 && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)' }}>

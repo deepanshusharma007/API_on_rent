@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿﻿﻿import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ArrowRight, Zap, Clock, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -125,7 +125,7 @@ export default function Pricing() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Pricing â€” AIRent | Affordable AI API Rental Plans in INR</title>
+        <title>Pricing â€" AIRent | Affordable AI API Rental Plans in INR</title>
         <meta name="description" content="Simple, pay-as-you-go AI API rental plans. Rent GPT-4o, Claude, Gemini by the hour or day. No subscription. Pay in INR via UPI." />
         <link rel="canonical" href="https://airent.dev/pricing" />
       </Helmet>
@@ -133,7 +133,7 @@ export default function Pricing() {
 
       <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
-        {/* â”€â”€ HERO â”€â”€ */}
+        {/* â"€â"€ HERO â"€â"€ */}
         <section style={{ padding: 'clamp(56px,9vw,96px) clamp(20px,5vw,56px) clamp(40px,6vw,64px)', background: '#0d1017' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <motion.h1 initial="hidden" animate="show" variants={fadeUp(0)} style={{
@@ -152,7 +152,7 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* â”€â”€ PROVIDER TABS â”€â”€ */}
+        {/* â"€â"€ PROVIDER TABS â"€â"€ */}
         <section style={{ background: '#0a0d14', padding: '0 clamp(20px,5vw,56px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -175,7 +175,7 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* â”€â”€ PLAN CARDS â”€â”€ */}
+        {/* â"€â"€ PLAN CARDS â"€â"€ */}
         <section style={{ background: '#0a0d14', padding: 'clamp(32px,5vw,56px) clamp(20px,5vw,56px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }} className="plan-cards-grid">
@@ -233,7 +233,7 @@ export default function Pricing() {
 
                       {/* Price */}
                       <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '2rem', color: '#e8edf8', letterSpacing: '-0.03em', marginTop: '20px', marginBottom: '16px' }}>
-                        â‚¹{plan.price}
+                        ₹{plan.price}
                       </div>
 
                       {/* CTA */}
@@ -260,7 +260,7 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* â”€â”€ FEATURE COMPARISON TABLE â”€â”€ */}
+        {/* â"€â"€ FEATURE COMPARISON TABLE â"€â"€ */}
         <section style={{ background: '#0a0d14', padding: '0 clamp(20px,5vw,56px) clamp(48px,7vw,80px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <motion.h2 initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{
@@ -307,7 +307,7 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* â”€â”€ FAQ â”€â”€ */}
+        {/* â"€â"€ FAQ â"€â"€ */}
         <section style={{ background: '#0d1017', padding: 'clamp(48px,7vw,80px) clamp(20px,5vw,56px)' }}>
           <div style={{ maxWidth: '680px', margin: '0 auto' }}>
             <motion.h2 initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{
