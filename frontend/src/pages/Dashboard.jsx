@@ -265,7 +265,7 @@ export default function Dashboard() {
       </aside>
 
       {/* ══ MAIN ══ */}
-      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
+      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }} className="dash-outer-main">
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
           {/* Page header */}
@@ -305,7 +305,7 @@ export default function Dashboard() {
           {/* ── ACTIVE RENTALS TAB ── */}
           {activeTab === 'active' && (
             loading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }} className="dash-main-grid">
                 <div style={{ background: '#111520', borderRadius: '14px', height: '320px', animation: 'pulse 1.5s infinite' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ background: '#111520', borderRadius: '14px', height: '140px', animation: 'pulse 1.5s infinite' }} />
@@ -576,9 +576,11 @@ export default function Dashboard() {
         @media (max-width: 900px) {
           .dash-main-grid { grid-template-columns: 1fr !important; }
         }
-        @media (max-width: 680px) {
-          aside { width: 100% !important; position: relative !important; height: auto !important; }
-          .dash-main { margin-left: 0 !important; }
+        @media (max-width: 768px) {
+          aside { width: 100% !important; position: relative !important; top: auto !important; height: auto !important; flex-direction: row !important; flex-wrap: wrap !important; padding: 12px 16px !important; }
+          aside nav { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 4px !important; padding: 0 !important; flex: 1 !important; }
+          aside > div:last-child { display: none !important; }
+          .dash-outer-main { margin-left: 0 !important; }
         }
       `}</style>
     </div>

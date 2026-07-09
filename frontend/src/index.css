@@ -439,3 +439,55 @@ nav, header {
   .step-row { grid-template-columns: 40px 1fr !important; }
   .step-row-body { display: none; }
 }
+
+/* ── MOBILE LAYOUT (≤768px) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* FAQ: sidebar nav → full width */
+  .faq-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+  /* Contact: info row + grid → stack */
+  .contact-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .contact-row  { grid-template-columns: 1fr !important; gap: 8px !important; }
+
+  /* Marketplace checkout review: sidebar → below */
+  .checkout-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* Playground: two-pane → stack */
+  .pg-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* Dashboard: main + sidebar → stack */
+  .dash-main-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* AboutUs values grid */
+  .values-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+  /* Form two-column row → single column */
+  .form-row { grid-template-columns: 1fr !important; }
+
+  /* Prevent iOS input zoom (font < 16px triggers zoom) */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* Footer social icon tap targets */
+  .footer-social a, .footer-social button { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Pricing comparison table: horizontal scroll */
+  .pricing-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* ── NAVBAR MOBILE HAMBURGER ────────────────────────────────────── */
+@media (max-width: 680px) {
+  .nb-nav-links    { display: none !important; }
+  .nb-mobile-actions { display: flex !important; }
+}
+
+/* ── SMALL MOBILE (≤480px) ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Navbar: hide text nav links on very small screens, keep logo + CTA */
+  .nav-links { display: none !important; }
+
+  /* ApiDocs: provider/language tab row → wrapping flex */
+  .apidocs-tabs { flex-wrap: wrap !important; gap: 6px !important; }
+
+  /* Landing hero headline font scaling */
+  h1 { font-size: clamp(1.8rem, 8vw, 2.8rem) !important; }
+}
