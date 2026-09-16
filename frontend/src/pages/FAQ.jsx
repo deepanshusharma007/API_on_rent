@@ -116,9 +116,9 @@ export default function FAQ() {
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }} className="faq-grid">
 
             {/* Sidebar categories */}
-            <div style={{ position: 'sticky', top: '80px' }}>
+            <div className="faq-category-nav" style={{ position: 'sticky', top: '80px' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>CATEGORIES</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="faq-category-list" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => setCategory(cat)} style={{
                     padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left',
@@ -164,7 +164,12 @@ export default function FAQ() {
 
       <Footer />
       <style>{`
-        @media (max-width: 720px) { .faq-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 720px) {
+          .faq-grid { grid-template-columns: 1fr !important; }
+          .faq-category-nav { position: static !important; }
+          .faq-category-list { flex-direction: row !important; overflow-x: auto; gap: 8px !important; padding-bottom: 4px; }
+          .faq-category-list button { flex: 0 0 auto; white-space: nowrap; min-height: 44px; }
+        }
         input::placeholder { color: rgba(255,255,255,0.2); }
       `}</style>
     </div>

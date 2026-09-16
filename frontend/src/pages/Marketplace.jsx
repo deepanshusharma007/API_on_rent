@@ -193,10 +193,10 @@ export default function Marketplace() {
   const provMeta = selectedProvider ? getProviderMeta(selectedProvider) : null;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
       {/* ══ SIDEBAR ══ */}
-      <aside style={{
+      <aside className="app-sidebar" style={{
         width: '220px', flexShrink: 0, background: '#0d1017',
         borderRight: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', flexDirection: 'column',
@@ -264,8 +264,16 @@ export default function Marketplace() {
         </div>
       </aside>
 
+      <nav className="app-sidebar-tabs" aria-label="Developer console sections" style={{ display: 'none' }}>
+        <Link to="/marketplace" aria-current="page">Marketplace</Link>
+        <Link to="/dashboard?tab=active">Rentals</Link>
+        <Link to="/dashboard?tab=history">History</Link>
+        <Link to="/dashboard?tab=keys">API Keys</Link>
+        <Link to="/playground">Playground</Link>
+      </nav>
+
       {/* ══ MAIN ══ */}
-      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
+      <div className="app-main" style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
           {/* Page header */}
@@ -319,7 +327,7 @@ export default function Marketplace() {
                     NO PROVIDERS AVAILABLE — CHECK BACK SOON
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(activeProviders.length, 3)}, 1fr)`, gap: '12px' }}>
+                  <div className="provider-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(activeProviders.length, 3)}, 1fr)`, gap: '12px' }}>
                     {activeProviders.map(pid => (
                       <ProviderCard
                         key={pid}
@@ -363,7 +371,7 @@ export default function Marketplace() {
                         NO PLANS AVAILABLE YET
                       </div>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)`, gap: '12px' }}>
+                      <div className="plans-grid-mp" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)`, gap: '12px' }}>
                         {plans.map(plan => (
                           <PlanCard
                             key={plan.id}
@@ -558,9 +566,6 @@ export default function Marketplace() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 900px) {
           .checkout-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 680px) {
-          aside { width: 100% !important; position: relative !important; height: auto !important; }
         }
       `}</style>
     </div>

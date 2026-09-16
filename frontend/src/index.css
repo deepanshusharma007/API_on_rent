@@ -480,6 +480,66 @@ nav, header {
   .nb-mobile-actions { display: flex !important; }
 }
 
+/* ── SIDEBAR-LAYOUT PAGES (Dashboard / Marketplace / Playground) ── */
+@media (max-width: 768px) {
+  /* Hide fixed sidebar, show mobile tab bar */
+  .app-sidebar      { display: none !important; }
+  .app-sidebar-tabs {
+    display: flex !important;
+    position: fixed;
+    top: var(--app-banner-h, 0px);
+    left: 0;
+    right: 0;
+    z-index: 45;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 16px;
+    background: #0d1017;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    scrollbar-width: none;
+  }
+  .app-sidebar-tabs::-webkit-scrollbar { display: none; }
+  .app-sidebar-tabs a,
+  .app-sidebar-tabs button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--on-surface-2);
+    text-decoration: none;
+    font: 600 0.75rem var(--font-body);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .app-sidebar-tabs [aria-current="page"] {
+    border-color: var(--primary);
+    background: rgba(192,193,255,0.12);
+    color: var(--primary);
+  }
+  /* Remove sidebar margin — main fills full width */
+  .app-main {
+    margin-left: 0 !important;
+    padding-top: calc(var(--app-banner-h, 0px) + 60px) !important;
+  }
+  /* Provider/plan grids: 1 col on mobile */
+  .provider-grid    { grid-template-columns: 1fr !important; }
+  .plans-grid-mp    { grid-template-columns: repeat(2,1fr) !important; }
+  .history-grid {
+    grid-template-columns: 1.3fr 1fr 1fr !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  .history-grid > :nth-child(3),
+  .history-grid > :nth-child(4) { display: none !important; }
+}
+@media (max-width: 480px) {
+  .plans-grid-mp    { grid-template-columns: 1fr !important; }
+  /* History table: hide less-important columns */
+  .history-col-hide { display: none !important; }
+}
+
 /* ── SMALL MOBILE (≤480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
   /* Navbar: hide text nav links on very small screens, keep logo + CTA */

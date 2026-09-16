@@ -160,10 +160,10 @@ export default function Dashboard() {
   const usedPct  = totalCap ? Math.round((firstActive.tokens_used / totalCap) * 100) : 0;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
       {/* ══ SIDEBAR ══ */}
-      <aside style={{
+      <aside className="app-sidebar" style={{
         width: '220px', flexShrink: 0, background: '#0d1017',
         borderRight: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', flexDirection: 'column',
@@ -264,8 +264,16 @@ export default function Dashboard() {
         </div>
       </aside>
 
+      <nav className="app-sidebar-tabs" aria-label="Dashboard sections" style={{ display: 'none' }}>
+        <Link to="/marketplace">Marketplace</Link>
+        <button onClick={() => setActiveTab('active')} aria-current={activeTab === 'active' ? 'page' : undefined}>Rentals</button>
+        <button onClick={() => setActiveTab('history')} aria-current={activeTab === 'history' ? 'page' : undefined}>History</button>
+        <button onClick={() => setActiveTab('keys')} aria-current={activeTab === 'keys' ? 'page' : undefined}>API Keys</button>
+        <Link to="/playground">Playground</Link>
+      </nav>
+
       {/* ══ MAIN ══ */}
-      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }} className="dash-outer-main">
+      <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }} className="dash-outer-main app-main">
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
           {/* Page header */}
@@ -437,7 +445,7 @@ export default function Dashboard() {
 
               <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
                 {/* Table header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#141820' }}>
+                <div className="history-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#141820' }}>
                   {['Date', 'Provider', 'Duration', 'Tokens Used', 'Status'].map(h => (
                     <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-3)' }}>{h}</span>
                   ))}
@@ -451,7 +459,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   historyRentals.map((r, i) => (
-                    <div key={r.id} onClick={() => handleInvoice(r.id)} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '16px 20px', borderBottom: i < historyRentals.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', cursor: 'pointer', transition: 'background 120ms', alignItems: 'center' }}
+                    <div className="history-grid" key={r.id} onClick={() => handleInvoice(r.id)} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '16px 20px', borderBottom: i < historyRentals.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', cursor: 'pointer', transition: 'background 120ms', alignItems: 'center' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
@@ -575,12 +583,6 @@ export default function Dashboard() {
         @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
         @media (max-width: 900px) {
           .dash-main-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 768px) {
-          aside { width: 100% !important; position: relative !important; top: auto !important; height: auto !important; flex-direction: row !important; flex-wrap: wrap !important; padding: 12px 16px !important; }
-          aside nav { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 4px !important; padding: 0 !important; flex: 1 !important; }
-          aside > div:last-child { display: none !important; }
-          .dash-outer-main { margin-left: 0 !important; }
         }
       `}</style>
     </div>
