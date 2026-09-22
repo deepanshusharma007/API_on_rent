@@ -691,7 +691,7 @@ export default function AdminPanel() {
     const [guardrails, setGuardrails] = React.useState(null);
     const [flushing, setFlushing] = React.useState(false);
     const [togglingId, setTogglingId] = React.useState(null);
-    const loadModels = () => adminAPI.getGatewayModels?.().then(r => setModels(r.data?.models || [])).catch(() => {});
+    const loadModels = () => adminAPI.getGatewayModels?.().then(r => setModels(r.data?.models || [])).catch(() => { toast.error('Failed to load gateway models'); setModels([]); });
     React.useEffect(() => {
       adminAPI.getGatewayCacheStats?.().then(r => setCacheStats(r.data)).catch(() => {});
       loadModels();

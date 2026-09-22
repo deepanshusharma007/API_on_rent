@@ -970,7 +970,7 @@ async def gateway_models(
         active_providers = {k.provider.value if hasattr(k.provider, "value") else k.provider for k in keys}
     except Exception:
         pass
-    enabled_ids = await get_enabled_model_ids(redis_manager.redis_client)
+    enabled_ids = await get_enabled_model_ids(redis_manager.redis)
     models = get_all_models()
     for m in models:
         m["available"] = infer_provider(m["id"]) in active_providers
@@ -987,7 +987,7 @@ async def enable_gateway_model(
 ):
     """Add a model to the enabled set. If the set was empty (all-enabled default), first populate it with all models minus this one, then add this one — net result: all enabled."""
     from backend.services.router import get_all_models, REDIS_ENABLED_MODELS_KEY
-    rc = redis_manager.redis_client
+    rc = redis_manager.redis
     enabled_ids = await rc.smembers(REDIS_ENABLED_MODELS_KEY)
     if not enabled_ids:
         # Set was empty (all-enabled default) — just add this model; keep default behaviour
@@ -1004,7 +1004,7 @@ async def disable_gateway_model(
 ):
     """Remove a model from the enabled set. If the set was empty (all-enabled default), first populate it with ALL models, then remove this one."""
     from backend.services.router import get_all_models, REDIS_ENABLED_MODELS_KEY
-    rc = redis_manager.redis_client
+    rc = redis_manager.redis
     enabled_ids = await rc.smembers(REDIS_ENABLED_MODELS_KEY)
     if not enabled_ids:
         # Transition from "all enabled" to "explicit list": add all, then remove this one
