@@ -196,6 +196,12 @@ export const adminAPI = {
 
     getGatewayModels: () =>
         apiClient.get('/admin/gateway/models'),
+
+    enableGatewayModel: (modelId) =>
+        apiClient.post(`/admin/gateway/models/${encodeURIComponent(modelId)}/enable`),
+
+    disableGatewayModel: (modelId) =>
+        apiClient.delete(`/admin/gateway/models/${encodeURIComponent(modelId)}`),
 };
 
 // Invoice API

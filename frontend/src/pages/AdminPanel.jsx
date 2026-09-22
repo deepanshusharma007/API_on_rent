@@ -690,9 +690,11 @@ export default function AdminPanel() {
     const [models, setModels] = React.useState([]);
     const [guardrails, setGuardrails] = React.useState(null);
     const [flushing, setFlushing] = React.useState(false);
+    const [togglingId, setTogglingId] = React.useState(null);
+    const loadModels = () => adminAPI.getGatewayModels?.().then(r => setModels(r.data?.models || [])).catch(() => {});
     React.useEffect(() => {
       adminAPI.getGatewayCacheStats?.().then(r => setCacheStats(r.data)).catch(() => {});
-      adminAPI.getGatewayModels?.().then(r => setModels(r.data?.models || [])).catch(() => {});
+      loadModels();
       adminAPI.getGuardrailsConfig?.().then(r => setGuardrails(r.data)).catch(() => {});
     }, []);
     const flushCache = () => {
@@ -702,6 +704,14 @@ export default function AdminPanel() {
         setCacheStats(null);
         adminAPI.getGatewayCacheStats?.().then(r => setCacheStats(r.data)).catch(() => {});
       }).catch(() => toast.error('Flush failed')).finally(() => setFlushing(false));
+    };
+    const toggleModel = (m) => {
+      setTogglingId(m.id);
+      const op = m.enabled ? adminAPI.disableGatewayModel : adminAPI.enableGatewayModel;
+      op?.(m.id)
+        .then(() => { toast.success(`${m.id} ${m.enabled ? 'disabled' : 'enabled'}`); loadModels(); })
+        .catch(() => toast.error('Toggle failed'))
+        .finally(() => setTogglingId(null));
     };
     const cardStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '12px', padding: '20px', marginBottom: '16px' };
     const labelStyle = { fontSize: '0.75rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' };
@@ -745,22 +755,40 @@ export default function AdminPanel() {
             )) : <span style={{ color: 'var(--c-text-3)', fontSize: '0.85rem' }}>Loading...</span>}
           </div>
         </div>
-        {models.length > 0 && (
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Route size={16} style={{ color: 'var(--c-accent)' }} />
-              <span style={{ fontWeight: 600 }}>Available Models ({models.length})</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {models.map(m => (
-                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: '8px', background: 'var(--c-bg)' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--c-text-2)' }}>{m.id}</span>
-                  <span style={{ fontSize: '0.75rem', color: m.available !== false ? '#34d399' : '#fb7185' }}>{m.available !== false ? 'Available' : 'Offline'}</span>
-                </div>
-              ))}
-            </div>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <Route size={16} style={{ color: 'var(--c-accent)' }} />
+            <span style={{ fontWeight: 600 }}>Gateway Models</span>
           </div>
-        )}
+          <p style={{ fontSize: '0.8rem', color: 'var(--c-text-3)', marginBottom: '16px' }}>
+            Toggle which models users can request. Disabled models are rejected at the gateway.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {models.length === 0 ? (
+              <span style={{ color: 'var(--c-text-3)', fontSize: '0.85rem' }}>Loading...</span>
+            ) : models.map(m => (
+              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: '8px', background: 'var(--c-bg)', border: `1px solid ${m.enabled ? 'rgba(52,211,153,0.15)' : 'rgba(251,113,133,0.1)'}` }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--c-text-2)' }}>{m.id}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', marginTop: '2px' }}>
+                    {m.provider} &middot; {m.speed} &middot; {m.best_for}
+                    {!m.available && <span style={{ marginLeft: '6px', color: '#fbbf24' }}>no provider key</span>}
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleModel(m)}
+                  disabled={togglingId === m.id}
+                  style={{ padding: '5px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, cursor: togglingId === m.id ? 'wait' : 'pointer', border: '1px solid', transition: 'all 0.15s',
+                    background: m.enabled ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.08)',
+                    borderColor: m.enabled ? 'rgba(52,211,153,0.3)' : 'rgba(251,113,133,0.25)',
+                    color: m.enabled ? '#34d399' : '#fb7185' }}
+                >
+                  {togglingId === m.id ? '...' : m.enabled ? 'Enabled' : 'Disabled'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   };

@@ -79,6 +79,18 @@ def infer_provider(model_id: str) -> str:
     return "openai"
 
 
+REDIS_ENABLED_MODELS_KEY = "gateway:enabled_models"
+
+
+async def get_enabled_model_ids(redis_client) -> set[str]:
+    """Return set of enabled model IDs from Redis. Empty set = all enabled (default)."""
+    try:
+        members = await redis_client.smembers(REDIS_ENABLED_MODELS_KEY)
+        return {m.decode() if isinstance(m, bytes) else m for m in members}
+    except Exception:
+        return set()
+
+
 def get_all_models() -> list[dict]:
     """Return full model catalogue with metadata."""
     result = []
