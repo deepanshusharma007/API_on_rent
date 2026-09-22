@@ -5,6 +5,7 @@ import {
   Plus, Trash2, RefreshCw, DollarSign, Zap, TrendingUp,
   Shield, Download, Loader2, Activity, CheckCircle, XCircle,
   Pencil, Save, X as XIcon,
+  Route, Database,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../api/client';
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'keys',       label: 'API Keys',   icon: Key },
   { id: 'analytics',  label: 'Analytics',  icon: TrendingUp },
   { id: 'alerts',     label: 'Alerts',     icon: AlertTriangle },
+  { id: 'gateway',   label: 'Gateway',    icon: Route },
 ];
 
 // Colour sets for stat cards — emerald is primary, others are semantic
@@ -683,7 +685,87 @@ export default function AdminPanel() {
     </div>
   );
 
-  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab };
+  const GatewayTab = () => {
+    const [cacheStats, setCacheStats] = React.useState(null);
+    const [models, setModels] = React.useState([]);
+    const [guardrails, setGuardrails] = React.useState(null);
+    const [flushing, setFlushing] = React.useState(false);
+    React.useEffect(() => {
+      adminAPI.getGatewayCacheStats?.().then(r => setCacheStats(r.data)).catch(() => {});
+      adminAPI.getGatewayModels?.().then(r => setModels(r.data?.models || [])).catch(() => {});
+      adminAPI.getGuardrailsConfig?.().then(r => setGuardrails(r.data)).catch(() => {});
+    }, []);
+    const flushCache = () => {
+      setFlushing(true);
+      adminAPI.flushGatewayCache?.().then(() => {
+        toast.success('Cache flushed');
+        setCacheStats(null);
+        adminAPI.getGatewayCacheStats?.().then(r => setCacheStats(r.data)).catch(() => {});
+      }).catch(() => toast.error('Flush failed')).finally(() => setFlushing(false));
+    };
+    const cardStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '12px', padding: '20px', marginBottom: '16px' };
+    const labelStyle = { fontSize: '0.75rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' };
+    const valStyle = { fontSize: '1.1rem', fontWeight: 600, color: 'var(--c-text-1)' };
+    return (
+      <div style={{ maxWidth: '700px' }}>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Database size={16} style={{ color: 'var(--c-accent)' }} />
+              <span style={{ fontWeight: 600 }}>Semantic Cache</span>
+            </div>
+            <button onClick={flushCache} disabled={flushing} style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(251,113,133,0.1)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', fontSize: '0.8rem', cursor: 'pointer' }}>
+              {flushing ? 'Flushing...' : 'Flush Cache'}
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {[
+              { label: 'Total Hits', val: cacheStats?.total_hits ?? '-' },
+              { label: 'Hit Rate', val: cacheStats?.hit_rate != null ? `${(cacheStats.hit_rate * 100).toFixed(1)}%` : '-' },
+              { label: 'Cached Entries', val: cacheStats?.cached_entries ?? '-' },
+            ].map(({ label, val }) => (
+              <div key={label}>
+                <div style={labelStyle}>{label}</div>
+                <div style={valStyle}>{val}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Shield size={16} style={{ color: 'var(--c-accent)' }} />
+            <span style={{ fontWeight: 600 }}>Guardrails</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {guardrails ? Object.entries(guardrails).map(([key, val]) => (
+              <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: '8px', background: 'var(--c-bg)' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: val ? '#34d399' : '#fb7185' }}>{val ? 'ON' : 'OFF'}</span>
+              </div>
+            )) : <span style={{ color: 'var(--c-text-3)', fontSize: '0.85rem' }}>Loading...</span>}
+          </div>
+        </div>
+        {models.length > 0 && (
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Route size={16} style={{ color: 'var(--c-accent)' }} />
+              <span style={{ fontWeight: 600 }}>Available Models ({models.length})</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {models.map(m => (
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: '8px', background: 'var(--c-bg)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--c-text-2)' }}>{m.id}</span>
+                  <span style={{ fontSize: '0.75rem', color: m.available !== false ? '#34d399' : '#fb7185' }}>{m.available !== false ? 'Available' : 'Offline'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab, gateway: GatewayTab };
   const ActiveTab = TAB_MAP[activeTab];
 
   if (loading) return (

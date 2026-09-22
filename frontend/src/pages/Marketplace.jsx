@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, History, Key, Settings, HelpCircle,
   Zap, Clock, CheckCircle2, ChevronRight, IndianRupee, LogOut, Terminal,
-  ChevronDown, ChevronUp, Shield, RefreshCw, Database, Route,
+  Shield, RefreshCw, Database, Route,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { marketplaceAPI, paymentAPI } from '../api/client';
@@ -21,23 +21,11 @@ const SIDEBAR_NAV = [
   { id: 'playground',  label: 'Playground',       icon: Terminal,    to: '/playground' },
 ];
 
-// Static gateway model catalogue — matches backend router.py
-const GATEWAY_MODELS = [
-  { id: 'gpt-4o',                     provider: 'OpenAI',    speed: 'Fast',    bestFor: 'General purpose, vision' },
-  { id: 'gpt-4o-mini',                provider: 'OpenAI',    speed: 'Fastest', bestFor: 'High volume, cost-efficient' },
-  { id: 'claude-3-5-sonnet-20241022', provider: 'Anthropic', speed: 'Medium',  bestFor: 'Reasoning, coding, analysis' },
-  { id: 'claude-3-5-haiku-20241022',  provider: 'Anthropic', speed: 'Fast',    bestFor: 'Lightweight tasks' },
-  { id: 'claude-3-opus-20240229',     provider: 'Anthropic', speed: 'Slow',    bestFor: 'Complex reasoning' },
-  { id: 'gemini-1.5-pro',             provider: 'Google',    speed: 'Medium',  bestFor: 'Long context, multimodal' },
-  { id: 'gemini-1.5-flash',           provider: 'Google',    speed: 'Fastest', bestFor: 'High volume, low cost' },
-  { id: 'gemini-2.0-flash',           provider: 'Google',    speed: 'Fastest', bestFor: 'Latest Google model' },
-];
+// Static gateway model catalogue â€” matches backend router.py
 
-const SPEED_COLOR = { Fastest: '#34d399', Fast: '#60a5fa', Medium: '#a78bfa', Slow: '#f87171' };
-const PROVIDER_COLOR = { OpenAI: '#74aa9c', Anthropic: '#c48f6a', Google: '#4285f4' };
 
 function formatTokens(n) {
-  if (!n) return '—';
+  if (!n) return 'â€”';
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   return `${(n / 1000).toFixed(0)}K`;
 }
@@ -105,54 +93,6 @@ function PlanCard({ plan, selected, onClick }) {
   );
 }
 
-function SupportedModelsTable({ models }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ borderRadius: '10px', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', marginTop: '24px' }}>
-      <button onClick={() => setOpen(v => !v)} style={{
-        width: '100%', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        color: 'var(--on-surface-2)', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600,
-      }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Route size={14} style={{ color: 'var(--primary)' }} />
-          Supported models — {models.length} available with any plan
-        </span>
-        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
-      {open && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem', fontFamily: 'var(--font-body)' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                {['Model', 'Provider', 'Speed', 'Best for'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: 'var(--on-surface-3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {models.map((m, i) => (
-                <tr key={m.id} style={{ borderBottom: i < models.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', transition: 'background 100ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 14px', color: '#e8edf8', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{m.id}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <span style={{ color: PROVIDER_COLOR[m.provider] || 'var(--on-surface-2)', fontWeight: 600 }}>{m.provider}</span>
-                  </td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <span style={{ color: SPEED_COLOR[m.speed] || 'var(--on-surface-2)', fontSize: '0.75rem', fontWeight: 600 }}>{m.speed}</span>
-                  </td>
-                  <td style={{ padding: '10px 14px', color: 'var(--on-surface-3)' }}>{m.bestFor}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Marketplace() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +119,7 @@ export default function Marketplace() {
     if (!selectedPlan) { toast.error('Please select a plan'); return; }
     setPurchasing(true);
     try {
-      // Gateway mode: no provider needed — pass 'gateway' as provider placeholder
+      // Gateway mode: no provider needed â€” pass 'gateway' as provider placeholder
       const response = await paymentAPI.createCheckoutSession(selectedPlan.id, 'gateway');
       const { payment_session_id } = response.data;
       if (window.Cashfree) {
@@ -196,14 +136,13 @@ export default function Marketplace() {
   };
 
   const step = selectedPlan ? 2 : 1;
-  const headerH = bannerUp ? 100 : 60;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface)', paddingTop: headerH }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface)' }}>
       {/* Sidebar */}
       <aside style={{
-        width: '220px', flexShrink: 0, position: 'fixed', top: headerH, left: 0,
-        height: `calc(100vh - ${headerH}px)`, background: '#0d1117',
+        width: '220px', flexShrink: 0, position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0,
+        height: bannerUp ? 'calc(100vh - 40px)' : '100vh', background: '#0d1117',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         display: 'flex', flexDirection: 'column', zIndex: 40, overflowY: 'auto',
       }} className="app-sidebar">
@@ -232,7 +171,7 @@ export default function Marketplace() {
       </aside>
 
       {/* Main */}
-      <main style={{ marginLeft: '220px', flex: 1, padding: '32px clamp(16px,3vw,40px)', maxWidth: '900px' }} className="app-main">
+      <main style={{ marginLeft: '220px', flex: 1, padding: '32px clamp(16px,3vw,40px)', maxWidth: '900px', paddingTop: bannerUp ? 'calc(32px + 40px)' : '32px' }} className="app-main">
         {/* Header */}
         <motion.div variants={fadeUp(0)} initial="hidden" animate="show" style={{ marginBottom: '28px' }}>
           <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.4rem,3vw,1.75rem)', fontWeight: 700, color: '#e8edf8', marginBottom: '6px' }}>
@@ -302,8 +241,6 @@ export default function Marketplace() {
             </div>
           )}
 
-          {/* Supported Models collapsible */}
-          <SupportedModelsTable models={GATEWAY_MODELS} />
         </motion.div>
 
         {/* STEP 2: Checkout */}
@@ -334,7 +271,7 @@ export default function Marketplace() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
                       <span>Access</span>
-                      <span style={{ color: '#34d399', fontWeight: 600 }}>{GATEWAY_MODELS.length} models</span>
+                      <span style={{ color: '#34d399', fontWeight: 600 }}>all models</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
                       <span>Rate limit</span>
@@ -342,13 +279,13 @@ export default function Marketplace() {
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
-                        <span>Subtotal</span><span>₹{selectedPlan.price}</span>
+                        <span>Subtotal</span><span>â‚¹{selectedPlan.price}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)', marginTop: '4px' }}>
-                        <span>GST (18%)</span><span>₹{(Math.round(Number(selectedPlan.price) * 0.18)).toFixed(2)}</span>
+                        <span>GST (18%)</span><span>â‚¹{(Math.round(Number(selectedPlan.price) * 0.18)).toFixed(2)}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#e8edf8', fontWeight: 700, marginTop: '8px' }}>
-                        <span>Total</span><span>₹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</span>
+                        <span>Total</span><span>â‚¹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -359,7 +296,7 @@ export default function Marketplace() {
                   <div>
                     <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-3)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>💳</div>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>ðŸ’³</div>
                       <div>
                         <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>UPI / Cashfree</div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-3)' }}>Secure payment gateway</div>
@@ -385,7 +322,7 @@ export default function Marketplace() {
                     {purchasing ? (
                       <><span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Processing...</>
                     ) : (
-                      <><IndianRupee size={16} />Pay ₹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</>
+                      <><IndianRupee size={16} />Pay â‚¹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</>
                     )}
                   </button>
 

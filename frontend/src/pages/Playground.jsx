@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Copy, Code2, Loader2, Terminal, Zap, ChevronDown, ShoppingBag, History, Key, Settings, HelpCircle, LogOut, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { providersAPI, marketplaceAPI } from '../api/client';
-import { buildDynamicCatalogue, getProviderMeta } from '../lib/providerMeta.jsx';
+import { marketplaceAPI } from '../api/client';
+
 import useAuthStore from '../store/authStore';
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -26,6 +26,7 @@ export default function Playground() {
   const [response,     setResponse]     = useState(null);
   const [loading,      setLoading]      = useState(false);
   const [responseTime, setResponseTime] = useState(null);
+  const [gatewayMeta,  setGatewayMeta]  = useState(null);
   const [allModels,    setAllModels]    = useState([]);
   const [modelOpen,    setModelOpen]    = useState(false);
   const { user, logout } = useAuthStore();
@@ -39,20 +40,39 @@ export default function Playground() {
   }, []);
 
   useEffect(() => {
-    Promise.all([marketplaceAPI.getPlans(), providersAPI.getActiveProviders()])
-      .then(([plansRes, providersRes]) => {
-        const catalogue = buildDynamicCatalogue(plansRes.data, providersRes.data.providers);
-        setAllModels(catalogue);
-        if (catalogue.length > 0) setModel(catalogue[0].id);
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const token = localStorage.getItem('auth_token');
+    // Load gateway models
+    fetch(`${base}/v1/models`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        const models = (data.data || []).map(m => ({
+          id: m.id,
+          label: m.id,
+          provider: m.provider || m.owned_by,
+          speed: m.speed,
+          bestFor: m.best_for,
+          available: m.available !== false,
+        }));
+        setAllModels(models);
+        const first = models.find(m => m.available) || models[0];
+        if (first) setModel(first.id);
       })
       .catch(() => setAllModels([]));
+    // Auto-fill virtual key from active rental
+    marketplaceAPI.getActiveRentals()
+      .then(res => {
+        const key = res.data?.[0]?.virtual_key;
+        if (key) setVirtualKey(key);
+      })
+      .catch(() => {});
   }, []);
 
   const selectedModel = allModels.find(m => m.id === model);
 
   const sendRequest = async () => {
     if (!virtualKey.trim()) { toast.error('Enter your Virtual API Key'); return; }
-    setLoading(true); setResponse(null); setResponseTime(null);
+    setLoading(true); setResponse(null); setResponseTime(null); setGatewayMeta(null);
     const t0 = Date.now();
     const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     const body = { model, messages: [{ role: 'user', content: prompt }], max_tokens: maxTokens, stream: streaming };
@@ -101,7 +121,7 @@ export default function Playground() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
-      {/* ── SIDEBAR ── */}
+      {/* â”€â”€ SIDEBAR â”€â”€ */}
       <aside className="app-sidebar" style={{ width: '220px', flexShrink: 0, background: '#0d1017', borderRight: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, overflowY: 'auto', transition: 'top 200ms ease' }}>
         <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
@@ -149,7 +169,7 @@ export default function Playground() {
         <Link to="/playground" aria-current="page">Playground</Link>
       </nav>
 
-      {/* ── MAIN ── */}
+      {/* â”€â”€ MAIN â”€â”€ */}
       <div className="app-main" style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }}>
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
@@ -157,7 +177,7 @@ export default function Playground() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
             <div>
               <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '6px' }}>API Playground</h1>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Test your virtual key live — real requests, real responses.</p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Test your virtual key live â€” real requests, real responses.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 6px var(--secondary)' }} />
@@ -168,7 +188,7 @@ export default function Playground() {
           {/* Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }} className="pg-grid">
 
-            {/* LEFT — Request */}
+            {/* LEFT â€” Request */}
             <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden' }}>
               {/* Panel header */}
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -196,7 +216,7 @@ export default function Playground() {
                     borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8', textAlign: 'left',
                   }}>
-                    <span>{selectedModel ? `${selectedModel.label} · ${getProviderMeta(selectedModel.providerKey).name}` : 'Select a model'}</span>
+                    <span>{selectedModel ? `${selectedModel.label} · ${selectedModel.provider || ""}` : 'Select a model'}</span>
                     <ChevronDown size={14} color="var(--on-surface-3)" style={{ transform: modelOpen ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }} />
                   </button>
                   <AnimatePresence>
@@ -216,7 +236,7 @@ export default function Playground() {
                               onMouseLeave={e => { if (model !== m.id) e.currentTarget.style.background = 'transparent'; }}
                             >
                               <span>{m.label}</span>
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>{getProviderMeta(m.providerKey).name}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>{m.provider}</span>
                             </button>
                           ))
                         }
@@ -282,7 +302,7 @@ export default function Playground() {
               </div>
             </div>
 
-            {/* RIGHT — Response */}
+            {/* RIGHT â€” Response */}
             <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -323,7 +343,7 @@ export default function Playground() {
                       <div style={{ padding: '16px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', maxHeight: '320px', overflowY: 'auto' }}>
                         <pre style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8', whiteSpace: 'pre-wrap', lineHeight: 1.75, margin: 0 }}>
                           {response.content}
-                          {response.streaming && <span style={{ color: 'var(--secondary)', animation: 'pulse-dot 0.8s infinite' }}>▌</span>}
+                          {response.streaming && <span style={{ color: 'var(--secondary)', animation: 'pulse-dot 0.8s infinite' }}>â–Œ</span>}
                         </pre>
                       </div>
                       {response.usage && (
@@ -337,6 +357,13 @@ export default function Playground() {
                         </div>
                       )}
                       {response.model && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>MODEL: <span style={{ color: 'var(--on-surface-2)' }}>{response.model}</span></span>}
+                     {gatewayMeta && (
+                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                         {gatewayMeta.cacheHit && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, color: '#34d399' }}>CACHE HIT</span>}
+                         {gatewayMeta.provider && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(192,193,255,0.06)', border: '1px solid rgba(192,193,255,0.15)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--primary)' }}>{gatewayMeta.provider}</span>}
+                         {gatewayMeta.fallbackUsed && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#fbbf24' }}>FALLBACK</span>}
+                       </div>
+                     )}
                       <button onClick={() => { navigator.clipboard.writeText(response.content); toast.success('Copied!'); }} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-2)', transition: 'background 120ms' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
@@ -350,7 +377,7 @@ export default function Playground() {
         </div>
       </div>
 
-      {/* ── Settings modal ── */}
+      {/* â”€â”€ Settings modal â”€â”€ */}
       <AnimatePresence>
         {showSettings && (
           <motion.div key="settings-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

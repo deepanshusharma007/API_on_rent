@@ -183,6 +183,19 @@ export const adminAPI = {
     // Impersonation
     impersonateUser: (userId) =>
         apiClient.get(`/admin/impersonate/${userId}`),
+
+    // Gateway
+    getGatewayCacheStats: () =>
+        apiClient.get('/admin/gateway/cache/stats'),
+
+    flushGatewayCache: () =>
+        apiClient.post('/admin/gateway/cache/flush'),
+
+    getGuardrailsConfig: () =>
+        apiClient.get('/admin/gateway/guardrails'),
+
+    getGatewayModels: () =>
+        apiClient.get('/admin/gateway/models'),
 };
 
 // Invoice API

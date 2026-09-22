@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, History, Key, Settings, HelpCircle,
   Copy, CheckCircle2, AlertTriangle, Zap, Clock, LogOut, X, Terminal,
+  Route, Database, Shield, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { marketplaceAPI, invoiceAPI, paymentAPI } from '../api/client';
@@ -22,7 +23,7 @@ const NAV = [
   { id: 'playground',  label: 'Playground',       icon: Terminal,   to: '/playground' },
 ];
 
-/* ── mini bar chart for latency ── */
+/* â”€â”€ mini bar chart for latency â”€â”€ */
 const BAR_DATA = [5, 7, 4, 8, 9, 6, 5, 8, 10, 7];
 function LatencyChart() {
   const max = Math.max(...BAR_DATA);
@@ -39,7 +40,7 @@ function LatencyChart() {
   );
 }
 
-/* ── config row ── */
+/* â”€â”€ config row â”€â”€ */
 function ConfigRow({ label, value }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -49,7 +50,7 @@ function ConfigRow({ label, value }) {
   );
 }
 
-/* ── history status badge ── */
+/* â”€â”€ history status badge â”€â”€ */
 function StatusBadge({ status }) {
   const cfg = status === 'active'
     ? { color: 'var(--secondary)', bg: 'rgba(78,222,163,0.1)', dot: 'var(--secondary)', label: 'COMPLETED' }
@@ -162,7 +163,7 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
-      {/* ══ SIDEBAR ══ */}
+      {/* â•â• SIDEBAR â•â• */}
       <aside className="app-sidebar" style={{
         width: '220px', flexShrink: 0, background: '#0d1017',
         borderRight: '1px solid rgba(255,255,255,0.07)',
@@ -272,7 +273,7 @@ export default function Dashboard() {
         <Link to="/playground">Playground</Link>
       </nav>
 
-      {/* ══ MAIN ══ */}
+      {/* â•â• MAIN â•â• */}
       <div style={{ marginLeft: '220px', flex: 1, minWidth: 0, paddingTop: bannerUp ? '40px' : '0px', transition: 'padding-top 200ms ease' }} className="dash-outer-main app-main">
         <div style={{ padding: 'clamp(28px,4vw,44px) clamp(24px,4vw,48px)', minHeight: '100vh' }}>
 
@@ -304,13 +305,13 @@ export default function Dashboard() {
                 <CheckCircle2 size={16} color="var(--secondary)" />
                 <div>
                   <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--secondary)' }}>Payment confirmed!</p>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--on-surface-2)', marginTop: '2px' }}>Your rental is activating — it will appear below in a few seconds.</p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--on-surface-2)', marginTop: '2px' }}>Your rental is activating â€” it will appear below in a few seconds.</p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── ACTIVE RENTALS TAB ── */}
+          {/* â”€â”€ ACTIVE RENTALS TAB â”€â”€ */}
           {activeTab === 'active' && (
             loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }} className="dash-main-grid">
@@ -342,7 +343,7 @@ export default function Dashboard() {
                       LIVE SESSION
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)' }}>
-                      <Key size={11} /> IP Pinned: {firstActive.ip_address || '—'}
+                      <Key size={11} /> IP Pinned: {firstActive.ip_address || 'â€”'}
                     </span>
                     <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '2px' }}>TIME REMAINING</div>
@@ -366,7 +367,7 @@ export default function Dashboard() {
                   <div style={{ padding: '0 20px 18px' }}>
                     <div style={{ background: '#0d1117', border: '1px solid rgba(192,193,255,0.15)', borderRadius: '10px', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>● VIRTUAL KEY</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>â— VIRTUAL KEY</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#f59e0b', letterSpacing: '0.04em' }}>
                           <AlertTriangle size={10} /> Visible Only Once
                         </span>
@@ -396,7 +397,7 @@ export default function Dashboard() {
                     <TokenProgressBar used={firstActive.tokens_used} remaining={firstActive.tokens_remaining} size="md" />
                     <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>
-                        ⓘ Auto-terminates at 100% or time expiration.
+                        â“˜ Auto-terminates at 100% or time expiration.
                       </span>
                       <button style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, color: '#f97316', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em' }}>
                         TERMINATE NOW
@@ -418,20 +419,38 @@ export default function Dashboard() {
                   {/* Active config */}
                   <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>ACTIVE RENTAL CONFIG</div>
-                    <ConfigRow label="Input Window"    value="200k" />
-                    <ConfigRow label="Output Quota"    value="4k" />
-                    <ConfigRow label="Priority"        value="Ultra-Fast" />
+                    <ConfigRow label="Models Available" value="8 models" />
+                    <ConfigRow label="Rate Limit"       value={`${firstActive.rpm_limit || 60} req/min`} />
+                    <ConfigRow label="Token Cap"        value={firstActive.tokens_remaining != null ? `${Math.round(firstActive.tokens_remaining / 1000)}K left` : '—'} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>Regional Hosting</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: '#e8edf8' }}>IND-West-1</span>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>Endpoint</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 600, color: '#e8edf8' }}>/v1/chat/completions</span>
                     </div>
+                  </div>
+
+                  {/* Gateway features card */}
+                  <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>GATEWAY FEATURES</div>
+                    {[
+                      { Icon: Route,     label: 'Smart Routing'  },
+                      { Icon: RefreshCw, label: 'Auto Fallback'  },
+                      { Icon: Database,  label: 'Semantic Cache' },
+                      { Icon: Shield,    label: 'Guardrails'     },
+                    ].map(({ Icon, label }) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>
+                          <Icon size={12} style={{ color: 'var(--primary)' }} />{label}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, color: '#34d399', letterSpacing: '0.06em' }}>ON</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             )
           )}
 
-          {/* ── HISTORY TAB ── */}
+          {/* â”€â”€ HISTORY TAB â”€â”€ */}
           {activeTab === 'history' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
@@ -439,7 +458,7 @@ export default function Dashboard() {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
                 >
-                  Download CSV ↓
+                  Download CSV â†“
                 </button>
               </div>
 
@@ -467,13 +486,13 @@ export default function Dashboard() {
                         {new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, {new Date(r.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })}
                       </span>
                       <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>
-                        {r.provider || r.plan_name || '—'}
+                        {r.provider || r.plan_name || 'â€”'}
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)' }}>
                         {r.duration_minutes >= 60 ? `${r.duration_minutes / 60}:00` : `${r.duration_minutes}:00`}
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)' }}>
-                        {r.tokens_used?.toLocaleString() || '—'}
+                        {r.tokens_used?.toLocaleString() || 'â€”'}
                       </span>
                       <StatusBadge status={r.status} />
                     </div>
@@ -483,7 +502,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── API KEYS TAB ── */}
+          {/* â”€â”€ API KEYS TAB â”€â”€ */}
           {activeTab === 'keys' && (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(192,193,255,0.08)', border: '1px solid rgba(192,193,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
@@ -500,7 +519,7 @@ export default function Dashboard() {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '24px clamp(24px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: '#e8edf8', marginBottom: '4px' }}>AIRent</div>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>© 2024 AIRent. Built for the Indian Developer Ecosystem.</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>Â© 2024 AIRent. Built for the Indian Developer Ecosystem.</div>
           </div>
           <div style={{ display: 'flex', gap: '20px' }}>
             {['Privacy', 'Terms', 'Status', 'GitHub'].map(l => (
@@ -513,7 +532,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Settings modal ── */}
+      {/* â”€â”€ Settings modal â”€â”€ */}
       <AnimatePresence>
         {showSettings && (
           <motion.div key="settings-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
