@@ -43,6 +43,10 @@ async def lifespan(app: FastAPI):
             ("cashfree_order_id", "VARCHAR(200)", "transactions"),
             ("token_budget",      "INTEGER DEFAULT 0", "provider_keys"),
             ("tokens_consumed",   "INTEGER DEFAULT 0", "provider_keys"),
+            # Gateway additions
+            ("provider",          "VARCHAR(50)",  "usage_logs"),
+            ("guardrail_log",     "TEXT",         "usage_logs"),
+            ("cache_hit",         "BOOLEAN DEFAULT FALSE", "usage_logs"),
         ]:
             try:
                 existing_cols = [c["name"] for c in inspector.get_columns(tbl)]

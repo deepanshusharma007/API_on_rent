@@ -907,3 +907,69 @@ async def get_plan_availability(
         result.append(entry)
 
     return {"plans": result}
+
+
+# ── Gateway: Cache Stats ─────────────────────────────────────────────────────
+
+@router.get("/gateway/cache/stats", summary="Cache statistics")
+async def cache_stats(
+    _admin=Depends(get_current_admin),
+    redis_manager: RedisManager = Depends(get_redis_manager),
+):
+    """Return semantic cache statistics."""
+    from backend.services.cache import GatewayCache
+    cache = GatewayCache(redis_manager)
+    stats = await cache.get_stats()
+    return stats
+
+
+@router.post("/gateway/cache/flush", summary="Flush semantic cache")
+async def flush_cache(
+    _admin=Depends(get_current_admin),
+    redis_manager: RedisManager = Depends(get_redis_manager),
+):
+    """Flush all semantic cache entries."""
+    from backend.services.cache import GatewayCache
+    cache = GatewayCache(redis_manager)
+    deleted = await cache.flush()
+    return {"deleted": deleted, "message": f"Flushed {deleted} cache entries"}
+
+
+# ── Gateway: Guardrail Config ────────────────────────────────────────────────
+
+@router.get("/gateway/guardrails", summary="Get guardrail config")
+async def get_guardrail_config(_admin=Depends(get_current_admin)):
+    """Return current guardrail middleware configuration."""
+    from backend.config import settings
+    return {
+        "token_estimator":  settings.GUARDRAIL_TOKEN_ESTIMATOR,
+        "pii_block":        settings.GUARDRAIL_PII_BLOCK,
+        "pii_redact":       settings.GUARDRAIL_PII_REDACT,
+        "injection_block":  settings.GUARDRAIL_INJECTION_BLOCK,
+        "ai_scan":          settings.GUARDRAIL_AI_SCAN,
+        "output_scrub":     settings.GUARDRAIL_OUTPUT_SCRUB,
+        "toxicity_log":     settings.GUARDRAIL_TOXICITY_LOG,
+        "toxicity_block":   settings.GUARDRAIL_TOXICITY_BLOCK,
+    }
+
+
+# ── Gateway: Router — supported models ───────────────────────────────────────
+
+@router.get("/gateway/models", summary="All gateway models with metadata")
+async def gateway_models(
+    _admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Return full model catalogue with provider availability."""
+    from backend.services.router import get_all_models, infer_provider
+    from backend.database.models import ProviderKey
+    active_providers = set()
+    try:
+        keys = db.query(ProviderKey).filter(ProviderKey.is_active == True).all()
+        active_providers = {k.provider.value if hasattr(k.provider, "value") else k.provider for k in keys}
+    except Exception:
+        pass
+    models = get_all_models()
+    for m in models:
+        m["available"] = infer_provider(m["id"]) in active_providers
+    return {"models": models, "active_providers": list(active_providers)}

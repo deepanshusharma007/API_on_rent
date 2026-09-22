@@ -73,11 +73,25 @@ class Settings(BaseSettings):
     DRAIN_RATE_GPT4O_MINI: int = 3
     DRAIN_RATE_GEMINI_FLASH: int = 1
     
-    # PII Masking
+    # PII Masking (legacy — kept for backward compat)
     PII_MASKING_ENABLED: bool = True
     PII_MASK_EMAILS: bool = True
     PII_MASK_PHONES: bool = True
     PII_MASK_SSNS: bool = True
+
+    # ── Gateway Guardrail Middleware ──────────────────────────────────────
+    GUARDRAIL_TOKEN_ESTIMATOR: bool = True   # block if estimated tokens exceed cap
+    GUARDRAIL_PII_BLOCK: bool = True         # detect PII in requests
+    GUARDRAIL_PII_REDACT: bool = True        # True=redact, False=block
+    GUARDRAIL_INJECTION_BLOCK: bool = True   # block prompt injection / jailbreaks
+    GUARDRAIL_AI_SCAN: bool = False          # AI content scan (costs tokens, off by default)
+    GUARDRAIL_OUTPUT_SCRUB: bool = False     # scrub PII from responses
+    GUARDRAIL_TOXICITY_LOG: bool = True      # log toxic responses
+    GUARDRAIL_TOXICITY_BLOCK: bool = False   # block (vs log-only) toxic responses
+
+    # ── Gateway Router ────────────────────────────────────────────────────
+    GATEWAY_DEFAULT_MODEL: str = "gpt-4o-mini"
+    GATEWAY_GLOBAL_RPM: int = 500
     PII_MASK_CREDIT_CARDS: bool = True
     
     # Cost Protection
