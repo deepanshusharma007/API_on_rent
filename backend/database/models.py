@@ -10,6 +10,15 @@ class UserRole(str, enum.Enum):
     """User role enumeration."""
     USER = "user"
     ADMIN = "admin"
+    PROXY_ADMIN = "proxy_admin"
+    PROXY_ADMIN_VIEWER = "proxy_admin_viewer"
+    INTERNAL_USER = "internal_user"
+    INTERNAL_USER_VIEWER = "internal_user_viewer"
+
+
+class TeamMemberRole(str, enum.Enum):
+    ADMIN = "admin"
+    MEMBER = "member"
 
 
 class RentalStatus(str, enum.Enum):
@@ -30,7 +39,7 @@ class ProviderType(str, enum.Enum):
 class User(Base):
     """User account model."""
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -38,11 +47,13 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
+
     # Relationships
     rentals = relationship("Rental", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     spending_alerts = relationship("SpendingAlert", back_populates="user", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    internal_keys = relationship("InternalKey", back_populates="user", cascade="all, delete-orphan")
 
 
 class Plan(Base):
@@ -181,9 +192,63 @@ class SpendingAlert(Base):
 class CircuitBreakerEvent(Base):
     """Circuit breaker event log."""
     __tablename__ = "circuit_breaker_events"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(SQLEnum(ProviderType), nullable=False)
     event_type = Column(String(50), nullable=False)  # "trip", "recover", "failure"
     error_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Team(Base):
+    """Team model for RBAC — groups users under shared model allowlist and budgets."""
+    __tablename__ = "teams"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    allowed_models = Column(Text, default="[]", nullable=False)  # JSON array of model IDs; [] = all
+    rpm_limit = Column(Integer, default=60, nullable=False)
+    token_budget = Column(Integer, default=0, nullable=False)  # 0 = unlimited
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+    internal_keys = relationship("InternalKey", back_populates="team", cascade="all, delete-orphan")
+
+
+class TeamMember(Base):
+    """Many-to-many: users ↔ teams with a role."""
+    __tablename__ = "team_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    role = Column(SQLEnum(TeamMemberRole), default=TeamMemberRole.MEMBER, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    team = relationship("Team", back_populates="members")
+    user = relationship("User", back_populates="team_memberships")
+
+
+class InternalKey(Base):
+    """Directly-issued virtual key — no Cashfree payment required. Scoped to a team."""
+    __tablename__ = "internal_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    virtual_key = Column(String(255), unique=True, index=True, nullable=False)
+    label = Column(String(100), nullable=True)  # human-readable name
+    token_budget = Column(Integer, default=0, nullable=False)  # 0 = team limit
+    tokens_used = Column(Integer, default=0, nullable=False)
+    rpm_limit = Column(Integer, default=0, nullable=False)  # 0 = team limit
+    is_active = Column(Boolean, default=True, nullable=False)
+    expires_at = Column(DateTime, nullable=True)  # null = no expiry
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="internal_keys")
+    team = relationship("Team", back_populates="internal_keys")

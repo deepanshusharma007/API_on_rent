@@ -5,10 +5,10 @@ import {
   Plus, Trash2, RefreshCw, DollarSign, Zap, TrendingUp,
   Shield, Download, Loader2, Activity, CheckCircle, XCircle,
   Pencil, Save, X as XIcon,
-  Route, Database,
+  Route, Database, Users2, KeyRound, ChevronDown, ChevronUp, UserPlus, Copy,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminAPI } from '../api/client';
+import { adminAPI, teamsAPI } from '../api/client';
 import Navbar from '../components/Navbar';
 import { fadeUp, staggerContainer, scaleIn, viewport } from '../lib/motion';
 
@@ -20,6 +20,7 @@ const TABS = [
   { id: 'analytics',  label: 'Analytics',  icon: TrendingUp },
   { id: 'alerts',     label: 'Alerts',     icon: AlertTriangle },
   { id: 'gateway',   label: 'Gateway',    icon: Route },
+  { id: 'teams',     label: 'Teams',      icon: Users2 },
 ];
 
 // Colour sets for stat cards — emerald is primary, others are semantic
@@ -793,7 +794,268 @@ export default function AdminPanel() {
     );
   };
 
-  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab, gateway: GatewayTab };
+  const TeamsTab = () => {
+    const [teams, setTeams] = React.useState([]);
+    const [users, setUsers] = React.useState([]);
+    const [gatewayModels, setGatewayModels] = React.useState([]);
+    const [expandedId, setExpandedId] = React.useState(null);
+    const [showCreate, setShowCreate] = React.useState(false);
+    const [form, setForm] = React.useState({ name: '', description: '', allowed_models: [], rpm_limit: 60, token_budget: 0 });
+    const [issueForm, setIssueForm] = React.useState({ teamId: null, user_id: '', label: '', token_budget: 0, rpm_limit: 0 });
+    const [showIssue, setShowIssue] = React.useState(false);
+    const [addMemberForm, setAddMemberForm] = React.useState({ teamId: null, user_id: '', role: 'member' });
+    const [showAddMember, setShowAddMember] = React.useState(false);
+
+    const load = () => {
+      teamsAPI.list().then(r => setTeams(r.data?.teams || [])).catch(() => {});
+      adminAPI.getUsers?.().then(r => setUsers(r.data?.users || [])).catch(() => {});
+      adminAPI.getGatewayModels?.().then(r => setGatewayModels(r.data?.models || [])).catch(() => {});
+    };
+    React.useEffect(() => { load(); }, []);
+
+    const cardS = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '12px', padding: '20px', marginBottom: '12px' };
+    const inputS = { width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'var(--c-text-1)', fontSize: '0.85rem', boxSizing: 'border-box' };
+    const btnS = (color='var(--c-accent)') => ({ padding: '7px 16px', borderRadius: '8px', background: `${color}22`, border: `1px solid ${color}44`, color, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' });
+
+    const createTeam = () => {
+      teamsAPI.create(form).then(() => { toast.success('Team created'); setShowCreate(false); setForm({ name: '', description: '', allowed_models: [], rpm_limit: 60, token_budget: 0 }); load(); }).catch(e => toast.error(e.response?.data?.detail || 'Failed'));
+    };
+    const deleteTeam = (id) => {
+      if (!confirm('Delete this team?')) return;
+      teamsAPI.delete(id).then(() => { toast.success('Team deleted'); load(); }).catch(() => toast.error('Failed'));
+    };
+    const toggleAllowedModel = (modelId) => {
+      setForm(f => ({ ...f, allowed_models: f.allowed_models.includes(modelId) ? f.allowed_models.filter(m => m !== modelId) : [...f.allowed_models, modelId] }));
+    };
+    const addMember = () => {
+      teamsAPI.addMember(addMemberForm.teamId, parseInt(addMemberForm.user_id), addMemberForm.role)
+        .then(() => { toast.success('Member added'); setShowAddMember(false); load(); })
+        .catch(e => toast.error(e.response?.data?.detail || 'Failed'));
+    };
+    const removeMember = (teamId, userId) => {
+      teamsAPI.removeMember(teamId, userId).then(() => { toast.success('Member removed'); load(); }).catch(() => toast.error('Failed'));
+    };
+    const issueKey = () => {
+      teamsAPI.issueKey(issueForm.teamId, { user_id: parseInt(issueForm.user_id), label: issueForm.label || undefined, token_budget: issueForm.token_budget, rpm_limit: issueForm.rpm_limit })
+        .then(() => { toast.success('Key issued'); setShowIssue(false); load(); })
+        .catch(e => toast.error(e.response?.data?.detail || 'Failed'));
+    };
+    const revokeKey = (teamId, keyId) => {
+      teamsAPI.revokeKey(teamId, keyId).then(() => { toast.success('Key revoked'); load(); }).catch(() => toast.error('Failed'));
+    };
+    const copyKey = (k) => { navigator.clipboard.writeText(k); toast.success('Copied'); };
+
+    return (
+      <div style={{ maxWidth: '800px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>Teams ({teams.length})</span>
+          <button onClick={() => setShowCreate(v => !v)} style={btnS('#a78bfa')}>+ New Team</button>
+        </div>
+
+        {showCreate && (
+          <div style={{ ...cardS, border: '1px solid rgba(167,139,250,0.3)' }}>
+            <div style={{ fontWeight: 600, marginBottom: '12px' }}>Create Team</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Name *</div>
+                <input style={inputS} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Engineering" />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Description</div>
+                <input style={inputS} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional" />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>RPM Limit</div>
+                <input style={inputS} type="number" value={form.rpm_limit} onChange={e => setForm(f => ({ ...f, rpm_limit: parseInt(e.target.value) || 60 }))} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Token Budget (0 = unlimited)</div>
+                <input style={inputS} type="number" value={form.token_budget} onChange={e => setForm(f => ({ ...f, token_budget: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '6px' }}>Allowed Models (none = all models)</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {gatewayModels.map(m => (
+                  <button key={m.id} onClick={() => toggleAllowedModel(m.id)}
+                    style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'all 0.15s',
+                      background: form.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.15)' : 'var(--c-bg)',
+                      border: `1px solid ${form.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.4)' : 'var(--c-border)'}`,
+                      color: form.allowed_models.includes(m.id) ? '#a78bfa' : 'var(--c-text-3)' }}>
+                    {m.id}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={createTeam} style={btnS('#34d399')}>Create</button>
+              <button onClick={() => setShowCreate(false)} style={btnS('#fb7185')}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {teams.map(team => (
+          <div key={team.id} style={cardS}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{team.name}</div>
+                {team.description && <div style={{ fontSize: '0.8rem', color: 'var(--c-text-3)', marginTop: '2px' }}>{team.description}</div>}
+                <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.78rem', color: 'var(--c-text-3)' }}>
+                  <span>{team.member_count} members</span>
+                  <span>{team.key_count} keys</span>
+                  <span>RPM: {team.rpm_limit}</span>
+                  <span>Budget: {team.token_budget === 0 ? 'Unlimited' : `${(team.token_budget / 1000).toFixed(0)}K tokens`}</span>
+                </div>
+                {team.allowed_models?.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                    {team.allowed_models.map(m => (
+                      <span key={m} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#a78bfa' }}>{m}</span>
+                    ))}
+                  </div>
+                )}
+                {(!team.allowed_models || team.allowed_models.length === 0) && (
+                  <span style={{ fontSize: '0.72rem', color: '#34d399', marginTop: '4px', display: 'inline-block' }}>All models allowed</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button onClick={() => { setAddMemberForm({ teamId: team.id, user_id: '', role: 'member' }); setShowAddMember(true); }} style={btnS('#38bdf8')} title="Add member"><UserPlus size={13} /></button>
+                <button onClick={() => { setIssueForm({ teamId: team.id, user_id: '', label: '', token_budget: 0, rpm_limit: 0 }); setShowIssue(true); }} style={btnS('#a78bfa')} title="Issue key"><KeyRound size={13} /></button>
+                <button onClick={() => deleteTeam(team.id)} style={btnS('#fb7185')} title="Delete"><Trash2 size={13} /></button>
+                <button onClick={() => setExpandedId(expandedId === team.id ? null : team.id)} style={btnS('var(--c-text-3)')}>
+                  {expandedId === team.id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+              </div>
+            </div>
+
+            {expandedId === team.id && (
+              <div style={{ marginTop: '16px', borderTop: '1px solid var(--c-border)', paddingTop: '16px' }}>
+                <TeamDetail teamId={team.id} users={users} removeMember={removeMember} revokeKey={revokeKey} copyKey={copyKey} reload={load} />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {showAddMember && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '16px', padding: '24px', minWidth: '320px' }}>
+              <div style={{ fontWeight: 700, marginBottom: '16px' }}>Add Member</div>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>User</div>
+                <select style={inputS} value={addMemberForm.user_id} onChange={e => setAddMemberForm(f => ({ ...f, user_id: e.target.value }))}>
+                  <option value="">Select user...</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Role</div>
+                <select style={inputS} value={addMemberForm.role} onChange={e => setAddMemberForm(f => ({ ...f, role: e.target.value }))}>
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={addMember} style={btnS('#34d399')}>Add</button>
+                <button onClick={() => setShowAddMember(false)} style={btnS('#fb7185')}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showIssue && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '16px', padding: '24px', minWidth: '360px' }}>
+              <div style={{ fontWeight: 700, marginBottom: '16px' }}>Issue Internal Key</div>
+              <div style={{ display: 'grid', gap: '10px', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>User *</div>
+                  <select style={inputS} value={issueForm.user_id} onChange={e => setIssueForm(f => ({ ...f, user_id: e.target.value }))}>
+                    <option value="">Select user...</option>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Label</div>
+                  <input style={inputS} value={issueForm.label} onChange={e => setIssueForm(f => ({ ...f, label: e.target.value }))} placeholder="e.g. dev-key" />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Token Budget (0=team)</div>
+                    <input style={inputS} type="number" value={issueForm.token_budget} onChange={e => setIssueForm(f => ({ ...f, token_budget: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>RPM (0=team)</div>
+                    <input style={inputS} type="number" value={issueForm.rpm_limit} onChange={e => setIssueForm(f => ({ ...f, rpm_limit: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={issueKey} style={btnS('#34d399')}>Issue Key</button>
+                <button onClick={() => setShowIssue(false)} style={btnS('#fb7185')}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const TeamDetail = ({ teamId, users, removeMember, revokeKey, copyKey, reload }) => {
+    const [detail, setDetail] = React.useState(null);
+    React.useEffect(() => {
+      teamsAPI.get(teamId).then(r => setDetail(r.data)).catch(() => {});
+    }, [teamId]);
+    if (!detail) return <span style={{ color: 'var(--c-text-3)', fontSize: '0.8rem' }}>Loading...</span>;
+    const thS = { fontSize: '0.72rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '6px 0', textAlign: 'left' };
+    const tdS = { fontSize: '0.82rem', color: 'var(--c-text-2)', padding: '8px 0', borderBottom: '1px solid var(--c-border)' };
+    return (
+      <div>
+        {detail.members.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px' }}>Members</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={thS}>Email</th><th style={thS}>Role</th><th style={thS}></th></tr></thead>
+              <tbody>
+                {detail.members.map(m => (
+                  <tr key={m.id}>
+                    <td style={tdS}>{m.email}</td>
+                    <td style={tdS}><span style={{ padding: '2px 8px', borderRadius: '12px', background: m.role === 'admin' ? 'rgba(167,139,250,0.1)' : 'rgba(56,189,248,0.08)', color: m.role === 'admin' ? '#a78bfa' : '#38bdf8', fontSize: '0.72rem' }}>{m.role}</span></td>
+                    <td style={tdS}><button onClick={() => { removeMember(teamId, m.user_id); setDetail(d => ({ ...d, members: d.members.filter(x => x.id !== m.id) })); }} style={{ background: 'none', border: 'none', color: '#fb7185', cursor: 'pointer', fontSize: '0.75rem' }}>Remove</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {detail.keys.length > 0 && (
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px' }}>Internal Keys</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={thS}>Key</th><th style={thS}>Label</th><th style={thS}>User</th><th style={thS}>Status</th><th style={thS}></th></tr></thead>
+              <tbody>
+                {detail.keys.map(k => (
+                  <tr key={k.id}>
+                    <td style={tdS}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--c-text-3)' }}>{k.virtual_key.slice(0, 16)}...</span>
+                      <button onClick={() => copyKey(k.virtual_key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)', marginLeft: '4px' }}><Copy size={11} /></button>
+                    </td>
+                    <td style={tdS}>{k.label || '—'}</td>
+                    <td style={tdS}>{k.user_email}</td>
+                    <td style={tdS}><span style={{ color: k.is_active ? '#34d399' : '#fb7185', fontSize: '0.75rem' }}>{k.is_active ? 'Active' : 'Revoked'}</span></td>
+                    <td style={tdS}>{k.is_active && <button onClick={() => { revokeKey(teamId, k.id); setDetail(d => ({ ...d, keys: d.keys.map(x => x.id === k.id ? { ...x, is_active: false } : x) })); }} style={{ background: 'none', border: 'none', color: '#fb7185', cursor: 'pointer', fontSize: '0.75rem' }}>Revoke</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {detail.members.length === 0 && detail.keys.length === 0 && (
+          <span style={{ color: 'var(--c-text-3)', fontSize: '0.82rem' }}>No members or keys yet.</span>
+        )}
+      </div>
+    );
+  };
+
+  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab, gateway: GatewayTab, teams: TeamsTab };
   const ActiveTab = TAB_MAP[activeTab];
 
   if (loading) return (
