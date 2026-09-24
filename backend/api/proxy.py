@@ -27,12 +27,39 @@ logger = logging.getLogger(__name__)
 async def verify_virtual_key(
     request: Request,
     redis_manager: RedisManager = Depends(get_redis_manager),
+    db: Session = Depends(get_db),
 ) -> dict:
-    """Verify virtual API key and return rental data."""
+    """Verify virtual API key (rental vk_ or internal ik_) and return rental data."""
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization header")
     virtual_key = auth[7:]
+
+    if virtual_key.startswith("ik_"):
+        import json as _json
+        from backend.database.models import InternalKey
+        from datetime import datetime as _dt
+        key_row = db.query(InternalKey).filter(
+            InternalKey.virtual_key == virtual_key,
+            InternalKey.is_active == True,
+        ).first()
+        if not key_row:
+            raise HTTPException(status_code=401, detail="Internal key invalid or revoked")
+        if key_row.expires_at and key_row.expires_at < _dt.utcnow():
+            raise HTTPException(status_code=401, detail="Internal key expired")
+        user = key_row.user
+        allowed_models = _json.loads(user.allowed_models or "[]")
+        token_budget = user.token_budget or 0
+        return {
+            "rental_id": f"ik_{key_row.id}",
+            "user_id": user.id,
+            "allowed_models": allowed_models,
+            "tokens_remaining": token_budget - key_row.tokens_used if token_budget else 999_999_999,
+            "rpm_limit": user.rpm_limit_override or 60,
+            "key_type": "internal",
+            "internal_key_id": key_row.id,
+        }
+
     rental_data = await redis_manager.get_virtual_key_data(virtual_key)
     if not rental_data:
         raise HTTPException(
@@ -87,6 +114,14 @@ async def chat_completions(
     model = body.get("model") or settings.GATEWAY_DEFAULT_MODEL
     stream = body.get("stream", False)
     user_max_tokens = body.get("max_tokens", None)
+
+    # Enforce per-user model allowlist (internal keys only)
+    allowed_models = rental_data.get("allowed_models", [])
+    if allowed_models and model not in allowed_models:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Model '{model}' is not allowed for your account. Allowed: {allowed_models}",
+        )
 
     MAX_TOKENS_BY_MODEL = {
         "gpt-4o": 16384, "gpt-4o-mini": 16384,

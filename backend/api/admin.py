@@ -1013,3 +1013,127 @@ async def disable_gateway_model(
             await rc.sadd(REDIS_ENABLED_MODELS_KEY, *all_ids)
     await rc.srem(REDIS_ENABLED_MODELS_KEY, model_id)
     return {"model_id": model_id, "enabled": False}
+
+
+# __ Per-user gateway config ___________________________________________________
+
+class UserGatewayConfig(BaseModel):
+    allowed_models: list = []
+    rpm_limit_override: int = None
+    token_budget: int = 0
+
+
+class InternalKeyCreate(BaseModel):
+    label: str = None
+    expires_at: str = None
+
+
+@router.put("/users/{user_id}/gateway-config", summary="Set per-user gateway config")
+async def set_user_gateway_config(
+    user_id: int,
+    body: UserGatewayConfig,
+    _admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    import json as _json
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.allowed_models = _json.dumps(body.allowed_models)
+    user.rpm_limit_override = body.rpm_limit_override
+    user.token_budget = body.token_budget
+    db.commit()
+    return {
+        "user_id": user_id,
+        "allowed_models": body.allowed_models,
+        "rpm_limit_override": body.rpm_limit_override,
+        "token_budget": body.token_budget,
+    }
+
+
+@router.post("/users/{user_id}/internal-keys", summary="Issue internal key to user")
+async def issue_internal_key(
+    user_id: int,
+    body: InternalKeyCreate,
+    _admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    import secrets as _secrets
+    import json as _json
+    from datetime import datetime as _dt
+    from backend.database.models import InternalKey
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    expires = None
+    if body.expires_at:
+        try:
+            expires = _dt.fromisoformat(body.expires_at.replace("Z", "+00:00"))
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid expires_at format")
+    vk = "ik_" + _secrets.token_urlsafe(32)
+    key = InternalKey(user_id=user_id, virtual_key=vk, label=body.label, expires_at=expires)
+    db.add(key)
+    db.commit()
+    db.refresh(key)
+    return {
+        "id": key.id,
+        "virtual_key": key.virtual_key,
+        "label": key.label,
+        "user_id": user_id,
+        "user_email": user.email,
+        "allowed_models": _json.loads(user.allowed_models or "[]"),
+        "expires_at": key.expires_at.isoformat() if key.expires_at else None,
+        "created_at": key.created_at.isoformat(),
+    }
+
+
+@router.get("/users/{user_id}/internal-keys", summary="List internal keys for user")
+async def list_internal_keys(
+    user_id: int,
+    _admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    import json as _json
+    from backend.database.models import InternalKey
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    keys = db.query(InternalKey).filter(InternalKey.user_id == user_id).all()
+    return {
+        "user_id": user_id,
+        "user_email": user.email,
+        "allowed_models": _json.loads(user.allowed_models or "[]"),
+        "rpm_limit_override": user.rpm_limit_override,
+        "token_budget": user.token_budget,
+        "keys": [
+            {
+                "id": k.id,
+                "virtual_key": k.virtual_key,
+                "label": k.label,
+                "tokens_used": k.tokens_used,
+                "is_active": k.is_active,
+                "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+                "created_at": k.created_at.isoformat(),
+            }
+            for k in keys
+        ],
+    }
+
+
+@router.delete("/users/{user_id}/internal-keys/{key_id}", summary="Revoke internal key")
+async def revoke_internal_key(
+    user_id: int,
+    key_id: int,
+    _admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    from backend.database.models import InternalKey
+    key = db.query(InternalKey).filter(
+        InternalKey.id == key_id, InternalKey.user_id == user_id
+    ).first()
+    if not key:
+        raise HTTPException(status_code=404, detail="Key not found")
+    key.is_active = False
+    db.commit()
+    return {"revoked": True}

@@ -184,6 +184,19 @@ export const adminAPI = {
     impersonateUser: (userId) =>
         apiClient.get(`/admin/impersonate/${userId}`),
 
+    // Per-user gateway config
+    setUserGatewayConfig: (userId, data) =>
+        apiClient.put(`/admin/users/${userId}/gateway-config`, data),
+
+    issueInternalKey: (userId, data) =>
+        apiClient.post(`/admin/users/${userId}/internal-keys`, data),
+
+    listInternalKeys: (userId) =>
+        apiClient.get(`/admin/users/${userId}/internal-keys`),
+
+    revokeInternalKey: (userId, keyId) =>
+        apiClient.delete(`/admin/users/${userId}/internal-keys/${keyId}`),
+
     // Gateway
     getGatewayCacheStats: () =>
         apiClient.get('/admin/gateway/cache/stats'),

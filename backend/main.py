@@ -47,6 +47,10 @@ async def lifespan(app: FastAPI):
             ("provider",          "VARCHAR(50)",  "usage_logs"),
             ("guardrail_log",     "TEXT",         "usage_logs"),
             ("cache_hit",         "BOOLEAN DEFAULT FALSE", "usage_logs"),
+            # Per-user gateway config
+            ("allowed_models",       "TEXT DEFAULT '[]'", "users"),
+            ("rpm_limit_override",   "INTEGER",           "users"),
+            ("token_budget",         "INTEGER DEFAULT 0", "users"),
         ]:
             try:
                 existing_cols = [c["name"] for c in inspector.get_columns(tbl)]

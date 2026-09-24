@@ -124,51 +124,179 @@ export default function AdminPanel() {
 
   // ── USERS ──────────────────────────────────────────────────────────────────────
   const UsersTab = () => {
+    const [selectedUser, setSelectedUser] = React.useState(null);
+    const [userDetail, setUserDetail] = React.useState(null);
+    const [gatewayModels, setGatewayModels] = React.useState([]);
+    const [configForm, setConfigForm] = React.useState({ allowed_models: [], rpm_limit_override: null, token_budget: 0 });
+    const [keyLabel, setKeyLabel] = React.useState('');
+    const [savingConfig, setSavingConfig] = React.useState(false);
+
+    React.useEffect(() => {
+      adminAPI.getGatewayModels?.().then(r => setGatewayModels(r.data?.models || [])).catch(() => {});
+    }, []);
+
+    const openUser = (user) => {
+      setSelectedUser(user);
+      setKeyLabel('');
+      adminAPI.listInternalKeys(user.id).then(r => {
+        setUserDetail(r.data);
+        setConfigForm({
+          allowed_models: r.data.allowed_models || [],
+          rpm_limit_override: r.data.rpm_limit_override || null,
+          token_budget: r.data.token_budget || 0,
+        });
+      }).catch(() => setUserDetail({ keys: [], allowed_models: [], rpm_limit_override: null, token_budget: 0 }));
+    };
+
     const act = async (id, action) => {
       try { await adminFetch(`/users/${id}/${action}`, { method: 'POST' }); toast.success(`User ${action}d`); loadData(); }
       catch (e) { toast.error(e.message); }
     };
+
+    const saveConfig = () => {
+      setSavingConfig(true);
+      adminAPI.setUserGatewayConfig(selectedUser.id, configForm)
+        .then(() => { toast.success('Config saved'); openUser(selectedUser); })
+        .catch(e => toast.error(e.response?.data?.detail || 'Failed'))
+        .finally(() => setSavingConfig(false));
+    };
+
+    const issueKey = () => {
+      adminAPI.issueInternalKey(selectedUser.id, { label: keyLabel || undefined })
+        .then(() => { toast.success('Key issued'); setKeyLabel(''); openUser(selectedUser); })
+        .catch(e => toast.error(e.response?.data?.detail || 'Failed'));
+    };
+
+    const revokeKey = (keyId) => {
+      adminAPI.revokeInternalKey(selectedUser.id, keyId)
+        .then(() => { toast.success('Key revoked'); openUser(selectedUser); })
+        .catch(() => toast.error('Failed'));
+    };
+
+    const copyKey = (k) => { navigator.clipboard.writeText(k); toast.success('Copied'); };
+
+    const toggleModel = (modelId) => {
+      setConfigForm(f => ({
+        ...f,
+        allowed_models: f.allowed_models.includes(modelId)
+          ? f.allowed_models.filter(m => m !== modelId)
+          : [...f.allowed_models, modelId],
+      }));
+    };
+
+    const inputS = { padding: '7px 10px', borderRadius: '7px', background: 'var(--c-bg)', border: '1px solid var(--c-border)', color: 'var(--c-text-1)', fontSize: '0.82rem', width: '100%', boxSizing: 'border-box' };
+
     return (
-      <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead><tr>
-            {['ID', 'Email', 'Role', 'Status', 'Rentals', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}
-          </tr></thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id} style={{ transition: 'background 100ms' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--c-text-3)', fontSize: '0.75rem' }}># {user.id}</td>
-                <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{user.email}</td>
-                <td style={tdStyle}>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', border: '1px solid',
-                    background: user.role === 'admin' ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)',
-                    borderColor: user.role === 'admin' ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)',
-                    color: user.role === 'admin' ? 'var(--c-accent-hi)' : '#7dd3fc',
-                  }}>{user.role}</span>
-                </td>
-                <td style={tdStyle}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: user.is_active ? '#10b981' : '#fb7185' }} />
-                    <span style={{ fontSize: '0.775rem', color: user.is_active ? '#10b981' : '#fb7185' }}>
-                      {user.is_active ? 'Active' : 'Suspended'}
-                    </span>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* User table */}
+        <div style={{ flex: 1, background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: '10px', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr>
+              {['ID', 'Email', 'Role', 'Status', 'Rentals', 'Actions'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id}
+                  style={{ transition: 'background 100ms', background: selectedUser?.id === user.id ? 'var(--c-raised)' : 'transparent', cursor: 'pointer' }}
+                  onMouseEnter={e => { if (selectedUser?.id !== user.id) e.currentTarget.style.background = 'var(--c-raised)'; }}
+                  onMouseLeave={e => { if (selectedUser?.id !== user.id) e.currentTarget.style.background = 'transparent'; }}>
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--c-text-3)', fontSize: '0.75rem' }}># {user.id}</td>
+                  <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{user.email}</td>
+                  <td style={tdStyle}>
+                    <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', border: '1px solid', background: user.role === 'admin' ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)', borderColor: user.role === 'admin' ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)', color: user.role === 'admin' ? 'var(--c-accent-hi)' : '#7dd3fc' }}>{user.role}</span>
+                  </td>
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: user.is_active ? '#10b981' : '#fb7185' }} />
+                      <span style={{ fontSize: '0.775rem', color: user.is_active ? '#10b981' : '#fb7185' }}>{user.is_active ? 'Active' : 'Suspended'}</span>
+                    </div>
+                  </td>
+                  <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{user.rental_count}</td>
+                  <td style={{ ...tdStyle, display: 'flex', gap: '6px' }}>
+                    {user.role !== 'admin' && (
+                      user.is_active
+                        ? <button onClick={() => act(user.id, 'suspend')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', cursor: 'pointer' }}>Suspend</button>
+                        : <button onClick={() => act(user.id, 'activate')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', color: 'var(--c-accent-hi)', cursor: 'pointer' }}>Activate</button>
+                    )}
+                    {user.role !== 'admin' && (
+                      <button onClick={() => openUser(user)} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)', color: '#a78bfa', cursor: 'pointer' }}>
+                        {selectedUser?.id === user.id ? 'Editing' : 'Manage'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* User config panel */}
+        {selectedUser && (
+          <div style={{ width: '340px', flexShrink: 0, background: 'var(--c-surface)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '12px', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Access Config</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--c-text-3)', marginTop: '2px' }}>{selectedUser.email}</div>
+              </div>
+              <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--c-text-3)', cursor: 'pointer', fontSize: '1.1rem' }}>&times;</button>
+            </div>
+
+            {/* Allowed models */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Allowed Models <span style={{ color: '#34d399' }}>(none = all)</span></div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {gatewayModels.map(m => (
+                  <button key={m.id} onClick={() => toggleModel(m.id)}
+                    style={{ padding: '3px 9px', borderRadius: '20px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                      background: configForm.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.15)' : 'var(--c-bg)',
+                      border: `1px solid ${configForm.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.4)' : 'var(--c-border)'}`,
+                      color: configForm.allowed_models.includes(m.id) ? '#a78bfa' : 'var(--c-text-3)' }}>
+                    {m.id}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* RPM + Budget */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>RPM Limit <span style={{ color: 'var(--c-text-3)' }}>(null=default)</span></div>
+                <input style={inputS} type="number" placeholder="null" value={configForm.rpm_limit_override ?? ''} onChange={e => setConfigForm(f => ({ ...f, rpm_limit_override: e.target.value ? parseInt(e.target.value) : null }))} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', marginBottom: '4px' }}>Token Budget <span style={{ color: 'var(--c-text-3)' }}>(0=unlimited)</span></div>
+                <input style={inputS} type="number" value={configForm.token_budget} onChange={e => setConfigForm(f => ({ ...f, token_budget: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+
+            <button onClick={saveConfig} disabled={savingConfig} style={{ width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer', marginBottom: '16px' }}>
+              {savingConfig ? 'Saving...' : 'Save Config'}
+            </button>
+
+            {/* Internal keys */}
+            <div style={{ borderTop: '1px solid var(--c-border)', paddingTop: '14px' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Internal Keys</div>
+              {userDetail?.keys?.map(k => (
+                <div key={k.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--c-border)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--c-text-3)' }}>{k.virtual_key.slice(0, 18)}...
+                      <button onClick={() => copyKey(k.virtual_key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)', marginLeft: '4px', fontSize: '0.7rem' }}>copy</button>
+                    </div>
+                    {k.label && <div style={{ fontSize: '0.68rem', color: 'var(--c-text-3)' }}>{k.label}</div>}
                   </div>
-                </td>
-                <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{user.rental_count}</td>
-                <td style={tdStyle}>
-                  {user.role !== 'admin' && (
-                    user.is_active
-                      ? <button onClick={() => act(user.id, 'suspend')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', cursor: 'pointer' }}>Suspend</button>
-                      : <button onClick={() => act(user.id, 'activate')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', color: 'var(--c-accent-hi)', cursor: 'pointer' }}>Activate</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.68rem', color: k.is_active ? '#34d399' : '#fb7185' }}>{k.is_active ? 'Active' : 'Revoked'}</span>
+                    {k.is_active && <button onClick={() => revokeKey(k.id)} style={{ background: 'none', border: 'none', color: '#fb7185', cursor: 'pointer', fontSize: '0.72rem' }}>Revoke</button>}
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+                <input style={{ ...inputS, flex: 1 }} placeholder="Label (optional)" value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
+                <button onClick={issueKey} style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Issue Key</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

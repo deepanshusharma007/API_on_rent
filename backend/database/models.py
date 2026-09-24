@@ -39,10 +39,16 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
+    # Per-user gateway config (set by admin)
+    allowed_models = Column(Text, default="[]", nullable=False)  # JSON array; [] = all models
+    rpm_limit_override = Column(Integer, nullable=True)          # null = use plan default
+    token_budget = Column(Integer, default=0, nullable=False)    # 0 = unlimited
+
     # Relationships
     rentals = relationship("Rental", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     spending_alerts = relationship("SpendingAlert", back_populates="user", cascade="all, delete-orphan")
+    internal_keys = relationship("InternalKey", back_populates="user", cascade="all, delete-orphan")
 
 
 class Plan(Base):
@@ -176,6 +182,22 @@ class SpendingAlert(Base):
     
     # Relationships
     user = relationship("User", back_populates="spending_alerts")
+
+
+class InternalKey(Base):
+    """Directly-issued virtual key — no Cashfree payment. Scoped to a user with their allowlist."""
+    __tablename__ = "internal_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    virtual_key = Column(String(255), unique=True, index=True, nullable=False)
+    label = Column(String(100), nullable=True)
+    tokens_used = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="internal_keys")
 
 
 class CircuitBreakerEvent(Base):
