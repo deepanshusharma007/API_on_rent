@@ -27,44 +27,12 @@ logger = logging.getLogger(__name__)
 async def verify_virtual_key(
     request: Request,
     redis_manager: RedisManager = Depends(get_redis_manager),
-    db: Session = Depends(get_db),
 ) -> dict:
-    """Verify virtual API key (rental vk_ or internal ik_) and return rental data."""
+    """Verify virtual API key and return rental data."""
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization header")
     virtual_key = auth[7:]
-
-    # Internal key path (ik_ prefix)
-    if virtual_key.startswith("ik_"):
-        from backend.database.models import InternalKey
-        import json as _json
-        key_row = db.query(InternalKey).filter(
-            InternalKey.virtual_key == virtual_key,
-            InternalKey.is_active == True,
-        ).first()
-        if not key_row:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Internal key invalid or revoked")
-        if key_row.expires_at and key_row.expires_at < __import__('datetime').datetime.utcnow():
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Internal key expired")
-        team = key_row.team
-        if not team or not team.is_active:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Team is inactive")
-        allowed_models = _json.loads(team.allowed_models or "[]")
-        effective_token_budget = key_row.token_budget or team.token_budget
-        effective_rpm = key_row.rpm_limit or team.rpm_limit
-        return {
-            "rental_id": f"ik_{key_row.id}",
-            "user_id": key_row.user_id,
-            "team_id": team.id,
-            "allowed_models": allowed_models,  # [] = all
-            "tokens_remaining": effective_token_budget - key_row.tokens_used if effective_token_budget else 999_999_999,
-            "rpm_limit": effective_rpm,
-            "key_type": "internal",
-            "internal_key_id": key_row.id,
-        }
-
-    # Standard rental key path (vk_ prefix)
     rental_data = await redis_manager.get_virtual_key_data(virtual_key)
     if not rental_data:
         raise HTTPException(
@@ -119,14 +87,6 @@ async def chat_completions(
     model = body.get("model") or settings.GATEWAY_DEFAULT_MODEL
     stream = body.get("stream", False)
     user_max_tokens = body.get("max_tokens", None)
-
-    # Enforce team model allowlist for internal keys
-    allowed_models = rental_data.get("allowed_models", [])
-    if allowed_models and model not in allowed_models:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Model '{model}' is not allowed for your team. Allowed: {allowed_models}",
-        )
 
     MAX_TOKENS_BY_MODEL = {
         "gpt-4o": 16384, "gpt-4o-mini": 16384,

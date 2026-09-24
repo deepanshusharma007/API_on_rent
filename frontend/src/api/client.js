@@ -204,24 +204,6 @@ export const adminAPI = {
         apiClient.delete(`/admin/gateway/models/${encodeURIComponent(modelId)}`),
 };
 
-// Teams API (admin)
-export const teamsAPI = {
-    list: () => apiClient.get('/admin/teams'),
-    get: (id) => apiClient.get(`/admin/teams/${id}`),
-    create: (data) => apiClient.post('/admin/teams', data),
-    update: (id, data) => apiClient.put(`/admin/teams/${id}`, data),
-    delete: (id) => apiClient.delete(`/admin/teams/${id}`),
-    addMember: (teamId, userId, role = 'member') => apiClient.post(`/admin/teams/${teamId}/members`, { user_id: userId, role }),
-    removeMember: (teamId, userId) => apiClient.delete(`/admin/teams/${teamId}/members/${userId}`),
-    issueKey: (teamId, data) => apiClient.post(`/admin/teams/${teamId}/keys`, data),
-    revokeKey: (teamId, keyId) => apiClient.delete(`/admin/teams/${teamId}/keys/${keyId}`),
-};
-
-// User team info
-export const myTeamAPI = {
-    get: () => apiClient.get('/admin/teams/my/team'),
-};
-
 // Invoice API
 export const invoiceAPI = {
     getInvoice: (rentalId) =>

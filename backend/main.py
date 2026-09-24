@@ -8,7 +8,7 @@ import logging
 from backend.database.connection import engine, Base, SessionLocal
 from backend.config import settings
 from backend.database.redis_manager import init_redis, close_redis
-from backend.api import auth, marketplace, admin, proxy, status, payment, websocket, teams
+from backend.api import auth, marketplace, admin, proxy, status, payment, websocket
 from backend.workers.spending_monitor import start_spending_monitor, stop_spending_monitor
 from backend.workers.expiration_monitor import expiration_monitor
 from backend.workers.capacity_reconciler import capacity_reconciler
@@ -47,15 +47,6 @@ async def lifespan(app: FastAPI):
             ("provider",          "VARCHAR(50)",  "usage_logs"),
             ("guardrail_log",     "TEXT",         "usage_logs"),
             ("cache_hit",         "BOOLEAN DEFAULT FALSE", "usage_logs"),
-            # RBAC additions
-            ("description",       "TEXT",         "teams"),
-            ("allowed_models",    "TEXT DEFAULT '[]'", "teams"),
-            ("rpm_limit",         "INTEGER DEFAULT 60", "teams"),
-            ("token_budget",      "INTEGER DEFAULT 0", "teams"),
-            ("is_active",         "BOOLEAN DEFAULT TRUE", "teams"),
-            ("label",             "VARCHAR(100)", "internal_keys"),
-            ("rpm_limit",         "INTEGER DEFAULT 0", "internal_keys"),
-            ("expires_at",        "DATETIME",     "internal_keys"),
         ]:
             try:
                 existing_cols = [c["name"] for c in inspector.get_columns(tbl)]
@@ -189,7 +180,6 @@ app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(proxy.router, prefix="/v1", tags=["Proxy"])
 app.include_router(status.router, prefix="/status", tags=["Status"])
 app.include_router(websocket.router, tags=["WebSocket"])
-app.include_router(teams.router, prefix="/admin/teams", tags=["Teams"])
 
 
 @app.get("/")
