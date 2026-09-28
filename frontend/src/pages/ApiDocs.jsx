@@ -18,6 +18,15 @@ const PROVIDERS = [
   { id: "Anthropic", label: "Anthropic", models: { fast: "claude-3-5-sonnet-20241022", power: "claude-3-5-sonnet-20241022" } },
 ];
 
+const DRAIN_RATES = {
+  "gemini-1.5-flash":          { rate: "1×", tier: "Economy" },
+  "gpt-4o-mini":               { rate: "3×", tier: "Standard" },
+  "gemini-1.5-pro":            { rate: "5×", tier: "Pro" },
+  "gemini-2.0-flash":          { rate: "5×", tier: "Pro" },
+  "claude-3-5-sonnet-20241022":{ rate: "8×", tier: "Premium" },
+  "gpt-4o":                    { rate: "10×", tier: "Ultra" },
+};
+
 const LANGUAGES = ["Python", "JavaScript", "Node.js", "cURL", "PHP"];
 
 function getSnippets(model) {
@@ -31,9 +40,15 @@ function getSnippets(model) {
 }
 
 const MODELS = [
-  { family: "All GPT Models",       provider: "OpenAI",    best: "Reasoning, code, chat"       },
-  { family: "All Anthropic Models", provider: "Anthropic", best: "Writing, analysis, safety"   },
-  { family: "All Gemini Models",    provider: "Google",    best: "Multimodal, high-volume"     },
+  // OpenAI
+  { id: "gpt-4o-mini",               provider: "OpenAI",    drain: "3×",  tier: "Standard", best: "Fast, cost-efficient chat & code" },
+  { id: "gpt-4o",                    provider: "OpenAI",    drain: "10×", tier: "Ultra",    best: "Flagship reasoning, vision, complex tasks" },
+  // Anthropic
+  { id: "claude-3-5-sonnet-20241022",provider: "Anthropic", drain: "8×",  tier: "Premium",  best: "Writing, analysis, long-context, safety" },
+  // Google
+  { id: "gemini-1.5-flash",          provider: "Google",    drain: "1×",  tier: "Economy",  best: "Fastest, cheapest — high-volume use cases" },
+  { id: "gemini-1.5-pro",            provider: "Google",    drain: "5×",  tier: "Pro",      best: "Multimodal, 1M context window" },
+  { id: "gemini-2.0-flash",          provider: "Google",    drain: "5×",  tier: "Pro",      best: "Latest Gemini — fast with strong reasoning" },
 ];
 
 const ERRORS = [
@@ -71,8 +86,20 @@ const ENDPOINT_GROUPS = [
       { label: 'RESPONSE', code: `{ "payment_session_id": "session_abc123..." }` },
     ]},
   ]},
+  { title: 'REQUEST ACCESS (CHAT)', icon: Globe, rows: [
+    { method: 'GET',  path: '/chat/messages',              desc: 'Get your message history — auth required', detail: [
+      { label: 'RESPONSE', code: `{ “messages”: [\n  { “id”: 1, “sender”: “user”, “content”: “I need gpt-4o access”, “is_read”: false, “created_at”: “2026-09-25T...” }\n] }` },
+    ]},
+    { method: 'POST', path: '/chat/messages',              desc: 'Send a message to admin — auth required', detail: [
+      { label: 'BODY',     code: `{ “content”: “I need access to gpt-4o for my project” }` },
+      { label: 'RESPONSE', code: `{ “id”: 2, “sender”: “user”, “content”: “...”, “is_read”: false, “created_at”: “...” }` },
+    ]},
+    { method: 'GET',  path: '/chat/unread-count',          desc: 'Count unread admin replies — auth required', detail: [
+      { label: 'RESPONSE', code: `{ “unread”: 2 }` },
+    ]},
+  ]},
   { title: 'STATUS', icon: AlertTriangle, rows: [
-    { method: 'GET', path: '/health',  desc: 'Health check â€” 200 OK if running', detail: [] },
+    { method: 'GET', path: '/health',  desc: 'Health check — 200 OK if running', detail: [] },
     { method: 'GET', path: '/status/', desc: 'Full system status with DB and Redis', detail: [] },
   ]},
 ];
@@ -148,6 +175,7 @@ export default function ApiDocs() {
       <Helmet>
         <title>Docs â€” AIRent API Reference</title>
         <meta name="description" content="AIRent API documentation. OpenAI-compatible endpoint for GPT, Claude, and Gemini. Quick start in Python, JavaScript, Node.js, cURL, and PHP." />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/docs" />
       </Helmet>
       <Navbar />
 
@@ -223,16 +251,32 @@ export default function ApiDocs() {
             </motion.div>
 
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.06)} style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.4fr', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#141820' }}>
-                {['MODEL FAMILY', 'PROVIDER', 'BEST FOR'].map(h => <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)' }}>{h}</span>)}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.8fr 0.7fr 2fr', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#141820' }}>
+                {['MODEL ID', 'PROVIDER', 'TIER', 'DRAIN', 'BEST FOR'].map(h => <span key={h} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)' }}>{h}</span>)}
               </div>
-              {MODELS.map((m, i) => (
-                <div key={m.family} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.4fr', padding: '16px 20px', borderBottom: i < MODELS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', alignItems: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.9rem', color: '#e8edf8' }}>{m.family}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--primary)' }}>{m.provider}</span>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)' }}>{m.best}</span>
-                </div>
-              ))}
+              {MODELS.map((m, i) => {
+                const tierColor = { Economy: '#10b981', Standard: '#60a5fa', Pro: '#a78bfa', Premium: '#f472b6', Ultra: '#f97316' }[m.tier] || '#fff';
+                return (
+                  <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 0.8fr 0.7fr 2fr', padding: '14px 20px', borderBottom: i < MODELS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', alignItems: 'center', gap: 4 }}>
+                    <code style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.78rem', color: '#e8edf8' }}>{m.id}</code>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--primary)' }}>{m.provider}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, color: tierColor, background: tierColor + '18', borderRadius: 5, padding: '2px 7px', display: 'inline-block' }}>{m.tier}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)' }}>{m.drain}</span>
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', color: 'var(--on-surface-2)' }}>{m.best}</span>
+                  </div>
+                );
+              })}
+            </motion.div>
+
+            {/* Drain rate explainer */}
+            <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.1)} style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.15)', borderRadius: 10, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <Zap size={15} color="#a78bfa" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Drain rate</strong> — heavier models consume your token plan faster.
+                A 1,000-token response on <code style={{ color: '#a78bfa' }}>gpt-4o</code> (10×) costs 10,000 plan tokens,
+                while the same on <code style={{ color: '#a78bfa' }}>gemini-1.5-flash</code> (1×) costs only 1,000.
+                Pick the model that matches your budget and task complexity.
+              </div>
             </motion.div>
           </div>
         </section>
@@ -255,7 +299,7 @@ export default function ApiDocs() {
                     </div>
                     <h3 style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', color: '#e8edf8', letterSpacing: '0.08em' }}>{group.title}</h3>
                   </div>
-                  {group.rows.map(row => <EndpointRow key={row.path} {...row} />)}
+                  {group.rows.map((row, ri) => <EndpointRow key={`${row.method}-${row.path}-${ri}`} {...row} />)}
                 </motion.div>
               );
             })}

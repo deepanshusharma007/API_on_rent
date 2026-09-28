@@ -12,7 +12,7 @@ export default function TermsOfService() {
       <Helmet>
         <title>Terms of Service — AIRent</title>
         <meta name="description" content="AIRent's terms of service — rules for using the platform, acceptable use policy, and your rights as a user." />
-        <link rel="canonical" href="https://airent.dev/terms" />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/terms" />
       </Helmet>
       <PolicyHero
         icon={FileText}

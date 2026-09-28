@@ -29,8 +29,9 @@ export default function AboutUs() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>About â€” AIRent</title>
-        <meta name="description" content="AIRent is a prepaid AI API rental platform built for Indian developers. No subscriptions, no KYC, instant keys." />
+        <title>About — AIRent</title>
+        <meta name=”description” content=”AIRent is a prepaid AI API rental platform built for Indian developers. No subscriptions, no KYC, instant keys.” />
+        <link rel=”canonical” href=”https://api-on-rent.pages.dev/about” />
       </Helmet>
       <Navbar />
 

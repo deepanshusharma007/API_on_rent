@@ -127,7 +127,7 @@ export default function Pricing() {
       <Helmet>
         <title>Pricing â€" AIRent | Affordable AI API Rental Plans in INR</title>
         <meta name="description" content="Simple, pay-as-you-go AI API rental plans. Rent GPT-4o, Claude, Gemini by the hour or day. No subscription. Pay in INR via UPI." />
-        <link rel="canonical" href="https://airent.dev/pricing" />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/pricing" />
       </Helmet>
       <Navbar />
 

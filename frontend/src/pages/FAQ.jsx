@@ -76,7 +76,8 @@ export default function FAQ() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
         <title>FAQ â€” AIRent | Common Questions About AI API Rental</title>
-        <meta name="description" content="Answers to common questions about renting AI APIs â€” how it works, pricing, supported models, refunds, and security." />
+        <meta name=”description” content=”Answers to common questions about renting AI APIs — how it works, pricing, supported models, refunds, and security.” />
+        <link rel=”canonical” href=”https://api-on-rent.pages.dev/faq” />
       </Helmet>
       <Navbar />
 

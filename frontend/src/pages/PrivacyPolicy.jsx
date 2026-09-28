@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
       <Helmet>
         <title>Privacy Policy — AIRent</title>
         <meta name="description" content="AIRent's privacy policy — what data we collect, how we use it, and how we protect it. No prompt storage. PII auto-masked." />
-        <link rel="canonical" href="https://airent.dev/privacy" />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/privacy-policy" />
       </Helmet>
       <PolicyHero
         icon={Shield}

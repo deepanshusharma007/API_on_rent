@@ -67,6 +67,7 @@ export default function ContactUs() {
       <Helmet>
         <title>Contact â€” AIRent | Get in Touch</title>
         <meta name="description" content="Contact AIRent for support, refund requests, or general questions. We respond within 24 hours." />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/contact" />
       </Helmet>
       <Navbar />
 

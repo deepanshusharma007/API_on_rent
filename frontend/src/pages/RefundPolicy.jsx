@@ -18,7 +18,7 @@ export default function RefundPolicy() {
       <Helmet>
         <title>Refund Policy — AIRent</title>
         <meta name="description" content="AIRent's refund policy — full refund within 24 hours if you haven't used the key. Clear, fair, and straightforward." />
-        <link rel="canonical" href="https://airent.dev/refund-policy" />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/refund-policy" />
       </Helmet>
       <PolicyHero
         icon={RefreshCcw}

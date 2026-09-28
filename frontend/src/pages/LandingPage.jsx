@@ -49,7 +49,7 @@ export default function LandingPage() {
       <Helmet>
         <title>AIRent â€" Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
         <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your API key in under 60 seconds." />
-        <link rel="canonical" href="https://airent.dev/" />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/" />
       </Helmet>
 
       <Navbar />

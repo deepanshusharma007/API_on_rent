@@ -5,5 +5,10 @@ Allow: /
 Disallow: /dashboard
 Disallow: /admin
 Disallow: /playground
+Disallow: /request-access
+
+# Block query-string variants — canonical handles deduplication
+Disallow: /*?ref=*
+Disallow: /*?utm_*
 
 Sitemap: https://api-on-rent.pages.dev/sitemap.xml
