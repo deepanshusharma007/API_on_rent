@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿﻿import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, Send, CheckCircle2, ArrowRight, Clock } from 'lucide-react';
@@ -25,15 +25,15 @@ const SUBJECTS = [
 ];
 
 const CONTACT_ROWS = [
-  { icon: Mail,  label: 'EMAIL',              value: 'deepanshu2210sharma@gmail.com', href: 'mailto:deepanshu2210sharma@gmail.com', note: 'For all queries â€” support, billing, and partnerships' },
-  { icon: Phone, label: 'PHONE / WHATSAPP',   value: '+91 91317 70985',               href: 'tel:+919131770985',                   note: 'Monâ€“Sat, 10 AMâ€“8 PM IST' },
-  { icon: Clock, label: 'RESPONSE TIME',      value: 'Within 24 hours',               href: null,                                  note: 'Solo developer â€” every message read personally.' },
+  { icon: Mail,  label: 'EMAIL',              value: 'deepanshu2210sharma@gmail.com', href: 'mailto:deepanshu2210sharma@gmail.com', note: 'For all queries â€" support, billing, and partnerships' },
+  { icon: Phone, label: 'PHONE / WHATSAPP',   value: '+91 91317 70985',               href: 'tel:+919131770985',                   note: 'Monâ€"Sat, 10 AMâ€"8 PM IST' },
+  { icon: Clock, label: 'RESPONSE TIME',      value: 'Within 24 hours',               href: null,                                  note: 'Solo developer â€" every message read personally.' },
 ];
 
 const QUICK_ANSWERS = [
-  { q: 'Payment went through but no key?', a: 'Email me with your order reference â€” resolved within 2 hours.' },
-  { q: 'Eligible for a refund?',           a: 'Yes â€” within 24 hours of purchase if the key is unused.' },
-  { q: 'Need a bulk or team plan?',        a: 'Email me directly â€” custom pricing for high-volume users.' },
+  { q: 'Payment went through but no key?', a: 'Email me with your order reference â€" resolved within 2 hours.' },
+  { q: 'Eligible for a refund?',           a: 'Yes â€" within 24 hours of purchase if the key is unused.' },
+  { q: 'Need a bulk or team plan?',        a: 'Email me directly â€" custom pricing for high-volume users.' },
 ];
 
 export default function ContactUs() {
@@ -65,7 +65,7 @@ export default function ContactUs() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Contact â€” AIRent | Get in Touch</title>
+        <title>Contact â€" AIRent | Get in Touch</title>
         <meta name="description" content="Contact AIRent for support, refund requests, or general questions. We respond within 24 hours." />
         <link rel="canonical" href="https://api-on-rent.pages.dev/contact" />
       </Helmet>

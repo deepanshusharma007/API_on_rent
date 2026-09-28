@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿﻿import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Github, ArrowRight, Zap, ShieldCheck, Code2, IndianRupee } from 'lucide-react';
@@ -13,7 +13,7 @@ const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, 
 const VALUES = [
   { icon: Zap,          n: '01', title: 'Speed first',         body: 'Your key arrives before you finish your coffee. Activation takes under 10 seconds end-to-end.' },
   { icon: ShieldCheck,  n: '02', title: 'Security by default', body: 'IP-pinned keys, PII masking, and prompt safety checks on every single API request, always.' },
-  { icon: Code2,        n: '03', title: 'Developer-first',     body: 'Every detail â€” from the OpenAI-compatible endpoint to the live token dashboard â€” built by a dev, for devs.' },
+  { icon: Code2,        n: '03', title: 'Developer-first',     body: 'Every detail â€" from the OpenAI-compatible endpoint to the live token dashboard â€" built by a dev, for devs.' },
   { icon: IndianRupee,  n: '04', title: 'Made for India',      body: 'Pay in INR via UPI. No forex fees, no enterprise lock-in. Just build what you want, when you want.' },
 ];
 
@@ -30,8 +30,8 @@ export default function AboutUs() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
         <title>About — AIRent</title>
-        <meta name=”description” content=”AIRent is a prepaid AI API rental platform built for Indian developers. No subscriptions, no KYC, instant keys.” />
-        <link rel=”canonical” href=”https://api-on-rent.pages.dev/about” />
+        <meta name="description" content="AIRent is a prepaid AI API rental platform built for Indian developers. No subscriptions, no KYC, instant keys." />
+        <link rel="canonical" href="https://api-on-rent.pages.dev/about" />
       </Helmet>
       <Navbar />
 

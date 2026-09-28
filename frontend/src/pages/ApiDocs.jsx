@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Copy, Check, Key, Code2, Table2, AlertTriangle, ArrowRight, Zap, Globe, ChevronDown, ChevronUp } from "lucide-react";
@@ -69,33 +69,33 @@ const ENDPOINT_GROUPS = [
       { label: 'BODY',     code: `{ "email": "user@example.com", "password": "secret123" }` },
       { label: 'RESPONSE', code: `{ "access_token": "eyJ...", "token_type": "bearer" }` },
     ]},
-    { method: 'GET', path: '/auth/me', desc: 'Get current user â€” auth required', detail: [] },
+    { method: 'GET', path: '/auth/me', desc: 'Get current user â€" auth required', detail: [] },
   ]},
   { title: 'MARKETPLACE', icon: Globe, rows: [
     { method: 'GET', path: '/api/plans', desc: 'List available rental plans', detail: [
       { label: 'RESPONSE', code: `[\n  {\n    "id": 1,\n    "duration_label": "1 Hour",\n    "duration_minutes": 60,\n    "token_cap": 80000,\n    "rpm_limit": 60,\n    "price": 149.0,\n    "is_active": true\n  }\n]` },
     ]},
     { method: 'GET',  path: '/api/active-providers', desc: 'List active AI providers', detail: [] },
-    { method: 'GET',  path: '/api/rentals/active',   desc: 'Your active rentals â€” auth required', detail: [
+    { method: 'GET',  path: '/api/rentals/active',   desc: 'Your active rentals â€" auth required', detail: [
       { label: 'RESPONSE', code: `[\n  {\n    "id": 42,\n    "virtual_key": "vk_abc123...",\n    "provider": "openai",\n    "status": "ACTIVE",\n    "tokens_remaining": 72000,\n    "expires_at": "2025-04-22T15:00:00Z"\n  }\n]` },
     ]},
   ]},
   { title: 'PAYMENT', icon: Zap, rows: [
-    { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session â€” auth required', detail: [
+    { method: 'POST', path: '/api/checkout/session', desc: 'Create payment session â€" auth required', detail: [
       { label: 'BODY',     code: `{\n  "plan_id": 1,\n  "provider": "openai"\n}` },
       { label: 'RESPONSE', code: `{ "payment_session_id": "session_abc123..." }` },
     ]},
   ]},
   { title: 'REQUEST ACCESS (CHAT)', icon: Globe, rows: [
     { method: 'GET',  path: '/chat/messages',              desc: 'Get your message history — auth required', detail: [
-      { label: 'RESPONSE', code: `{ “messages”: [\n  { “id”: 1, “sender”: “user”, “content”: “I need gpt-4o access”, “is_read”: false, “created_at”: “2026-09-25T...” }\n] }` },
+      { label: 'RESPONSE', code: `{ "messages": [\n  { "id": 1, "sender": "user", "content": "I need gpt-4o access", "is_read": false, "created_at": "2026-09-25T..." }\n] }` },
     ]},
     { method: 'POST', path: '/chat/messages',              desc: 'Send a message to admin — auth required', detail: [
-      { label: 'BODY',     code: `{ “content”: “I need access to gpt-4o for my project” }` },
-      { label: 'RESPONSE', code: `{ “id”: 2, “sender”: “user”, “content”: “...”, “is_read”: false, “created_at”: “...” }` },
+      { label: 'BODY',     code: `{ "content": "I need access to gpt-4o for my project" }` },
+      { label: 'RESPONSE', code: `{ "id": 2, "sender": "user", "content": "...", "is_read": false, "created_at": "..." }` },
     ]},
     { method: 'GET',  path: '/chat/unread-count',          desc: 'Count unread admin replies — auth required', detail: [
-      { label: 'RESPONSE', code: `{ “unread”: 2 }` },
+      { label: 'RESPONSE', code: `{ "unread": 2 }` },
     ]},
   ]},
   { title: 'STATUS', icon: AlertTriangle, rows: [
@@ -173,7 +173,7 @@ export default function ApiDocs() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Docs â€” AIRent API Reference</title>
+        <title>Docs â€" AIRent API Reference</title>
         <meta name="description" content="AIRent API documentation. OpenAI-compatible endpoint for GPT, Claude, and Gemini. Quick start in Python, JavaScript, Node.js, cURL, and PHP." />
         <link rel="canonical" href="https://api-on-rent.pages.dev/docs" />
       </Helmet>
@@ -194,7 +194,7 @@ export default function ApiDocs() {
               <span style={{ color: 'var(--secondary)' }}>Drop-in replacement.</span>
             </motion.h1>
             <motion.p initial="hidden" animate="show" variants={fadeUp(0.12)} style={{ fontFamily: 'var(--font-body)', fontSize: '0.9375rem', color: 'var(--on-surface-2)', lineHeight: 1.7, maxWidth: '520px' }}>
-              Change two lines in your existing code â€” <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>api_key</code> and <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>base_url</code>. Everything else stays the same.
+              Change two lines in your existing code â€" <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>api_key</code> and <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', fontSize: '0.875rem' }}>base_url</code>. Everything else stays the same.
             </motion.p>
           </div>
         </section>
