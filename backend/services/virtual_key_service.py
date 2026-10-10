@@ -1,4 +1,5 @@
 """Virtual key generation and management."""
+import asyncio
 import secrets
 import string
 import logging
@@ -24,7 +25,8 @@ async def create_rental(
     plan_id: int,
     db: Session,
     redis_manager: RedisManager,
-    provider: Optional[str] = None
+    provider: Optional[str] = None,
+    send_activation_email: bool = True
 ) -> Rental:
     """Create a new rental with virtual key and Redis TTL."""
     # Get plan details
@@ -71,20 +73,26 @@ async def create_rental(
     await redis_manager.set_virtual_key_ttl(virtual_key, expires_at, rental_data)
     await redis_manager.set_token_balance(rental.id, plan.token_cap)
 
-    # Send rental activation email (best-effort)
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if user:
-            from backend.services.email_service import email_service
-            email_service.send_rental_activated(
-                email=user.email,
-                plan_name=plan.name,
-                virtual_key=virtual_key,
-                expires_at=expires_at.isoformat(),
-                token_cap=plan.token_cap
-            )
-    except Exception as e:
-        logger.debug(f"Rental activation email failed (non-fatal): {e}")
+    # Send rental activation email (best-effort, in a worker thread so a slow
+    # SMTP server never delays the response or blocks the event loop)
+    if send_activation_email:
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                from backend.services.email_service import email_service
+                user_email, plan_name, token_cap = user.email, plan.name, plan.token_cap
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: email_service.send_rental_activated(
+                        email=user_email,
+                        plan_name=plan_name,
+                        virtual_key=virtual_key,
+                        expires_at=expires_at.isoformat(),
+                        token_cap=token_cap
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Rental activation email failed (non-fatal): {e}")
 
     return rental
 

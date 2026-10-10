@@ -39,7 +39,7 @@ class EmailService:
             msg["To"] = to_email
             msg.attach(MIMEText(html_body, "html"))
 
-            with smtplib.SMTP(self.host, self.port) as server:
+            with smtplib.SMTP(self.host, self.port, timeout=10) as server:
                 server.starttls()
                 server.login(self.user, self.password)
                 server.sendmail(self.from_email, to_email, msg.as_string())
@@ -142,7 +142,7 @@ class EmailService:
                 logger.info(f"[Email stub] Contact form from {sender_email}: {email_subject}")
                 return
 
-            with smtplib.SMTP(self.host, self.port) as server:
+            with smtplib.SMTP(self.host, self.port, timeout=10) as server:
                 server.starttls()
                 server.login(self.user, self.password)
                 server.sendmail(self.from_email, owner_email, msg.as_string())

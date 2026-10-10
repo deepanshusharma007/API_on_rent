@@ -286,24 +286,37 @@ async def cashfree_webhook(
 
     # Create rental
     try:
-        rental = await create_rental(user_id, plan_id, db, redis_manager, provider=provider)
+        # Webhook sends its own (human-readable) activation email below,
+        # so skip the one create_rental would send — exactly one email per purchase.
+        rental = await create_rental(
+            user_id, plan_id, db, redis_manager, provider=provider, send_activation_email=False
+        )
 
         capacity_mgr = CapacityManager(redis_manager)
         await capacity_mgr.reserve_capacity(plan.token_cap, plan.rpm_limit)
 
-        # Send activation email (non-blocking, best-effort)
+        # Send activation email (non-blocking, best-effort): runs in a worker
+        # thread and is not awaited, so the webhook responds immediately.
         try:
             from backend.services.email_service import email_service
             user = await loop.run_in_executor(
                 None, lambda: db.query(User).filter(User.id == user_id).first()
             )
             if user:
-                email_service.send_rental_activated(
-                    email=user.email,
-                    plan_name=plan.name,
-                    virtual_key=rental.virtual_key,
-                    expires_at=rental.expires_at.strftime("%Y-%m-%d %H:%M UTC"),
-                    token_cap=plan.token_cap,
+                # Capture plain values so the worker thread never touches the DB session
+                user_email = user.email
+                plan_name, token_cap = plan.name, plan.token_cap
+                virtual_key = rental.virtual_key
+                expires_str = rental.expires_at.strftime("%Y-%m-%d %H:%M UTC")
+                loop.run_in_executor(
+                    None,
+                    lambda: email_service.send_rental_activated(
+                        email=user_email,
+                        plan_name=plan_name,
+                        virtual_key=virtual_key,
+                        expires_at=expires_str,
+                        token_cap=token_cap,
+                    )
                 )
         except Exception as email_err:
             logger.warning(f"Activation email failed (non-critical): {email_err}")
