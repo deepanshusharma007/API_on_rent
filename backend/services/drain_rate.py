@@ -14,6 +14,9 @@ MODEL_DRAIN_RATES: Dict[str, float] = {
     
     # Anthropic models
     "claude-3-5-sonnet-20241022": 8.0,
+    "claude-sonnet-5-5": 8.0,
+    "claude-haiku-5-5": 5.0,
+    "claude-opus-4-8": 10.0,
     "claude-3-opus": 10.0,
     "claude-3-sonnet": 8.0,
     "claude-3-haiku": 3.0,

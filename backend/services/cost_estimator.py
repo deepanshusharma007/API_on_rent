@@ -11,6 +11,9 @@ class CostEstimator:
         "gpt-4o-mini": {"input": 0.15, "output": 0.60},
         "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
         "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
+        "claude-sonnet-5-5": {"input": 2.00, "output": 10.00},
+        "claude-haiku-5-5": {"input": 0.10, "output": 0.50},  # prompts up to 100K tokens
+        "claude-opus-4-8": {"input": 5.00, "output": 25.00},
         "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
         "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
     }

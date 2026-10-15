@@ -140,7 +140,7 @@ The proxy endpoint `/v1/chat/completions` uses your **virtual key** (`vk_...`) a
 | `gpt-4o` | OpenAI | 10× |
 | `gemini-1.5-flash` | Google | 1× |
 | `gemini-1.5-pro` | Google | 5× |
-| `claude-3-5-sonnet-20241022` | Anthropic | 8× |
+| `claude-sonnet-5-5` | Anthropic | 8× |
 """,
     version="1.0.0",
     contact={"name": "AIRent Support", "url": "https://api-on-rent.pages.dev/contact"},

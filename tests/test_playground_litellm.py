@@ -181,7 +181,7 @@ def test_every_catalogue_model_resolves_to_its_provider():
 # -- Non-streaming -------------------------------------------------------------
 
 @pytest.mark.parametrize("model,provider", [
-    ("claude-3-5-sonnet-20241022", "anthropic"),
+    ("claude-sonnet-5-5", "anthropic"),
     ("gpt-4o-mini", "openai"),
     ("gemini-2.0-flash", "gemini"),
 ])
@@ -222,7 +222,7 @@ def test_already_prefixed_request_model_is_not_double_prefixed(client, mocks):
 
 
 def test_fallback_chain_unchanged(client, db, mocks):
-    """claude-3-5-sonnet chain: sonnet -> haiku -> gpt-4o-mini (existing behaviour)."""
+    """Legacy claude-3-5-sonnet ID uses the claude-sonnet-5-5 chain: sonnet -> haiku -> gpt-4o-mini."""
     mocks["acompletion"].side_effect = [
         Exception("anthropic down"), Exception("anthropic down"), _fake_response("gpt-4o-mini"),
     ]
@@ -232,8 +232,8 @@ def test_fallback_chain_unchanged(client, db, mocks):
     assert resp.status_code == 200, resp.text
     called = [c.kwargs["model"] for c in mocks["acompletion"].await_args_list]
     assert called == [
-        "anthropic/claude-3-5-sonnet-20241022",
-        "anthropic/claude-3-5-haiku-20241022",
+        "anthropic/claude-sonnet-5-5",
+        "anthropic/claude-haiku-5-5",
         "openai/gpt-4o-mini",
     ]
     data = resp.json()
@@ -264,9 +264,9 @@ def test_stream_passes_qualified_model(client, mocks):
 
     assert resp.status_code == 200
     kwargs = mocks["acompletion"].await_args.kwargs
-    assert kwargs["model"] == "anthropic/claude-3-5-sonnet-20241022"
+    assert kwargs["model"] == "anthropic/claude-sonnet-5-5"            # legacy ID served by its replacement
     assert kwargs["api_key"] == "test-anthropic-key" and kwargs["stream"] is True
-    assert resp.headers["X-Model-Used"] == "claude-3-5-sonnet-20241022"   # bare, unchanged
+    assert resp.headers["X-Model-Used"] == "claude-sonnet-5-5"            # bare
 
     payloads = _sse_payloads(resp.text)
     assert payloads[-1] == "[DONE]"

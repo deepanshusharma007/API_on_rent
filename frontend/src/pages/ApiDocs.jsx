@@ -15,7 +15,7 @@ const BASE_URL = "https://api-on-rent-backend.onrender.com";
 const PROVIDERS = [
   { id: "OpenAI",    label: "OpenAI",    models: { fast: "gpt-4o-mini",                power: "gpt-4o" } },
   { id: "Google",    label: "Google",    models: { fast: "gemini-1.5-flash",           power: "gemini-1.5-pro" } },
-  { id: "Anthropic", label: "Anthropic", models: { fast: "claude-3-5-sonnet-20241022", power: "claude-3-5-sonnet-20241022" } },
+  { id: "Anthropic", label: "Anthropic", models: { fast: "claude-sonnet-5-5",          power: "claude-sonnet-5-5" } },
 ];
 
 const DRAIN_RATES = {
@@ -23,7 +23,7 @@ const DRAIN_RATES = {
   "gpt-4o-mini":               { rate: "3×", tier: "Standard" },
   "gemini-1.5-pro":            { rate: "5×", tier: "Pro" },
   "gemini-2.0-flash":          { rate: "5×", tier: "Pro" },
-  "claude-3-5-sonnet-20241022":{ rate: "8×", tier: "Premium" },
+  "claude-sonnet-5-5":         { rate: "8×", tier: "Premium" },
   "gpt-4o":                    { rate: "10×", tier: "Ultra" },
 };
 
@@ -44,7 +44,7 @@ const MODELS = [
   { id: "gpt-4o-mini",               provider: "OpenAI",    drain: "3×",  tier: "Standard", best: "Fast, cost-efficient chat & code" },
   { id: "gpt-4o",                    provider: "OpenAI",    drain: "10×", tier: "Ultra",    best: "Flagship reasoning, vision, complex tasks" },
   // Anthropic
-  { id: "claude-3-5-sonnet-20241022",provider: "Anthropic", drain: "8×",  tier: "Premium",  best: "Writing, analysis, long-context, safety" },
+  { id: "claude-sonnet-5-5",         provider: "Anthropic", drain: "8×",  tier: "Premium",  best: "Writing, analysis, long-context, safety" },
   // Google
   { id: "gemini-1.5-flash",          provider: "Google",    drain: "1×",  tier: "Economy",  best: "Fastest, cheapest — high-volume use cases" },
   { id: "gemini-1.5-pro",            provider: "Google",    drain: "5×",  tier: "Pro",      best: "Multimodal, 1M context window" },
