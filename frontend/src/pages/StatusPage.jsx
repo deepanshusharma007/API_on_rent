@@ -71,7 +71,7 @@ export default function StatusPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>Status â€” AIRent</title>
+        <title>Status — AIRent</title>
         <meta name="description" content="Real-time status of the AIRent API rental platform." />
       </Helmet>
       <Navbar />

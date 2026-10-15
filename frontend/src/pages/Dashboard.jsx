@@ -305,7 +305,7 @@ export default function Dashboard() {
                 <CheckCircle2 size={16} color="var(--secondary)" />
                 <div>
                   <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--secondary)' }}>Payment confirmed!</p>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--on-surface-2)', marginTop: '2px' }}>Your rental is activating â€” it will appear below in a few seconds.</p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--on-surface-2)', marginTop: '2px' }}>Your rental is activating — it will appear below in a few seconds.</p>
                 </div>
               </motion.div>
             )}
@@ -343,7 +343,7 @@ export default function Dashboard() {
                       LIVE SESSION
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)' }}>
-                      <Key size={11} /> IP Pinned: {firstActive.ip_address || 'â€”'}
+                      <Key size={11} /> IP Pinned: {firstActive.ip_address || '—'}
                     </span>
                     <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '2px' }}>TIME REMAINING</div>
@@ -367,7 +367,7 @@ export default function Dashboard() {
                   <div style={{ padding: '0 20px 18px' }}>
                     <div style={{ background: '#0d1117', border: '1px solid rgba(192,193,255,0.15)', borderRadius: '10px', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>â— VIRTUAL KEY</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>● VIRTUAL KEY</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#f59e0b', letterSpacing: '0.04em' }}>
                           <AlertTriangle size={10} /> Visible Only Once
                         </span>
@@ -397,7 +397,7 @@ export default function Dashboard() {
                     <TokenProgressBar used={firstActive.tokens_used} remaining={firstActive.tokens_remaining} size="md" />
                     <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>
-                        â“˜ Auto-terminates at 100% or time expiration.
+                        ⓘ Auto-terminates at 100% or time expiration.
                       </span>
                       <button style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, color: '#f97316', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em' }}>
                         TERMINATE NOW
@@ -458,7 +458,7 @@ export default function Dashboard() {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
                 >
-                  Download CSV â†“
+                  Download CSV ↓
                 </button>
               </div>
 
@@ -486,13 +486,13 @@ export default function Dashboard() {
                         {new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, {new Date(r.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })}
                       </span>
                       <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>
-                        {r.provider || r.plan_name || 'â€”'}
+                        {r.provider || r.plan_name || '—'}
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)' }}>
                         {r.duration_minutes >= 60 ? `${r.duration_minutes / 60}:00` : `${r.duration_minutes}:00`}
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)' }}>
-                        {r.tokens_used?.toLocaleString() || 'â€”'}
+                        {r.tokens_used?.toLocaleString() || '—'}
                       </span>
                       <StatusBadge status={r.status} />
                     </div>
@@ -519,7 +519,7 @@ export default function Dashboard() {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '24px clamp(24px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: '#e8edf8', marginBottom: '4px' }}>AIRent</div>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>Â© 2024 AIRent. Built for the Indian Developer Ecosystem.</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>© 2024 AIRent. Built for the Indian Developer Ecosystem.</div>
           </div>
           <div style={{ display: 'flex', gap: '20px' }}>
             {['Privacy', 'Terms', 'Status', 'GitHub'].map(l => (

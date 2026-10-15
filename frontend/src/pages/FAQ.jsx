@@ -19,20 +19,20 @@ const FAQ_DATA = [
   ]},
   { category: 'Plans & Tokens', items: [
     { q: 'How do token caps work?',                    a: 'Each plan includes a maximum token budget (input + output per request). Different models drain at different rates.' },
-    { q: 'What happens when tokens run out?',          a: 'Your key stops accepting requests. Buy a new plan anytime to continue â€" it activates as a separate rental.' },
-    { q: 'What happens when rental time expires?',     a: 'The key deactivates at the end of the window even if tokens remain. Time and tokens are independent â€" whichever runs out first ends the rental.' },
+    { q: 'What happens when tokens run out?',          a: 'Your key stops accepting requests. Buy a new plan anytime to continue — it activates as a separate rental.' },
+    { q: 'What happens when rental time expires?',     a: 'The key deactivates at the end of the window even if tokens remain. Time and tokens are independent — whichever runs out first ends the rental.' },
     { q: 'Are there bulk or enterprise plans?',        a: 'Yes. Email deepanshu2210sharma@gmail.com for custom pricing on high-volume or team usage.' },
   ]},
   { category: 'Using the API', items: [
     { q: 'How do I use my virtual key in code?',       a: 'Set your API key to the virtual key and base_url to your AIRent endpoint. Any OpenAI SDK works - Python, Node.js, cURL - no other changes needed.' },
-    { q: 'Can I use Claude or Gemini models?',         a: 'Yes. All plans include all supported providers. Specify the model name in your request â€" the model determines the drain rate.' },
+    { q: 'Can I use Claude or Gemini models?',         a: 'Yes. All plans include all supported providers. Specify the model name in your request — the model determines the drain rate.' },
     { q: 'Does AIRent support streaming?',             a: 'Yes. Pass stream: true just as with the standard OpenAI API. SSE streaming is fully supported.' },
     { q: 'Is my IP locked to the key?',                a: 'After the first request, the key is pinned to that IP to prevent theft. Contact us to reset if you change networks.' },
   ]},
   { category: 'Payments & Refunds', items: [
     { q: 'How is my payment secured?',                 a: 'Payments are processed by Cashfree Payments, a PCI DSS-compliant gateway. We never see or store your card details.' },
     { q: 'Can I get a refund?',                        a: 'Yes - within 24 hours of purchase if you have made zero API calls. See the full Refund Policy for details.' },
-    { q: 'Payment went through but no key?',           a: 'Email deepanshu2210sharma@gmail.com with your payment reference â€" resolved within 2 business hours.' },
+    { q: 'Payment went through but no key?',           a: 'Email deepanshu2210sharma@gmail.com with your payment reference — resolved within 2 business hours.' },
     { q: 'Do you provide invoices?',                   a: 'Yes. Download a PDF invoice from your dashboard after purchase.' },
   ]},
   { category: 'Privacy & Security', items: [
