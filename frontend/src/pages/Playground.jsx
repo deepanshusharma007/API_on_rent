@@ -86,7 +86,9 @@ export default function Playground() {
           for (const line of decoder.decode(value).split('\n').filter(l => l.startsWith('data: '))) {
             const d = line.replace('data: ', '');
             if (d === '[DONE]') continue;
-            try { full += JSON.parse(d).choices?.[0]?.delta?.content || ''; setResponse({ content: full, streaming: true }); } catch {}
+            let chunk; try { chunk = JSON.parse(d); } catch { continue; }
+            if (chunk.error) throw new Error(typeof chunk.error === 'string' ? chunk.error : (chunk.error.message || JSON.stringify(chunk.error)));
+            full += chunk.choices?.[0]?.delta?.content || ''; setResponse({ content: full, streaming: true });
           }
         }
         setResponseTime(Date.now() - t0); setResponse({ content: full, streaming: false });
