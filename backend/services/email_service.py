@@ -1,9 +1,11 @@
 """Email notification service for rental events.
 
-Uses SMTP for sending emails. Configure via environment variables:
-- SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM_EMAIL
+Transport is chosen with EMAIL_TRANSPORT (default "smtp"):
+- smtp:      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM_EMAIL
+- gmail_api: GMAIL_API_CLIENT_ID, GMAIL_API_CLIENT_SECRET, GMAIL_API_REFRESH_TOKEN,
+             GMAIL_SENDER (HTTPS; for hosts that block outbound SMTP)
 
-Falls back to logging if SMTP is not configured.
+Falls back to logging if the selected transport is not fully configured.
 """
 import logging
 import smtplib
@@ -12,25 +14,85 @@ from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import os
 
+from backend.services.email_transport import GmailApiTransport
+
 logger = logging.getLogger(__name__)
+
+EMAIL_TRANSPORTS = ("smtp", "gmail_api")
+
+
+def _config(name: str, default: str) -> str:
+    """Process environment first (e.g. Render), then the app settings, which also
+    read the project .env file; previously values only present in .env were ignored."""
+    value = os.getenv(name)
+    if value is not None:
+        return value
+    try:
+        from backend.config import settings
+        value = getattr(settings, name, None)
+    except Exception:  # settings unavailable (e.g. isolated tests)
+        value = None
+    return default if value is None or value == "" else str(value)
 
 
 class EmailService:
     """Send email notifications for rental events."""
 
     def __init__(self):
-        self.host = os.getenv("SMTP_HOST", "")
-        self.port = int(os.getenv("SMTP_PORT", "587"))
-        self.user = os.getenv("SMTP_USER", "")
-        self.password = os.getenv("SMTP_PASSWORD", "")
-        self.from_email = os.getenv("SMTP_FROM_EMAIL", "noreply@apirental.dev")
+        self.host = _config("SMTP_HOST", "")
+        self.port = int(_config("SMTP_PORT", "587"))
+        self.user = _config("SMTP_USER", "")
+        self.password = _config("SMTP_PASSWORD", "")
+        self.from_email = _config("SMTP_FROM_EMAIL", "noreply@apirental.dev")
         self.enabled = bool(self.host and self.user and self.password)
 
-    def _send(self, to_email: str, subject: str, html_body: str):
-        """Send an email (blocking). Call from background task."""
+        transport = _config("EMAIL_TRANSPORT", "smtp").strip().lower() or "smtp"
+        if transport not in EMAIL_TRANSPORTS:
+            logger.warning("Unknown EMAIL_TRANSPORT value; using smtp")
+            transport = "smtp"
+        self.transport = transport
+        self.gmail = GmailApiTransport(
+            client_id=_config("GMAIL_API_CLIENT_ID", ""),
+            client_secret=_config("GMAIL_API_CLIENT_SECRET", ""),
+            refresh_token=_config("GMAIL_API_REFRESH_TOKEN", ""),
+            sender=_config("GMAIL_SENDER", ""),
+        )
+        if transport == "gmail_api":
+            # Gmail only sends as the authorised account; never fall back to SMTP here
+            self.from_email = self.gmail.sender
+            self.enabled = self.gmail.configured
+            if not self.enabled:
+                logger.warning("EMAIL_TRANSPORT=gmail_api but Gmail API settings are incomplete; emails will only be logged")
+
+    def status(self) -> dict:
+        """What is configured, for startup logs and setup checks. Never includes secret values."""
+        if self.transport == "gmail_api":
+            required = {"GMAIL_API_CLIENT_ID": self.gmail._client_id, "GMAIL_API_CLIENT_SECRET": self.gmail._client_secret,
+                        "GMAIL_API_REFRESH_TOKEN": self.gmail._refresh_token, "GMAIL_SENDER": self.gmail.sender}
+        else:
+            required = {"SMTP_HOST": self.host, "SMTP_USER": self.user, "SMTP_PASSWORD": self.password}
+        return {
+            "transport": self.transport,
+            "enabled": self.enabled,
+            "missing": [name for name, value in required.items() if not value],
+            "sender": self.from_email if self.enabled else None,
+        }
+
+    def _deliver(self, msg: MIMEMultipart, to_email: str):
+        """Send a built message with the selected transport. Raises on failure."""
+        if self.transport == "gmail_api":
+            self.gmail.send(msg)
+            return
+        with smtplib.SMTP(self.host, self.port, timeout=10) as server:
+            server.starttls()
+            server.login(self.user, self.password)
+            server.sendmail(self.from_email, to_email, msg.as_string())
+
+    def _send(self, to_email: str, subject: str, html_body: str) -> bool:
+        """Send an email (blocking). Call from background task. Returns True if sent."""
         if not self.enabled:
             logger.info(f"[Email stub] To: {to_email} | Subject: {subject}")
-            return
+            return False
 
         try:
             msg = MIMEMultipart("alternative")
@@ -39,14 +101,13 @@ class EmailService:
             msg["To"] = to_email
             msg.attach(MIMEText(html_body, "html"))
 
-            with smtplib.SMTP(self.host, self.port, timeout=10) as server:
-                server.starttls()
-                server.login(self.user, self.password)
-                server.sendmail(self.from_email, to_email, msg.as_string())
+            self._deliver(msg, to_email)
 
             logger.info(f"Email sent to {to_email}: {subject}")
+            return True
         except Exception as e:
             logger.error(f"Email send failed to {to_email}: {e}")
+            return False
 
     def send_rental_activated(self, email: str, plan_name: str, virtual_key: str,
                                expires_at: str, token_cap: int):
@@ -142,10 +203,7 @@ class EmailService:
                 logger.info(f"[Email stub] Contact form from {sender_email}: {email_subject}")
                 return
 
-            with smtplib.SMTP(self.host, self.port, timeout=10) as server:
-                server.starttls()
-                server.login(self.user, self.password)
-                server.sendmail(self.from_email, owner_email, msg.as_string())
+            self._deliver(msg, owner_email)
 
             logger.info(f"Contact form email sent to {owner_email} from {sender_email}")
         except Exception as e:
@@ -186,6 +244,51 @@ class EmailService:
         </body></html>
         """
         self._send(admin_email, subject, body)
+
+    def send_signup_otp(self, email: str, code: str, expires_minutes: int) -> bool:
+        """Email a signup verification code. The code is only in the body, never the subject."""
+        subject = "Your AIRent verification code"
+        body = f"""
+        <html><body style="font-family: sans-serif; color: #333; max-width: 520px;">
+        <h2>Verify your email</h2>
+        <p>Use this code to finish creating your AIRent account:</p>
+        <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; font-family: monospace; margin: 24px 0;">{code}</p>
+        <p>The code expires in {expires_minutes} minutes and can be used once.</p>
+        <p style="color: #6b7280; font-size: 13px;">If you didn't try to sign up, you can ignore this email.</p>
+        </body></html>
+        """
+        return self._send(email, subject, body)
+
+    def send_account_exists_notice(self, email: str, login_url: str, reset_url: str) -> bool:
+        """Sent instead of a code when someone tries to sign up with an existing account's email."""
+        subject = "You already have an AIRent account"
+        body = f"""
+        <html><body style="font-family: sans-serif; color: #333; max-width: 520px;">
+        <h2>You already have an account</h2>
+        <p>Someone (hopefully you) tried to create a new AIRent account with this email address,
+           but an account already exists.</p>
+        <p><a href="{login_url}" style="color: #7c3aed;">Sign in</a> &nbsp;·&nbsp;
+           <a href="{reset_url}" style="color: #7c3aed;">Reset your password</a></p>
+        <p style="color: #6b7280; font-size: 13px;">If this wasn't you, no action is needed.</p>
+        </body></html>
+        """
+        return self._send(email, subject, body)
+
+    def send_password_reset(self, email: str, reset_link: str, expires_minutes: int) -> bool:
+        """Email a single-use password reset link."""
+        subject = "Reset your AIRent password"
+        body = f"""
+        <html><body style="font-family: sans-serif; color: #333; max-width: 520px;">
+        <h2>Reset your password</h2>
+        <p>Click the button below to choose a new password. The link expires in
+           {expires_minutes} minutes and works once.</p>
+        <p style="margin: 24px 0;"><a href="{reset_link}" style="background: #7c3aed; color: #fff; padding: 12px 20px;
+           border-radius: 8px; text-decoration: none; font-weight: 600;">Reset password</a></p>
+        <p style="color: #6b7280; font-size: 13px;">If you didn't ask to reset your password, you can ignore this
+           email — your password won't change.</p>
+        </body></html>
+        """
+        return self._send(email, subject, body)
 
     def send_token_low_warning(self, email: str, plan_name: str, tokens_remaining: int, pct: float):
         """Notify user when their tokens are running low (< 10%)."""

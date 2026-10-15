@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Zap, Github } from 'lucide-react';
+import { Mail, Lock, Eye, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
+import GoogleSignInButton from '../components/GoogleSignInButton';
+import { FormMessage } from '../components/AuthShell';
 
 const EASE = [0.22, 1, 0.36, 1];
 const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: d } } });
@@ -13,26 +15,43 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [error,    setError]    = useState('');
   const [bannerUp, setBannerUp] = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
   const navigate = useNavigate();
   const login    = useAuthStore(s => s.login);
+  const googleLogin = useAuthStore(s => s.googleLogin);
 
   useEffect(() => {
     const id = setInterval(() => setBannerUp(sessionStorage.getItem('banner_dismissed') !== 'true'), 200);
     return () => clearInterval(id);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const result = await login(email, password);
+  const finish = (result) => {
     if (result.success) {
       toast.success('Welcome back!');
       navigate('/dashboard');
     } else {
+      setError(result.error || 'Invalid credentials');
       toast.error(result.error || 'Invalid credentials');
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const result = await login(email.trim(), password, remember);
     setLoading(false);
+    finish(result);
+  };
+
+  const handleGoogle = async (credential) => {
+    setError('');
+    setLoading(true);
+    const result = await googleLogin(credential, remember);
+    setLoading(false);
+    finish(result);
   };
 
   return (
@@ -145,16 +164,17 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleSubmit}>
+              <FormMessage>{error}</FormMessage>
               {/* Email */}
               <div style={{ marginBottom: '18px' }}>
-                <label style={{
+                <label htmlFor="login-email" style={{
                   display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
                   fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
                   marginBottom: '8px',
                 }}>SYSTEM.USER_EMAIL</label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type="email" value={email} onChange={e => setEmail(e.target.value)}
+                    id="login-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="dev@air-ent.io" required
                     style={{
                       width: '100%', padding: '13px 40px 13px 16px',
@@ -174,12 +194,12 @@ export default function Login() {
               {/* Password */}
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{
+                  <label htmlFor="login-password" style={{
                     fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
                     fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
                   }}>SYSTEM.ACCESS_KEY</label>
-                  <button type="button" style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
+                  <Link to="/forgot-password" style={{
+                    textDecoration: 'none',
                     fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700,
                     letterSpacing: '0.06em', color: 'rgba(192,193,255,0.4)',
                     transition: 'color 120ms', padding: 0,
@@ -188,10 +208,11 @@ export default function Login() {
                     onMouseLeave={e => e.currentTarget.style.color = 'rgba(192,193,255,0.4)'}
                   >
                     FORGOT?
-                  </button>
+                  </Link>
                 </div>
                 <div style={{ position: 'relative' }}>
                   <input
+                    id="login-password" autoComplete="current-password"
                     type={showPass ? 'text' : 'password'} value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••" required
@@ -208,6 +229,7 @@ export default function Login() {
                   />
                   <button
                     type="button" onClick={() => setShowPass(v => !v)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'} aria-pressed={showPass}
                     style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(255,255,255,0.25)', lineHeight: 1, transition: 'color 120ms' }}
                     onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
@@ -216,6 +238,13 @@ export default function Login() {
                   </button>
                 </div>
               </div>
+
+              {/* Remember me */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', cursor: 'pointer', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
+                  style={{ width: '15px', height: '15px', accentColor: '#8083ff', cursor: 'pointer' }} />
+                Remember me for 30 days
+              </label>
 
               {/* Authenticate button */}
               <button
@@ -249,23 +278,9 @@ export default function Login() {
               <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
             </div>
 
-            {/* GitHub button */}
-            <button
-              type="button"
-              onClick={() => toast('GitHub OAuth coming soon')}
-              style={{
-                width: '100%', padding: '13px',
-                borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.04)', cursor: 'pointer',
-                fontFamily: 'var(--font-body)', fontSize: '0.9rem', fontWeight: 500,
-                color: '#e8edf8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                transition: 'background 150ms, border-color 150ms',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-            >
-              <Github size={16} /> Continue with GitHub
-            </button>
+            {/* Google Sign-In */}
+            <GoogleSignInButton text="signin_with" disabled={loading} onCredential={handleGoogle}
+              onError={msg => { setError(msg); toast.error(msg); }} />
 
             {/* Footer */}
             <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.35)', marginTop: '24px' }}>

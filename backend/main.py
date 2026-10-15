@@ -81,6 +81,9 @@ async def lifespan(app: FastAPI):
     # Initialize Redis
     await init_redis()
     logger.info("✅ Redis initialized")
+
+    # Report which sign-in features are configured (setting names only, never values)
+    auth.log_auth_setup_status()
     
     # Start spending monitor background worker
     asyncio.create_task(start_spending_monitor())
