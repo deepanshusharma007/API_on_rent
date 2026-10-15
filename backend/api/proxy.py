@@ -13,7 +13,7 @@ from backend.database.connection import get_db
 from backend.database.models import Rental, UsageLog, RentalStatus
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.services.circuit_breaker import CircuitBreakerService
-from backend.services.router import GatewayRouter, infer_provider, get_all_models
+from backend.services.router import GatewayRouter, infer_provider, get_all_models, normalize_model_id
 from backend.services.cache import GatewayCache
 from backend.services.drain_rate import get_drain_rate
 from backend.middleware.guardrails.base import RequestContext, ResponseContext, BlockedResponse
@@ -88,7 +88,7 @@ client = OpenAI(
     base_url="https://api-on-rent-backend.onrender.com/v1"
 )
 response = client.chat.completions.create(
-    model="gpt-4o-mini",   # or claude-3-5-sonnet-20241022, gemini-1.5-flash, etc.
+    model="gpt-4o-mini",   # or claude-sonnet-5-5, gemini-1.5-flash, etc.
     messages=[{"role": "user", "content": "Hello!"}]
 )
 ```
@@ -129,6 +129,10 @@ async def chat_completions(
         "gemini-1.5-pro": 8192, "gemini-1.5-flash": 8192, "gemini-2.0-flash": 8192,
     }
     max_tokens = min(user_max_tokens or 4096, MAX_TOKENS_BY_MODEL.get(model, 8192))
+
+    # Retired IDs are served by their replacement; allowlist, token cap, drain rate
+    # and cache key stay on the requested ID so legacy behaviour and billing are unchanged.
+    routed_model = normalize_model_id(model)
 
     rental_id = rental_data["rental_id"]
     user_id = rental_data["user_id"]
@@ -191,7 +195,7 @@ async def chat_completions(
     # ── Router + fallback chain ──────────────────────────────────────────
     circuit_breaker = CircuitBreakerService(redis_manager)
     gateway_router = GatewayRouter(circuit_breaker, db)
-    fallback_list = await gateway_router.resolve(model)
+    fallback_list = await gateway_router.resolve(routed_model)
 
     if not fallback_list:
         raise HTTPException(status_code=503, detail="All providers currently unavailable.")
@@ -290,7 +294,7 @@ async def chat_completions(
                 response_dict["x_model_used"] = fallback_model
                 response_dict["x_provider"] = provider
                 response_dict["x_cache"] = "MISS"
-                if fallback_model != model:
+                if fallback_model != routed_model:
                     response_dict["x_fallback_used"] = True
 
                 return response_dict

@@ -22,11 +22,9 @@ MODEL_PROVIDER_MAP = {
     "o1-mini":                    "openai",
     "o3-mini":                    "openai",
     # Anthropic
-    "claude-3-5-sonnet-20241022": "anthropic",
-    "claude-3-5-haiku-20241022":  "anthropic",
-    "claude-3-opus-20240229":     "anthropic",
-    "claude-3-sonnet-20240229":   "anthropic",
-    "claude-3-haiku-20240307":    "anthropic",
+    "claude-sonnet-5-5":          "anthropic",
+    "claude-haiku-5-5":           "anthropic",
+    "claude-opus-4-8":            "anthropic",
     # Google
     "gemini-1.5-pro":             "gemini",
     "gemini-1.5-flash":           "gemini",
@@ -38,9 +36,9 @@ MODEL_PROVIDER_MAP = {
 FALLBACK_CHAINS = {
     "gpt-4o":                     [("openai", "gpt-4o"),          ("openai", "gpt-4o-mini"),     ("gemini", "gemini-1.5-pro")],
     "gpt-4o-mini":                [("openai", "gpt-4o-mini"),     ("gemini", "gemini-1.5-flash")],
-    "claude-3-5-sonnet-20241022": [("anthropic", "claude-3-5-sonnet-20241022"), ("anthropic", "claude-3-5-haiku-20241022"), ("openai", "gpt-4o-mini")],
-    "claude-3-5-haiku-20241022":  [("anthropic", "claude-3-5-haiku-20241022"),  ("openai", "gpt-4o-mini")],
-    "claude-3-opus-20240229":     [("anthropic", "claude-3-opus-20240229"),     ("anthropic", "claude-3-5-sonnet-20241022"), ("openai", "gpt-4o")],
+    "claude-sonnet-5-5":          [("anthropic", "claude-sonnet-5-5"), ("anthropic", "claude-haiku-5-5"),  ("openai", "gpt-4o-mini")],
+    "claude-haiku-5-5":           [("anthropic", "claude-haiku-5-5"),  ("openai", "gpt-4o-mini")],
+    "claude-opus-4-8":            [("anthropic", "claude-opus-4-8"),   ("anthropic", "claude-sonnet-5-5"), ("openai", "gpt-4o")],
     "gemini-1.5-pro":             [("gemini", "gemini-1.5-pro"),  ("gemini", "gemini-1.5-flash"), ("openai", "gpt-4o-mini")],
     "gemini-1.5-flash":           [("gemini", "gemini-1.5-flash"), ("openai", "gpt-4o-mini")],
     "gemini-2.0-flash":           [("gemini", "gemini-2.0-flash"), ("gemini", "gemini-1.5-flash"), ("openai", "gpt-4o-mini")],
@@ -48,14 +46,31 @@ FALLBACK_CHAINS = {
 
 DEFAULT_MODEL = "gpt-4o-mini"
 
+# Retired Anthropic IDs → supported replacements, so existing clients keep working.
+# Source: platform.claude.com/docs/en/about-claude/model-deprecations (checked 2026-10-15)
+MODEL_ALIASES = {
+    "claude-3-5-sonnet-20241022": "claude-sonnet-5-5",
+    "claude-3-sonnet-20240229":   "claude-sonnet-5-5",
+    "claude-3-5-haiku-20241022":  "claude-haiku-5-5",
+    "claude-3-haiku-20240307":    "claude-haiku-5-5",
+    "claude-3-opus-20240229":     "claude-opus-4-8",
+}
+
+
+def normalize_model_id(model_id: str) -> str:
+    """Map a retired model ID to its supported replacement; other IDs are returned unchanged."""
+    if not model_id:
+        return model_id
+    return MODEL_ALIASES.get(model_id.lower(), model_id)
+
 # Speed/capability metadata for UI
 MODEL_METADATA = {
     "gpt-4o":                     {"provider": "OpenAI",    "speed": "Fast",    "best_for": "General purpose, vision"},
     "gpt-4o-mini":                {"provider": "OpenAI",    "speed": "Fastest", "best_for": "High volume, cost-efficient"},
     "gpt-4-turbo":                {"provider": "OpenAI",    "speed": "Medium",  "best_for": "Long context"},
-    "claude-3-5-sonnet-20241022": {"provider": "Anthropic", "speed": "Medium",  "best_for": "Reasoning, coding, analysis"},
-    "claude-3-5-haiku-20241022":  {"provider": "Anthropic", "speed": "Fast",    "best_for": "Lightweight tasks"},
-    "claude-3-opus-20240229":     {"provider": "Anthropic", "speed": "Slow",    "best_for": "Complex reasoning"},
+    "claude-sonnet-5-5":          {"provider": "Anthropic", "speed": "Medium",  "best_for": "Reasoning, coding, analysis"},
+    "claude-haiku-5-5":           {"provider": "Anthropic", "speed": "Fast",    "best_for": "Lightweight tasks"},
+    "claude-opus-4-8":            {"provider": "Anthropic", "speed": "Slow",    "best_for": "Complex reasoning"},
     "gemini-1.5-pro":             {"provider": "Google",    "speed": "Medium",  "best_for": "Long context, multimodal"},
     "gemini-1.5-flash":           {"provider": "Google",    "speed": "Fastest", "best_for": "High volume, low cost"},
     "gemini-2.0-flash":           {"provider": "Google",    "speed": "Fastest", "best_for": "Latest Google model"},
@@ -153,7 +168,7 @@ class GatewayRouter:
         Return ordered list of {provider, model, api_key} to try.
         Skips entries where circuit is open or no key is available.
         """
-        model = model or DEFAULT_MODEL
+        model = normalize_model_id(model or DEFAULT_MODEL)
         chain = FALLBACK_CHAINS.get(model)
 
         if not chain:

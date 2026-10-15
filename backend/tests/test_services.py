@@ -43,6 +43,9 @@ class TestDrainRate:
         assert get_drain_rate("gpt-4o-mini") == 3.0
         assert get_drain_rate("gemini-1.5-flash") == 1.0
         assert get_drain_rate("claude-3-5-sonnet-20241022") == 8.0
+        assert get_drain_rate("claude-sonnet-5-5") == 8.0
+        assert get_drain_rate("claude-haiku-5-5") == 5.0
+        assert get_drain_rate("claude-opus-4-8") == 10.0
 
     def test_unknown_model(self):
         from backend.services.drain_rate import get_drain_rate
