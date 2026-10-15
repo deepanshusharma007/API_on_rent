@@ -10,7 +10,7 @@ from backend.database.connection import get_db
 from backend.database.models import Plan, Rental, User, UsageLog, RentalStatus, Transaction, ProviderKey
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.api.schemas import PlanResponse, RentalPurchase, RentalResponse, UsageStats
-from backend.api.dependencies import get_current_user
+from backend.api.dependencies import get_current_user, get_current_admin
 from backend.services.virtual_key_service import create_rental, get_rental_ttl
 from backend.services.capacity_manager import CapacityManager
 
@@ -38,10 +38,10 @@ async def list_plans(db: Session = Depends(get_db)):
     )
 
 
-@router.post("/rentals/purchase", response_model=RentalResponse, status_code=status.HTTP_201_CREATED, summary="Direct purchase (legacy)", description="Purchase a rental plan directly without a payment gateway. Use POST /api/checkout/session for the Cashfree-based checkout flow instead.")
+@router.post("/rentals/purchase", response_model=RentalResponse, status_code=status.HTTP_201_CREATED, summary="Direct rental injection (admin only)", description="Admin only: creates a rental for the calling admin account without a payment gateway (testing / manual provisioning). Customers buy through POST /api/checkout/session (Cashfree).")
 async def purchase_rental(
     purchase_data: RentalPurchase,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):

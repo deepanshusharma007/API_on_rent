@@ -1,4 +1,5 @@
 """Virtual key generation and management."""
+import asyncio
 import secrets
 import string
 import logging
@@ -24,7 +25,8 @@ async def create_rental(
     plan_id: int,
     db: Session,
     redis_manager: RedisManager,
-    provider: Optional[str] = None
+    provider: Optional[str] = None,
+    send_activation_email: bool = True
 ) -> Rental:
     """Create a new rental with virtual key and Redis TTL."""
     # Get plan details
@@ -68,23 +70,43 @@ async def create_rental(
         "drain_rate_multiplier": plan.drain_rate_multiplier
     }
     
-    await redis_manager.set_virtual_key_ttl(virtual_key, expires_at, rental_data)
-    await redis_manager.set_token_balance(rental.id, plan.token_cap)
-
-    # Send rental activation email (best-effort)
     try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if user:
-            from backend.services.email_service import email_service
-            email_service.send_rental_activated(
-                email=user.email,
-                plan_name=plan.name,
-                virtual_key=virtual_key,
-                expires_at=expires_at.isoformat(),
-                token_cap=plan.token_cap
-            )
-    except Exception as e:
-        logger.debug(f"Rental activation email failed (non-fatal): {e}")
+        await redis_manager.set_virtual_key_ttl(virtual_key, expires_at, rental_data)
+        await redis_manager.set_token_balance(rental.id, plan.token_cap)
+    except Exception:
+        # Don't leave an ACTIVE rental whose key was never activated: undo it, so a
+        # retry (e.g. a redelivered payment webhook) creates exactly one rental.
+        try:
+            await redis_manager.delete_virtual_key(virtual_key)
+        except Exception as e:
+            logger.error(f"Could not clean up key for failed rental {rental.id}: {e}")
+        try:
+            db.delete(rental)
+            db.commit()
+        except Exception as e:
+            logger.error(f"Could not remove failed rental {rental.id}: {e}")
+        raise
+
+    # Send rental activation email (best-effort, in a worker thread so a slow
+    # SMTP server never delays the response or blocks the event loop)
+    if send_activation_email:
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                from backend.services.email_service import email_service
+                user_email, plan_name, token_cap = user.email, plan.name, plan.token_cap
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: email_service.send_rental_activated(
+                        email=user_email,
+                        plan_name=plan_name,
+                        virtual_key=virtual_key,
+                        expires_at=expires_at.isoformat(),
+                        token_cap=token_cap
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Rental activation email failed (non-fatal): {e}")
 
     return rental
 

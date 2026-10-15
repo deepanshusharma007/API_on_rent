@@ -47,7 +47,7 @@ export default function LandingPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
       <Helmet>
-        <title>AIRent â€" Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
+        <title>AIRent — Rent AI APIs by the Minute | GPT, Claude, Gemini on Rent</title>
         <meta name="description" content="Rent GPT-4o, Claude, Gemini APIs by the hour. No subscription, no lock-in. Pay in INR via UPI. Get your API key in under 60 seconds." />
         <link rel="canonical" href="https://api-on-rent.pages.dev/" />
       </Helmet>
@@ -187,7 +187,7 @@ export default function LandingPage() {
         <section style={{ background: '#0a0d14', padding: 'clamp(48px, 6vw, 80px) clamp(16px, 5vw, 48px)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: '16px' }} className="feat-grid">
 
-            {/* IP Security â€" wide left, spans 2 rows */}
+            {/* IP Security — wide left, spans 2 rows */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ gridRow: 'span 2' }}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -204,7 +204,7 @@ export default function LandingPage() {
                     Lock your API key to specific server IPs. Prevents unauthorized usage even if your key is leaked in a codebase.
                   </p>
                 </div>
-                {/* World map graphic â€" CSS grid dots */}
+                {/* World map graphic — CSS grid dots */}
                 <div style={{
                   marginTop: '28px', borderRadius: '10px', overflow: 'hidden',
                   background: 'rgba(78,222,163,0.04)', border: '1px solid rgba(78,222,163,0.1)',
@@ -222,7 +222,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Instant Delivery â€" top right */}
+            {/* Instant Delivery — top right */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.08)}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -244,7 +244,7 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Cost Control â€" bottom right */}
+            {/* Cost Control — bottom right */}
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.12)}>
               <div style={{
                 background: '#111520', border: '1px solid rgba(255,255,255,0.07)',
@@ -269,7 +269,7 @@ export default function LandingPage() {
 
           </div>
 
-          {/* Second bento row: Transparent INR Pricing â€" full width */}
+          {/* Second bento row: Transparent INR Pricing — full width */}
           <div style={{ maxWidth: '960px', margin: '16px auto 0' }}>
             <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0.08)}>
               <div style={{

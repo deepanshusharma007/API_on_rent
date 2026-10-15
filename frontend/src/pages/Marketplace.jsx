@@ -21,11 +21,11 @@ const SIDEBAR_NAV = [
   { id: 'playground',  label: 'Playground',       icon: Terminal,    to: '/playground' },
 ];
 
-// Static gateway model catalogue â€” matches backend router.py
+// Static gateway model catalogue — matches backend router.py
 
 
 function formatTokens(n) {
-  if (!n) return 'â€”';
+  if (!n) return '—';
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   return `${(n / 1000).toFixed(0)}K`;
 }
@@ -119,7 +119,7 @@ export default function Marketplace() {
     if (!selectedPlan) { toast.error('Please select a plan'); return; }
     setPurchasing(true);
     try {
-      // Gateway mode: no provider needed â€” pass 'gateway' as provider placeholder
+      // Gateway mode: no provider needed — pass 'gateway' as provider placeholder
       const response = await paymentAPI.createCheckoutSession(selectedPlan.id, 'gateway');
       const { payment_session_id } = response.data;
       if (window.Cashfree) {
@@ -233,6 +233,10 @@ export default function Marketplace() {
                 <div key={i} style={{ height: '130px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
               ))}
             </div>
+          ) : plans.length === 0 ? (
+            <div style={{ padding: '24px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', textAlign: 'center' }}>
+              No plans available
+            </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: '12px' }} className="plans-grid-mp">
               {plans.map(plan => (
@@ -279,13 +283,10 @@ export default function Marketplace() {
                     </div>
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
-                        <span>Subtotal</span><span>â‚¹{selectedPlan.price}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)', marginTop: '4px' }}>
-                        <span>GST (18%)</span><span>â‚¹{(Math.round(Number(selectedPlan.price) * 0.18)).toFixed(2)}</span>
+                        <span>Subtotal</span><span>₹{selectedPlan.price}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#e8edf8', fontWeight: 700, marginTop: '8px' }}>
-                        <span>Total</span><span>â‚¹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</span>
+                        <span>Total</span><span>₹{selectedPlan.price}</span>
                       </div>
                     </div>
                   </div>
@@ -296,7 +297,7 @@ export default function Marketplace() {
                   <div>
                     <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-3)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>ðŸ’³</div>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>💳</div>
                       <div>
                         <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>UPI / Cashfree</div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-3)' }}>Secure payment gateway</div>
@@ -322,7 +323,7 @@ export default function Marketplace() {
                     {purchasing ? (
                       <><span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Processing...</>
                     ) : (
-                      <><IndianRupee size={16} />Pay â‚¹{(Number(selectedPlan.price) * 1.18).toFixed(2)}</>
+                      <><IndianRupee size={16} />Pay ₹{selectedPlan.price}</>
                     )}
                   </button>
 

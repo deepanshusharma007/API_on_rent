@@ -4,10 +4,12 @@ import hmac
 import hashlib
 import base64
 import logging
+import secrets
 import time
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from redis.exceptions import WatchError
 from sqlalchemy.orm import Session
 
 from backend.database.connection import get_db
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 CASHFREE_API_VERSION = "2023-08-01"
+WEBHOOK_LOCK_SECONDS = 120  # upper bound for processing one webhook delivery
 
 
 def _cashfree_base_url() -> str:
@@ -40,21 +43,42 @@ def _cashfree_headers() -> dict:
 
 
 def _verify_cashfree_webhook(payload: bytes, timestamp: str, signature: str) -> bool:
-    """Verify Cashfree webhook HMAC-SHA256 signature."""
+    """Verify Cashfree webhook HMAC-SHA256 signature. Fails closed without a secret."""
     secret = settings.CASHFREE_WEBHOOK_SECRET or settings.CASHFREE_CLIENT_SECRET
     if not secret:
-        logger.warning("No Cashfree secret configured — skipping webhook verification")
-        return True
+        logger.error("No Cashfree webhook secret configured (CASHFREE_WEBHOOK_SECRET) — rejecting webhook")
+        return False
 
-    # Cashfree signs: timestamp + rawBody
-    message = timestamp + payload.decode("utf-8")
+    # Cashfree signs: timestamp + rawBody. Computed over the raw bytes, so a body that is
+    # not valid UTF-8 just fails verification instead of raising.
+    message = timestamp.encode() + payload
     expected = base64.b64encode(
-        hmac.new(secret.encode(), message.encode(), hashlib.sha256).digest()
-    ).decode()
+        hmac.new(secret.encode(), message, hashlib.sha256).digest()
+    )
 
-    # Cashfree may send comma-separated list of signatures
-    received_sigs = [s.strip() for s in signature.split(",")]
+    # Cashfree may send comma-separated list of signatures (compared as bytes: constant
+    # time, and safe for non-ASCII header values)
+    received_sigs = [s.strip().encode() for s in signature.split(",")]
     return any(hmac.compare_digest(expected, sig) for sig in received_sigs)
+
+
+async def _release_webhook_lock(redis_manager: RedisManager, lock_key: str, lock_token: str):
+    """Release the per-order webhook lock only if this request still owns it.
+
+    Atomic compare-and-delete (WATCH/MULTI): if the lock expires and another delivery takes
+    it between our read and our delete, EXEC aborts instead of deleting their lock.
+    """
+    try:
+        async with redis_manager.redis.pipeline(transaction=True) as pipe:
+            await pipe.watch(lock_key)
+            if await pipe.get(lock_key) == lock_token:
+                pipe.multi()
+                pipe.delete(lock_key)
+                await pipe.execute()
+    except WatchError:
+        logger.info(f"Webhook lock {lock_key} changed owner before release; left in place")
+    except Exception as e:
+        logger.warning(f"Could not release webhook lock {lock_key} (it expires on its own): {e}")
 
 
 def _make_order_id(plan_id: int, user_id: int, provider: str = "openai") -> str:
@@ -213,20 +237,24 @@ async def cashfree_webhook(
     timestamp = request.headers.get("x-webhook-timestamp", "")
     signature = request.headers.get("x-webhook-signature", "")
 
-    # Verify webhook signature
-    logger.info(f"Webhook headers — timestamp: {timestamp!r}, signature: {signature!r}")
-    if timestamp and signature:
-        if not _verify_cashfree_webhook(payload, timestamp, signature):
-            logger.error(f"Webhook signature mismatch — ts={timestamp} sig={signature}")
-            raise HTTPException(status_code=400, detail="Invalid webhook signature")
-    elif not timestamp and not signature:
-        logger.warning("Webhook received with no signature headers — accepting (check Cashfree settings)")
+    # Authenticate before any side effect. Fail closed: both headers are required and the
+    # signature must verify. Signature values are never logged.
+    if not timestamp or not signature:
+        logger.warning(
+            f"Webhook rejected: missing signature headers "
+            f"(timestamp present={bool(timestamp)}, signature present={bool(signature)})"
+        )
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    if not _verify_cashfree_webhook(payload, timestamp, signature):
+        logger.warning("Webhook rejected: signature verification failed")
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     try:
-        event = request.app.state  # unused, parse from payload
         import json
         data = json.loads(payload)
     except Exception:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
     event_type = data.get("type", "")
@@ -255,55 +283,100 @@ async def cashfree_webhook(
 
     loop = asyncio.get_event_loop()
 
-    # Idempotency check + plan fetch in one thread
-    def _check_and_fetch():
-        existing = db.query(Transaction).filter(Transaction.cashfree_order_id == order_id).first()
-        if existing:
-            return "duplicate", None
-        plan = db.query(Plan).filter(Plan.id == plan_id).first()
-        return "ok", plan
-
-    check_result, plan = await loop.run_in_executor(None, _check_and_fetch)
-    if check_result == "duplicate":
-        logger.info(f"Duplicate webhook for order {order_id}, skipping")
-        return {"status": "already_processed"}
-    if not plan:
-        logger.error(f"Plan {plan_id} not found for webhook order {order_id}")
-        return {"status": "error", "message": "Plan not found"}
-
-    # Create transaction record
-    def _record_transaction():
-        transaction = Transaction(
-            user_id=user_id,
-            amount=plan.price,
-            description=f"Cashfree payment: {plan.name}",
-            cashfree_order_id=order_id,
-        )
-        db.add(transaction)
-        db.commit()
-
-    await loop.run_in_executor(None, _record_transaction)
-
-    # Create rental
+    # Only one delivery of an order is processed at a time: an atomic, owned, expiring
+    # Redis lock. A concurrent duplicate gets a retryable 409 and is re-checked later.
+    lock_key = f"webhook_lock:{order_id}"
+    lock_token = secrets.token_hex(16)
     try:
-        rental = await create_rental(user_id, plan_id, db, redis_manager, provider=provider)
+        acquired = await redis_manager.redis.set(lock_key, lock_token, nx=True, ex=WEBHOOK_LOCK_SECONDS)
+    except Exception as e:
+        logger.error(f"Webhook lock unavailable for order {order_id}: {e}")
+        raise HTTPException(status_code=503, detail="Temporarily unavailable, please retry")
+    if not acquired:
+        logger.info(f"Webhook for order {order_id} is already being processed")
+        raise HTTPException(status_code=409, detail="Order is already being processed")
 
-        capacity_mgr = CapacityManager(redis_manager)
-        await capacity_mgr.reserve_capacity(plan.token_cap, plan.rpm_limit)
+    try:
+        # Idempotency check + plan fetch in one thread
+        def _check_and_fetch():
+            existing = db.query(Transaction).filter(Transaction.cashfree_order_id == order_id).first()
+            if existing:
+                return "duplicate", None
+            plan = db.query(Plan).filter(Plan.id == plan_id).first()
+            return "ok", plan
 
-        # Send activation email (non-blocking, best-effort)
+        check_result, plan = await loop.run_in_executor(None, _check_and_fetch)
+        if check_result == "duplicate":
+            logger.info(f"Duplicate webhook for order {order_id}, skipping")
+            return {"status": "already_processed"}
+        if not plan:
+            logger.error(f"Plan {plan_id} not found for paid order {order_id}")
+            raise HTTPException(status_code=500, detail="Payment processing failed, will retry")
+
+        # Activate first; the payment is recorded only once the rental exists, so a failed
+        # activation is never mistaken for a completed order when Cashfree redelivers.
+        try:
+            # Webhook sends its own (human-readable) activation email below,
+            # so skip the one create_rental would send — exactly one email per purchase.
+            rental = await create_rental(
+                user_id, plan_id, db, redis_manager, provider=provider, send_activation_email=False
+            )
+        except Exception as e:
+            logger.error(f"Rental activation failed for paid order {order_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Payment processing failed, will retry")
+
+        # Captured while loaded: a failed commit/rollback expires ORM attributes, and reloading
+        # them would need the database that just failed.
+        rental_id, virtual_key = rental.id, rental.virtual_key
+
+        def _record_transaction():
+            transaction = Transaction(
+                user_id=user_id,
+                rental_id=rental_id,
+                amount=plan.price,
+                description=f"Cashfree payment: {plan.name}",
+                cashfree_order_id=order_id,
+            )
+            db.add(transaction)
+            db.commit()
+
+        try:
+            await loop.run_in_executor(None, _record_transaction)
+        except Exception as e:
+            # Without a payment record a redelivery would activate again, so withdraw this
+            # rental (key first, so it is unusable even if the DB is unavailable).
+            logger.error(f"Could not record payment for order {order_id}: {e}", exc_info=True)
+            await _withdraw_rental(db, redis_manager, rental, rental_id, virtual_key)
+            raise HTTPException(status_code=500, detail="Payment processing failed, will retry")
+
+        try:
+            capacity_mgr = CapacityManager(redis_manager)
+            await capacity_mgr.reserve_capacity(plan.token_cap, plan.rpm_limit)
+        except Exception as e:
+            logger.error(f"Capacity reservation failed for order {order_id} (rental is active): {e}")
+
+        # Send activation email (non-blocking, best-effort): runs in a worker
+        # thread and is not awaited, so the webhook responds immediately.
         try:
             from backend.services.email_service import email_service
             user = await loop.run_in_executor(
                 None, lambda: db.query(User).filter(User.id == user_id).first()
             )
             if user:
-                email_service.send_rental_activated(
-                    email=user.email,
-                    plan_name=plan.name,
-                    virtual_key=rental.virtual_key,
-                    expires_at=rental.expires_at.strftime("%Y-%m-%d %H:%M UTC"),
-                    token_cap=plan.token_cap,
+                # Capture plain values so the worker thread never touches the DB session
+                user_email = user.email
+                plan_name, token_cap = plan.name, plan.token_cap
+                virtual_key = rental.virtual_key
+                expires_str = rental.expires_at.strftime("%Y-%m-%d %H:%M UTC")
+                loop.run_in_executor(
+                    None,
+                    lambda: email_service.send_rental_activated(
+                        email=user_email,
+                        plan_name=plan_name,
+                        virtual_key=virtual_key,
+                        expires_at=expires_str,
+                        token_cap=token_cap,
+                    )
                 )
         except Exception as email_err:
             logger.warning(f"Activation email failed (non-critical): {email_err}")
@@ -314,9 +387,30 @@ async def cashfree_webhook(
         )
         return {"status": "success", "rental_id": rental.id}
 
+    finally:
+        await _release_webhook_lock(redis_manager, lock_key, lock_token)
+
+
+async def _withdraw_rental(db: Session, redis_manager: RedisManager, rental, rental_id: int, virtual_key: str):
+    """Best-effort undo of a rental whose payment could not be recorded.
+
+    Never raises, so the caller still reports the original payment error. Logs use only the
+    captured rental_id (no ORM access after rollback, and never the key itself).
+    """
+    try:
+        await redis_manager.delete_virtual_key(virtual_key)
     except Exception as e:
-        logger.error(f"Failed to create rental from webhook: {e}")
-        return {"status": "error", "message": str(e)}
+        logger.error(f"Could not revoke key for rental {rental_id}: {type(e).__name__}")
+    try:
+        await redis_manager.redis.delete(f"balance:{rental_id}")
+    except Exception as e:
+        logger.error(f"Could not remove token balance for rental {rental_id}: {type(e).__name__}")
+    try:
+        db.rollback()
+        db.delete(rental)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Could not remove rental {rental_id} (key already revoked): {type(e).__name__}")
 
 
 # ==================== ORDER STATUS VERIFICATION ====================

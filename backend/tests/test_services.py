@@ -15,7 +15,7 @@ class TestAuthUtils:
 
     def test_jwt_token(self):
         from backend.services.auth_utils import create_access_token, decode_access_token
-        token = create_access_token({"sub": "1", "email": "test@test.com", "role": "user"})
+        token, _ = create_access_token({"sub": "1", "email": "test@test.com", "role": "user"})
         payload = decode_access_token(token)
         assert payload is not None
         assert payload["sub"] == "1"
@@ -23,7 +23,7 @@ class TestAuthUtils:
 
     def test_expired_jwt(self):
         from backend.services.auth_utils import create_access_token, decode_access_token
-        token = create_access_token(
+        token, _ = create_access_token(
             {"sub": "1"},
             expires_delta=timedelta(seconds=-1)
         )
