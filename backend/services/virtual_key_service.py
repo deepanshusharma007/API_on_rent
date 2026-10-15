@@ -70,8 +70,22 @@ async def create_rental(
         "drain_rate_multiplier": plan.drain_rate_multiplier
     }
     
-    await redis_manager.set_virtual_key_ttl(virtual_key, expires_at, rental_data)
-    await redis_manager.set_token_balance(rental.id, plan.token_cap)
+    try:
+        await redis_manager.set_virtual_key_ttl(virtual_key, expires_at, rental_data)
+        await redis_manager.set_token_balance(rental.id, plan.token_cap)
+    except Exception:
+        # Don't leave an ACTIVE rental whose key was never activated: undo it, so a
+        # retry (e.g. a redelivered payment webhook) creates exactly one rental.
+        try:
+            await redis_manager.delete_virtual_key(virtual_key)
+        except Exception as e:
+            logger.error(f"Could not clean up key for failed rental {rental.id}: {e}")
+        try:
+            db.delete(rental)
+            db.commit()
+        except Exception as e:
+            logger.error(f"Could not remove failed rental {rental.id}: {e}")
+        raise
 
     # Send rental activation email (best-effort, in a worker thread so a slow
     # SMTP server never delays the response or blocks the event loop)
