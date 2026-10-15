@@ -86,7 +86,9 @@ export default function Playground() {
           for (const line of decoder.decode(value).split('\n').filter(l => l.startsWith('data: '))) {
             const d = line.replace('data: ', '');
             if (d === '[DONE]') continue;
-            try { full += JSON.parse(d).choices?.[0]?.delta?.content || ''; setResponse({ content: full, streaming: true }); } catch {}
+            let chunk; try { chunk = JSON.parse(d); } catch { continue; }
+            if (chunk.error) throw new Error(typeof chunk.error === 'string' ? chunk.error : (chunk.error.message || JSON.stringify(chunk.error)));
+            full += chunk.choices?.[0]?.delta?.content || ''; setResponse({ content: full, streaming: true });
           }
         }
         setResponseTime(Date.now() - t0); setResponse({ content: full, streaming: false });
@@ -177,7 +179,7 @@ export default function Playground() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
             <div>
               <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '6px' }}>API Playground</h1>
-              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Test your virtual key live â€” real requests, real responses.</p>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Test your virtual key live — real requests, real responses.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 6px var(--secondary)' }} />
@@ -188,7 +190,7 @@ export default function Playground() {
           {/* Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }} className="pg-grid">
 
-            {/* LEFT â€” Request */}
+            {/* LEFT — Request */}
             <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden' }}>
               {/* Panel header */}
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -302,7 +304,7 @@ export default function Playground() {
               </div>
             </div>
 
-            {/* RIGHT â€” Response */}
+            {/* RIGHT — Response */}
             <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
               <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -343,7 +345,7 @@ export default function Playground() {
                       <div style={{ padding: '16px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', maxHeight: '320px', overflowY: 'auto' }}>
                         <pre style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8', whiteSpace: 'pre-wrap', lineHeight: 1.75, margin: 0 }}>
                           {response.content}
-                          {response.streaming && <span style={{ color: 'var(--secondary)', animation: 'pulse-dot 0.8s infinite' }}>â–Œ</span>}
+                          {response.streaming && <span style={{ color: 'var(--secondary)', animation: 'pulse-dot 0.8s infinite' }}>▌</span>}
                         </pre>
                       </div>
                       {response.usage && (

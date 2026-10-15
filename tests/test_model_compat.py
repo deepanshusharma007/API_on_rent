@@ -30,6 +30,7 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret")
 import httpx
 import litellm
 import pytest
+import fakeredis
 import fakeredis.aioredis
 from fastapi import FastAPI
 from sqlalchemy import create_engine
@@ -59,10 +60,13 @@ class FakeUpstream:
     """Stands in for litellm.acompletion: retired IDs 404 like Anthropic, others answer."""
 
     def __init__(self, failing=()):
-        self.calls = []
+        self.calls = []            # bare model ids, in call order
+        self.qualified_calls = []  # ids exactly as the gateway sent them ("anthropic/...")
         self.failing = set(failing) | RETIRED_IDS
 
     async def __call__(self, model, messages, api_key=None, stream=False, **kwargs):
+        self.qualified_calls.append(model)
+        model = model.split("/", 1)[-1]
         self.calls.append(model)
         if model in self.failing:
             raise litellm.NotFoundError(
@@ -74,6 +78,12 @@ class FakeUpstream:
             choices=[{"message": {"role": "assistant", "content": "ok"}}],
             usage={"prompt_tokens": 60, "completion_tokens": 40, "total_tokens": 100},
         )
+
+
+def _fake_redis():
+    """Fresh, unshared Redis per test: fakeredis instances share one server by default,
+    which would leak cached responses and circuit-breaker state between tests."""
+    return fakeredis.aioredis.FakeRedis(server=fakeredis.FakeServer(), decode_responses=True)
 
 
 def _keys_for(providers):
@@ -93,7 +103,7 @@ def _gateway(rental_overrides=None):
         finally:
             db.close()
 
-    redis_manager = RedisManager(fakeredis.aioredis.FakeRedis(decode_responses=True))
+    redis_manager = RedisManager(_fake_redis())
     rental = {"rental_id": 42, "user_id": 1, "rpm_limit": 1000,
               "tokens_remaining": 10**6, "allowed_models": []}
     rental.update(rental_overrides or {})
@@ -205,7 +215,7 @@ class TestRouterTables:
 
 class TestRouterResolve:
     def _resolve(self, model, providers):
-        breaker = CircuitBreakerService(RedisManager(fakeredis.aioredis.FakeRedis(decode_responses=True)))
+        breaker = CircuitBreakerService(RedisManager(_fake_redis()))
         router = gw.GatewayRouter(breaker, db=None)
         with patch.object(gw.GatewayRouter, "_get_key", _keys_for(providers)):
             return asyncio.run(router.resolve(model))
@@ -227,6 +237,7 @@ class TestChatCompletions:
         assert response.status_code == 200
         body = response.json()
         assert upstream.calls == ["claude-sonnet-5-5"]
+        assert upstream.qualified_calls == ["anthropic/claude-sonnet-5-5"]
         assert body["x_model_used"] == "claude-sonnet-5-5"
         assert "x_fallback_used" not in body  # alias is not a fallback
         assert deductions == [(42, 800)]       # charged once, 100 tokens at legacy 8x
@@ -255,6 +266,7 @@ class TestChatCompletions:
         assert response.status_code == 200
         body = response.json()
         assert upstream.calls == ["claude-sonnet-5-5", "claude-haiku-5-5", "gpt-4o-mini"]
+        assert upstream.qualified_calls[-1] == "openai/gpt-4o-mini"
         assert body["x_model_used"] == "gpt-4o-mini"
         assert body["x_fallback_used"] is True
         assert deductions == [(42, 800)]  # one charge, requested-model rate

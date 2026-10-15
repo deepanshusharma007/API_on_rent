@@ -49,7 +49,7 @@ from sqlalchemy.pool import StaticPool
 
 from backend.config import settings
 from backend.database.connection import Base, get_db
-from backend.database.models import Plan, Rental, RentalStatus, Transaction, User
+from backend.database.models import Plan, Rental, RentalStatus, Transaction, User, UserRole
 from backend.database.redis_manager import get_redis_manager
 from backend.api.dependencies import get_current_user
 from backend.api import payment, marketplace
@@ -134,6 +134,11 @@ def redis_mock():
     mgr.set_virtual_key_ttl = AsyncMock()
     mgr.set_token_balance = AsyncMock()
     mgr.get_virtual_key_ttl = AsyncMock(return_value=PLAN_MINUTES * 60)
+    mgr.delete_virtual_key = AsyncMock()
+    # Raw client used by the webhook's per-order lock
+    mgr.redis.set = AsyncMock(return_value=True)
+    mgr.redis.get = AsyncMock(return_value=None)
+    mgr.redis.delete = AsyncMock()
     return mgr
 
 
@@ -320,8 +325,11 @@ def test_create_rental_default_still_emails_without_blocking(db, seed, redis_moc
 
 
 def test_marketplace_purchase_route_still_works(app, db, seed, blocking_email):
+    # The direct (no-payment) route is an admin-only injection workflow
     user_id, plan_id = seed
     user = db.query(User).filter(User.id == user_id).one()
+    user.role = UserRole.ADMIN
+    db.commit()
     app.dependency_overrides[get_current_user] = lambda: user
 
     with TestClient(app) as client:
