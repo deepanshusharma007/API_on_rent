@@ -42,7 +42,10 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        // A 401 from a sign-in/sign-up request means wrong credentials, not an expired
+        // session: let the page show the error instead of reloading /login.
+        const isAuthAttempt = /\/auth\/(login|google|register|signup\/|password\/)/.test(error.config?.url || '');
+        if (error.response?.status === 401 && !isAuthAttempt) {
             const detail = error.response?.data?.detail || '';
             localStorage.removeItem('auth_token');
             // Show kicked-out message if it was a session conflict
@@ -60,8 +63,29 @@ export const authAPI = {
     register: (email, password) =>
         apiClient.post('/auth/register', { email, password }),
 
-    login: (email, password) =>
-        apiClient.post('/auth/login', { email, password }),
+    login: (email, password, rememberMe = false) =>
+        apiClient.post('/auth/login', { email, password, remember_me: rememberMe }),
+
+    getConfig: () =>
+        apiClient.get('/auth/config'),
+
+    googleLogin: (credential, rememberMe = false) =>
+        apiClient.post('/auth/google', { credential, remember_me: rememberMe }),
+
+    requestSignupOtp: (email) =>
+        apiClient.post('/auth/signup/request-otp', { email }),
+
+    verifySignupOtp: (email, otp) =>
+        apiClient.post('/auth/signup/verify-otp', { email, otp }),
+
+    completeSignup: (signupToken, password) =>
+        apiClient.post('/auth/signup/complete', { signup_token: signupToken, password }),
+
+    forgotPassword: (email) =>
+        apiClient.post('/auth/password/forgot', { email }),
+
+    resetPassword: (token, password) =>
+        apiClient.post('/auth/password/reset', { token, password }),
 
     logout: () =>
         apiClient.post('/auth/logout'),

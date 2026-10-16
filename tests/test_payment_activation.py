@@ -176,6 +176,7 @@ def app(db, redis_mock, capacity_mock, monkeypatch):
 
 def _enabled_email_service():
     svc = email_module.EmailService()
+    svc.transport = "smtp"  # never the real transport from a developer's .env
     svc.host, svc.port, svc.user, svc.password = "smtp.test.local", 587, "u", "p"
     svc.enabled = True
     return svc

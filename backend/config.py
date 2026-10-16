@@ -49,7 +49,25 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "noreply@apirental.dev"
     ADMIN_NOTIFICATION_EMAIL: str = ""  # Admin email for spending alerts
-    
+
+    # Email transport: "smtp" (default) or "gmail_api" (HTTPS; for hosts that block SMTP)
+    EMAIL_TRANSPORT: str = "smtp"
+    GMAIL_API_CLIENT_ID: str = ""
+    GMAIL_API_CLIENT_SECRET: str = ""
+    GMAIL_API_REFRESH_TOKEN: str = ""
+    GMAIL_SENDER: str = ""
+
+    # Signup / login (email OTP, password reset, Google Sign-In)
+    GOOGLE_CLIENT_ID: str = ""              # OAuth Web client ID; empty = Google Sign-In disabled
+    REQUIRE_EMAIL_OTP: bool = False         # True = legacy POST /auth/register is closed
+    REMEMBER_ME_DAYS: int = 30
+    OTP_TTL_SECONDS: int = 600
+    OTP_MAX_ATTEMPTS: int = 5
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+    OTP_MAX_SENDS_PER_HOUR: int = 5
+    SIGNUP_TOKEN_TTL_SECONDS: int = 900
+    PASSWORD_RESET_TTL_SECONDS: int = 1800
+
     # Cost Estimation
     PRE_REQUEST_COST_CHECK: bool = True
     COST_ESTIMATION_BUFFER: float = 1.2

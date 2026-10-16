@@ -17,6 +17,54 @@ class UserLogin(BaseModel):
     """User login request."""
     email: EmailStr
     password: str
+    remember_me: bool = False
+
+
+class SignupOtpRequest(BaseModel):
+    """Start email signup: send a verification code."""
+    email: EmailStr
+
+
+class SignupOtpVerify(BaseModel):
+    """Check the emailed verification code."""
+    email: EmailStr
+    otp: str = Field(..., pattern=r"^\d{6}$")
+
+
+class SignupComplete(BaseModel):
+    """Finish email signup with the token from verify-otp and a new password."""
+    signup_token: str = Field(..., min_length=20, max_length=200)
+    password: str
+
+
+class PasswordForgotRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetRequest(BaseModel):
+    token: str = Field(..., min_length=20, max_length=200)
+    password: str
+
+
+class GoogleLoginRequest(BaseModel):
+    """ID token (credential) from Google Identity Services."""
+    credential: str = Field(..., min_length=20, max_length=8192)
+    remember_me: bool = False
+
+
+class OtpSentResponse(BaseModel):
+    message: str
+    expires_in: int
+    resend_after: int
+
+
+class SignupVerifiedResponse(BaseModel):
+    signup_token: str
+    expires_in: int
+
+
+class MessageResponse(BaseModel):
+    message: str
 
 
 class Token(BaseModel):
