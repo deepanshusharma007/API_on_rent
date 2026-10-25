@@ -1,7 +1,7 @@
 """Base classes for the guardrail middleware pipeline."""
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Any
 
 
 @dataclass
@@ -15,6 +15,7 @@ class RequestContext:
     body: dict
     # Annotations set by middleware
     estimated_tokens: int = 0
+    drain_rate: float = 1.0   # tokens_remaining is in credits (tokens * drain rate)
     pii_detected: bool = False
     pii_redacted: bool = False
     injection_detected: bool = False
@@ -57,3 +58,33 @@ class GuardrailMiddleware(ABC):
     async def process_output(self, ctx: ResponseContext) -> ResponseContext:
         """Process the response after it returns from the provider. Override if needed."""
         return ctx
+
+
+# ---- Message content helpers -------------------------------------------------
+# OpenAI `content` is a string, a list of parts ({"type": "text", "text": ...}, images, ...)
+# or null (assistant tool-call messages). Guardrails must handle all three.
+
+def message_text(msg) -> str:
+    """All text in one message, whatever shape its content has."""
+    content = msg.get("content") if isinstance(msg, dict) else None
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            part["text"] for part in content
+            if isinstance(part, dict) and isinstance(part.get("text"), str)
+        )
+    return ""
+
+
+def map_message_text(msg, fn) -> None:
+    """Apply fn to every text segment of a message, in place."""
+    if not isinstance(msg, dict):
+        return
+    content = msg.get("content")
+    if isinstance(content, str):
+        msg["content"] = fn(content)
+    elif isinstance(content, list):
+        for part in content:
+            if isinstance(part, dict) and isinstance(part.get("text"), str):
+                part["text"] = fn(part["text"])

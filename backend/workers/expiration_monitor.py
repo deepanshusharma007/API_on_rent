@@ -1,7 +1,6 @@
 """Background worker to update expired rental statuses and release capacity."""
 import asyncio
 from datetime import datetime
-from sqlalchemy.orm import Session
 from backend.database.connection import SessionLocal
 from backend.database.models import Rental, Plan, User, RentalStatus
 from backend.database.redis_manager import get_redis_manager
@@ -90,7 +89,8 @@ class RentalExpirationMonitor:
                         None, lambda r=rental: db.query(User).filter(User.id == r.user_id).first()
                     )
                     if user and plan:
-                        email_service.send_rental_expired(user.email, plan.name)
+                        # Fire and forget in a thread: a slow mail server must not stall expiry
+                        loop.run_in_executor(None, email_service.send_rental_expired, user.email, plan.name)
                 except Exception as email_err:
                     logger.debug(f"Expiry email failed (non-fatal): {email_err}")
 

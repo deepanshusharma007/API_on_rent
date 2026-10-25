@@ -1,11 +1,11 @@
 """Background worker for monitoring user spending and auto-suspension."""
 import asyncio
-import httpx
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database.connection import SessionLocal
 from backend.database.models import User, UsageLog, SpendingAlert, Rental, RentalStatus
+from backend.database.redis_manager import get_redis_manager
 from backend.config import settings
 import logging
 
@@ -23,8 +23,6 @@ async def _notify_admin(user_email: str, amount_usd: float, rentals_suspended: i
     # Email notification (uses EmailService — falls back to log if SMTP not configured)
     try:
         from backend.services.email_service import email_service
-        budget = SPENDING_THRESHOLD
-        pct = (amount_usd / budget) * 100 if budget > 0 else 100
         subject = f"🚨 Spending Alert: User {user_email} exceeded threshold"
         body = f"""
         <html><body style="font-family: sans-serif; color: #333;">
@@ -33,10 +31,11 @@ async def _notify_admin(user_email: str, amount_usd: float, rentals_suspended: i
            in the last <strong>{MONITORING_WINDOW_MINUTES} minutes</strong>
            (threshold: ${SPENDING_THRESHOLD:.2f}).</p>
         <p><strong>{rentals_suspended}</strong> rental(s) auto-suspended.</p>
-        <p><a href="http://localhost:5173/admin" style="color: #7c3aed;">Open Admin Panel →</a></p>
+        <p><a href="{settings.FRONTEND_URL.rstrip('/')}/admin" style="color: #7c3aed;">Open Admin Panel →</a></p>
         </body></html>
         """
-        email_service._send(admin_email, subject, body)
+        # SMTP/Gmail calls block for seconds: keep them off the event loop
+        await asyncio.get_event_loop().run_in_executor(None, email_service._send, admin_email, subject, body)
     except Exception as e:
         logger.warning(f"Admin email notification failed: {e}")
 
@@ -111,7 +110,7 @@ class SpendingMonitor:
             ).scalar() or 0.0
 
             if total_spent <= SPENDING_THRESHOLD:
-                return total_spent, False, 0
+                return total_spent, False, []
 
             existing_alert = db.query(SpendingAlert).filter(
                 SpendingAlert.user_id == user.id,
@@ -119,7 +118,7 @@ class SpendingMonitor:
             ).first()
 
             if existing_alert:
-                return total_spent, False, 0
+                return total_spent, False, []
 
             alert = SpendingAlert(
                 user_id=user.id,
@@ -133,16 +132,26 @@ class SpendingMonitor:
                 Rental.user_id == user.id,
                 Rental.status == RentalStatus.ACTIVE
             ).all()
+            suspended_keys = []
             for rental in active_rentals:
                 rental.status = RentalStatus.SUSPENDED
+                suspended_keys.append(rental.virtual_key)
                 logger.info(f"🔒 Suspended rental ID: {rental.id}")
 
             db.commit()
-            return total_spent, True, len(active_rentals)
+            return total_spent, True, suspended_keys
 
-        total_spent, did_suspend, suspended_count = await loop.run_in_executor(None, _check_and_suspend)
+        total_spent, did_suspend, suspended_keys = await loop.run_in_executor(None, _check_and_suspend)
+        suspended_count = len(suspended_keys)
 
         if did_suspend:
+            # The DB status alone doesn't stop traffic: the proxy trusts the Redis key
+            try:
+                redis_mgr = get_redis_manager()
+                for key in suspended_keys:
+                    await redis_mgr.delete_virtual_key(key)
+            except Exception as e:
+                logger.error(f"Could not revoke keys of suspended user {user.email}: {e}")
             logger.warning(
                 f"⚠️  User {user.email} exceeded spending threshold: "
                 f"${total_spent:.2f} in {MONITORING_WINDOW_MINUTES} minutes"

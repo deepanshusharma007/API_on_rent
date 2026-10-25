@@ -205,9 +205,9 @@ def test_internal_key_cache_hit_survives_usage_log_failure(client, db, user, aco
     db.commit()
     acompletion.return_value = _fake_response("gpt-4o-mini")
 
-    first = _chat(client, "ik_test")
+    first = _chat(client, "ik_test", temperature=0)   # only temperature=0 is cached
     db.rollback()   # the app opens a fresh session per request; the shared test session must be reset
-    second = _chat(client, "ik_test")
+    second = _chat(client, "ik_test", temperature=0)
 
     assert first.status_code == 200, first.text
     assert second.status_code == 200, second.text
@@ -366,9 +366,10 @@ def test_cache_get_set_isolated_between_users(redis_mgr):
     msgs = [{"role": "user", "content": "hi"}]
 
     async def scenario():
-        await cache.set("gpt-4o-mini", msgs, {}, {"answer": "for user 1"}, user_id=1)
-        return (await cache.get("gpt-4o-mini", msgs, {}, user_id=1),
-                await cache.get("gpt-4o-mini", msgs, {}, user_id=2))
+        body = {"temperature": 0}   # only temperature=0 requests are cached
+        await cache.set("gpt-4o-mini", msgs, body, {"answer": "for user 1"}, user_id=1)
+        return (await cache.get("gpt-4o-mini", msgs, body, user_id=1),
+                await cache.get("gpt-4o-mini", msgs, body, user_id=2))
     own, other = asyncio.run(scenario())
 
     assert own == {"answer": "for user 1"}
@@ -378,9 +379,9 @@ def test_cache_get_set_isolated_between_users(redis_mgr):
 def test_same_user_identical_repeat_is_cache_hit(client, db, redis_mgr, rental, acompletion):
     acompletion.return_value = _fake_response("gpt-4o-mini")
 
-    first = _chat(client, rental.virtual_key)
-    repeat = _chat(client, rental.virtual_key)
-    other_prompt = _chat(client, rental.virtual_key, content="Say bye")
+    first = _chat(client, rental.virtual_key, temperature=0)    # only temperature=0 is cached
+    repeat = _chat(client, rental.virtual_key, temperature=0)
+    other_prompt = _chat(client, rental.virtual_key, content="Say bye", temperature=0)
     not_cacheable = _chat(client, rental.virtual_key, temperature=0.7)
 
     assert [r.status_code for r in (first, repeat, other_prompt, not_cacheable)] == [200] * 4
@@ -428,7 +429,7 @@ def test_cache_stats_and_flush_use_v2(redis_mgr):
     cache = GatewayCache(redis_mgr)
 
     async def scenario():
-        await cache.set("gpt-4o-mini", [{"role": "user", "content": "hi"}], {}, {"a": 1}, user_id=1)
+        await cache.set("gpt-4o-mini", [{"role": "user", "content": "hi"}], {"temperature": 0}, {"a": 1}, user_id=1)
         return await cache.get_stats(), await cache.flush(), await cache.get_stats()
     before, flushed, after = asyncio.run(scenario())
 

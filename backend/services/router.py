@@ -1,10 +1,10 @@
 """Gateway router — model-to-provider mapping, key pool selection, fallback chain."""
 from typing import Optional
+from datetime import datetime
 import asyncio
-from backend.database.connection import SessionLocal
+from sqlalchemy import or_
 from backend.database.models import ProviderKey, ProviderType
 from backend.services.circuit_breaker import CircuitBreakerService
-from backend.database.redis_manager import get_redis_manager
 
 
 # ---------------------------------------------------------------------------
@@ -94,16 +94,13 @@ def infer_provider(model_id: str) -> str:
     return "openai"
 
 
-REDIS_ENABLED_MODELS_KEY = "gateway:enabled_models"
-
-
-async def get_enabled_model_ids(redis_client) -> set[str]:
-    """Return set of enabled model IDs from Redis. Empty set = all enabled (default)."""
-    try:
-        members = await redis_client.smembers(REDIS_ENABLED_MODELS_KEY)
-        return {m.decode() if isinstance(m, bytes) else m for m in members}
-    except Exception:
-        return set()
+def is_supported_model(model_id: str) -> bool:
+    """True only for catalogue models and their retired aliases. Anything else would be
+    forwarded to a provider and billed at a guessed rate."""
+    if not isinstance(model_id, str):
+        return False
+    m = model_id.lower()
+    return m in MODEL_PROVIDER_MAP or m in MODEL_ALIASES
 
 
 def get_all_models() -> list[dict]:
@@ -133,19 +130,25 @@ class GatewayRouter:
         """Get next available API key for a provider from DB pool."""
         try:
             provider_enum = ProviderType(provider)
-            keys = (
+            key = (
                 self.db.query(ProviderKey)
                 .filter(
                     ProviderKey.provider == provider_enum,
                     ProviderKey.is_active == True,
+                    # token_budget 0 = unlimited; otherwise stop using a key that has spent it
+                    or_(ProviderKey.token_budget == 0, ProviderKey.tokens_consumed < ProviderKey.token_budget),
                 )
                 .order_by(ProviderKey.last_used_at.asc().nullsfirst())
                 .first()
             )
-            if keys:
-                return keys.api_key
+            if key:
+                # Least-recently-used ordering only rotates keys if the pick is recorded
+                key.last_used_at = datetime.utcnow()
+                key.usage_count = (key.usage_count or 0) + 1
+                self.db.commit()
+                return key.api_key
         except Exception:
-            pass
+            self.db.rollback()
         return None
 
     def _get_env_key(self, provider: str) -> Optional[str]:

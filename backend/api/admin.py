@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional
-import time
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+import logging
 
 from backend.database.connection import get_db
 from backend.database.models import (
@@ -18,6 +18,7 @@ from backend.api.dependencies import get_current_admin
 from backend.api.schemas import PlanCreate, PlanResponse, CreditInjection
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ==================== Schemas ====================
@@ -86,7 +87,8 @@ async def list_users(
 async def suspend_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    redis_manager: RedisManager = Depends(get_redis_manager),
 ):
     """Suspend a user account."""
     loop = asyncio.get_event_loop()
@@ -94,24 +96,32 @@ async def suspend_user(
     def _suspend():
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            return None, None
+            return None, None, []
         if user.role == UserRole.ADMIN:
-            return user, "admin"
+            return user, "admin", []
         user.is_active = False
         active_rentals = db.query(Rental).filter(
             Rental.user_id == user_id,
             Rental.status == RentalStatus.ACTIVE
         ).all()
+        keys = [r.virtual_key for r in active_rentals]
         for rental in active_rentals:
             rental.status = RentalStatus.SUSPENDED
         db.commit()
-        return user, len(active_rentals)
+        return user, len(active_rentals), keys
 
-    user, result = await loop.run_in_executor(None, _suspend)
+    user, result, keys = await loop.run_in_executor(None, _suspend)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     if result == "admin":
         raise HTTPException(status_code=400, detail="Cannot suspend admin users")
+    # The database status alone does not stop API traffic: the proxy trusts Redis.
+    # Block the user (covers internal keys too), drop every rental key and kill their web session.
+    await redis_manager.block_user(user_id)
+    for key in keys:
+        await redis_manager.delete_virtual_key(key)
+    await redis_manager.delete_user_session(user_id)
+    logger.info(f"Admin {admin.email} suspended user {user.email} ({result} rentals)")
     return {"message": f"User {user.email} suspended", "rentals_suspended": result}
 
 
@@ -119,9 +129,11 @@ async def suspend_user(
 async def activate_user(
     user_id: int,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    redis_manager: RedisManager = Depends(get_redis_manager),
 ):
-    """Reactivate a suspended user account."""
+    """Reactivate a suspended user account. Their suspended rentals stay suspended until
+    an admin resumes each one (POST /rentals/{id}/resume): a refunded rental must not come back."""
     loop = asyncio.get_event_loop()
 
     def _activate():
@@ -135,6 +147,8 @@ async def activate_user(
     user = await loop.run_in_executor(None, _activate)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    await redis_manager.unblock_user(user_id)
+    logger.info(f"Admin {admin.email} activated user {user.email}")
     return {"message": f"User {user.email} activated"}
 
 
@@ -497,6 +511,32 @@ async def suspend_rental(
     return {"message": "Rental suspended", "rental_id": rental_id}
 
 
+@router.post("/rentals/{rental_id}/resume", summary="Resume a paused or suspended rental")
+async def resume_rental(
+    rental_id: int,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+    redis_manager: RedisManager = Depends(get_redis_manager)
+):
+    """Bring a paused or suspended rental back for its remaining time and balance."""
+    from backend.services.virtual_key_service import restore_rental_key
+    loop = asyncio.get_event_loop()
+    rental = await loop.run_in_executor(
+        None, lambda: db.query(Rental).filter(Rental.id == rental_id).first()
+    )
+    if not rental:
+        raise HTTPException(status_code=404, detail="Rental not found")
+    owner = await loop.run_in_executor(None, lambda: db.query(User).filter(User.id == rental.user_id).first())
+    if not owner or not owner.is_active:
+        raise HTTPException(status_code=400, detail="Activate the user before resuming their rental")
+    try:
+        await restore_rental_key(rental, db, redis_manager)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    logger.info(f"Admin {admin.email} resumed rental {rental_id}")
+    return {"message": f"Rental {rental_id} resumed", "rental_id": rental_id}
+
+
 # ==================== Analytics ====================
 
 @router.get("/stats", summary="Platform statistics", description="Returns high-level platform metrics: total users, active rentals, total revenue. Admin only.")
@@ -678,29 +718,31 @@ async def refund_transaction(
     def _fetch_txn_rental():
         txn = db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not txn:
-            return None, None
-        rental = db.query(Rental).filter(
-            Rental.user_id == txn.user_id,
-            Rental.plan_id != None
-        ).order_by(Rental.created_at.desc()).first()
-        return txn, rental
+            return None, None, False
+        # The rental this payment bought. Never guess "the user's latest rental".
+        rental = db.query(Rental).filter(Rental.id == txn.rental_id).first() if txn.rental_id else None
+        already = db.query(Transaction).filter(
+            Transaction.cashfree_order_id == f"refund_{transaction_id}"
+        ).first() is not None
+        return txn, rental, already
 
-    transaction, rental = await loop.run_in_executor(None, _fetch_txn_rental)
+    transaction, rental, already_refunded = await loop.run_in_executor(None, _fetch_txn_rental)
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
+    if transaction.amount <= 0:
+        raise HTTPException(status_code=400, detail="Only a payment can be refunded")
+    if already_refunded:
+        raise HTTPException(status_code=409, detail="This transaction has already been refunded")
 
-    # Attempt Cashfree refund if order ID exists
+    # Ask Cashfree to return the money first. If that fails, change nothing: reporting
+    # "Refund processed" for money that was never returned would be worse than an error.
     cashfree_refund_id = None
     if transaction.cashfree_order_id and not transaction.cashfree_order_id.startswith("refund_"):
+        import httpx
+        from backend.config import settings
+        refund_id = f"ref_{transaction_id}"   # fixed per transaction: Cashfree itself rejects a repeat
         try:
-            import httpx
-            from backend.config import settings
             async with httpx.AsyncClient(timeout=10.0) as client:
-                refund_payload = {
-                    "refund_amount": float(transaction.amount),
-                    "refund_id": f"ref_{transaction_id}_{int(time.time())}",
-                    "refund_note": refund_req.reason,
-                }
                 resp = await client.post(
                     f"{'https://api.cashfree.com/pg' if settings.CASHFREE_ENVIRONMENT == 'production' else 'https://sandbox.cashfree.com/pg'}/orders/{transaction.cashfree_order_id}/refunds",
                     headers={
@@ -709,20 +751,27 @@ async def refund_transaction(
                         "x-api-version": "2023-08-01",
                         "Content-Type": "application/json",
                     },
-                    json=refund_payload,
+                    json={
+                        "refund_amount": float(transaction.amount),
+                        "refund_id": refund_id,
+                        "refund_note": refund_req.reason,
+                    },
                 )
-                if resp.status_code in (200, 201):
-                    cashfree_refund_id = resp.json().get("refund_id")
         except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"Cashfree refund API call failed: {e}")
+            logger.warning(f"Cashfree refund call failed for transaction {transaction_id}: {e}")
+            raise HTTPException(status_code=502, detail="Could not reach the payment provider. Nothing was refunded.")
+        if resp.status_code not in (200, 201):
+            logger.warning(f"Cashfree refund rejected for transaction {transaction_id}: {resp.status_code} {resp.text[:200]}")
+            raise HTTPException(status_code=502, detail="The payment provider rejected the refund. Nothing was refunded.")
+        cashfree_refund_id = resp.json().get("refund_id", refund_id)
 
-    # Suspend the rental if active
+    # Cut off the rental this payment bought, if it is still running
+    rental_suspended = None
     if rental and rental.status == RentalStatus.ACTIVE:
         rental.status = RentalStatus.SUSPENDED
         await redis_manager.delete_virtual_key(rental.virtual_key)
+        rental_suspended = rental.id
 
-        # Release capacity
         plan = await loop.run_in_executor(
             None, lambda: db.query(Plan).filter(Plan.id == rental.plan_id).first()
         )
@@ -731,24 +780,25 @@ async def refund_transaction(
             capacity_mgr = CapacityManager(redis_manager)
             await capacity_mgr.release_capacity(plan.token_cap, plan.rpm_limit)
 
-    # Record refund transaction
+    # Record the refund (and who issued it)
     def _commit_refund():
-        refund_txn = Transaction(
+        db.add(Transaction(
             user_id=transaction.user_id,
+            rental_id=transaction.rental_id,
             amount=-transaction.amount,
-            description=f"Refund: {refund_req.reason}",
-            cashfree_order_id=cashfree_refund_id or f"refund_{transaction_id}"
-        )
-        db.add(refund_txn)
+            description=f"Refund by {admin.email}: {refund_req.reason}",
+            cashfree_order_id=f"refund_{transaction_id}",   # also the duplicate-refund marker
+        ))
         db.commit()
 
     await loop.run_in_executor(None, _commit_refund)
+    logger.info(f"Admin {admin.email} refunded transaction {transaction_id} ({transaction.amount})")
 
     return {
         "message": "Refund processed",
         "original_transaction_id": transaction_id,
         "refund_amount": transaction.amount,
-        "rental_suspended": rental.id if rental and rental.status == RentalStatus.SUSPENDED else None,
+        "rental_suspended": rental_suspended,
         "cashfree_refund_id": cashfree_refund_id,
     }
 
@@ -962,7 +1012,7 @@ async def gateway_models(
     redis_manager: RedisManager = Depends(get_redis_manager),
 ):
     """Return full model catalogue with provider availability and enabled state."""
-    from backend.services.router import get_all_models, infer_provider, get_enabled_model_ids
+    from backend.services.router import get_all_models, infer_provider
     from backend.database.models import ProviderKey
     active_providers = set()
     try:
@@ -970,12 +1020,11 @@ async def gateway_models(
         active_providers = {k.provider.value if hasattr(k.provider, "value") else k.provider for k in keys}
     except Exception:
         pass
-    enabled_ids = await get_enabled_model_ids(redis_manager.redis)
+    disabled_ids = await redis_manager.get_disabled_models()
     models = get_all_models()
     for m in models:
         m["available"] = infer_provider(m["id"]) in active_providers
-        # Empty set means all enabled (default); otherwise check membership
-        m["enabled"] = (len(enabled_ids) == 0) or (m["id"] in enabled_ids)
+        m["enabled"] = m["id"] not in disabled_ids
     return {"models": models, "active_providers": list(active_providers)}
 
 
@@ -985,14 +1034,11 @@ async def enable_gateway_model(
     _admin=Depends(get_current_admin),
     redis_manager: RedisManager = Depends(get_redis_manager),
 ):
-    """Add a model to the enabled set. If the set was empty (all-enabled default), first populate it with all models minus this one, then add this one — net result: all enabled."""
-    from backend.services.router import get_all_models, REDIS_ENABLED_MODELS_KEY
-    rc = redis_manager.redis
-    enabled_ids = await rc.smembers(REDIS_ENABLED_MODELS_KEY)
-    if not enabled_ids:
-        # Set was empty (all-enabled default) — just add this model; keep default behaviour
-        pass
-    await rc.sadd(REDIS_ENABLED_MODELS_KEY, model_id)
+    """Remove a model from the disabled set (everything is enabled by default)."""
+    from backend.services.router import is_supported_model
+    if not is_supported_model(model_id):
+        raise HTTPException(status_code=404, detail="Unknown model")
+    await redis_manager.set_model_disabled(model_id, False)
     return {"model_id": model_id, "enabled": True}
 
 
@@ -1002,16 +1048,11 @@ async def disable_gateway_model(
     _admin=Depends(get_current_admin),
     redis_manager: RedisManager = Depends(get_redis_manager),
 ):
-    """Remove a model from the enabled set. If the set was empty (all-enabled default), first populate it with ALL models, then remove this one."""
-    from backend.services.router import get_all_models, REDIS_ENABLED_MODELS_KEY
-    rc = redis_manager.redis
-    enabled_ids = await rc.smembers(REDIS_ENABLED_MODELS_KEY)
-    if not enabled_ids:
-        # Transition from "all enabled" to "explicit list": add all, then remove this one
-        all_ids = [m["id"] for m in get_all_models()]
-        if all_ids:
-            await rc.sadd(REDIS_ENABLED_MODELS_KEY, *all_ids)
-    await rc.srem(REDIS_ENABLED_MODELS_KEY, model_id)
+    """Add a model to the disabled set. The proxy refuses disabled models."""
+    from backend.services.router import is_supported_model
+    if not is_supported_model(model_id):
+        raise HTTPException(status_code=404, detail="Unknown model")
+    await redis_manager.set_model_disabled(model_id, True)
     return {"model_id": model_id, "enabled": False}
 
 

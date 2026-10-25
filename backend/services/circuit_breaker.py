@@ -1,6 +1,6 @@
 """Circuit breaker service for provider health monitoring."""
-from typing import Dict, Optional
-from datetime import datetime, timedelta
+from typing import Optional
+from backend.config import settings
 from backend.database.redis_manager import RedisManager
 
 
@@ -9,8 +9,8 @@ class CircuitBreakerService:
     
     def __init__(self, redis_manager: RedisManager):
         self.redis = redis_manager
-        self.failure_threshold = 5  # Trip after 5 failures
-        self.timeout_seconds = 60  # Stay open for 60 seconds
+        self.failure_threshold = settings.CIRCUIT_BREAKER_FAILURE_THRESHOLD
+        self.timeout_seconds = settings.CIRCUIT_BREAKER_TIMEOUT_SECONDS
     
     async def is_available(self, provider: str) -> bool:
         """Check if provider is available (circuit not open)."""
@@ -33,11 +33,3 @@ class CircuitBreakerService:
         if count >= self.failure_threshold:
             await self.redis.trip_circuit_breaker(provider, self.timeout_seconds)
     
-    async def get_status(self, provider: str) -> Dict[str, any]:
-        """Get circuit breaker status for provider."""
-        state = await self.redis.get_circuit_breaker_state(provider)
-        return {
-            "provider": provider,
-            "state": state,
-            "available": state != "open"
-        }

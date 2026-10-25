@@ -25,7 +25,7 @@ from backend.services.auth_codes import (
     normalize_email, check_send_allowed, release_send, issue_code, verify_code, issue_token, consume_token,
 )
 from backend.services.google_auth import google_verifier, GoogleTokenError, GoogleKeysUnavailable
-from backend.api.dependencies import get_current_user
+from backend.api.dependencies import get_current_user, rate_limit
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.services.email_service import email_service
 
@@ -69,6 +69,19 @@ async def _issue_session(user: User, redis_manager: RedisManager, remember_me: b
     )
     await redis_manager.set_user_session(user.id, session_id, ttl_seconds=int(lifetime.total_seconds()))
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+LOGIN_MAX_FAILURES = 10            # wrong passwords per email...
+LOGIN_LOCKOUT_SECONDS = 15 * 60    # ...within this window lock further attempts
+
+_DUMMY_HASH: Optional[str] = None
+
+
+def _dummy_hash() -> str:
+    global _DUMMY_HASH
+    if _DUMMY_HASH is None:
+        _DUMMY_HASH = hash_password(secrets.token_urlsafe(16))
+    return _DUMMY_HASH
 
 
 def _check_new_password(password: str) -> None:
@@ -124,7 +137,8 @@ def _create_user(db: Session, email: str, hashed_password: str) -> Optional[User
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="Create account", description="Register a new user account. Returns user info (no token — call /auth/login next).")
-async def register(user_data: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def register(user_data: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db),
+                   _limit=Depends(rate_limit("register", 10, 3600))):
     """Register a new user."""
     if settings.REQUIRE_EMAIL_OTP:
         raise HTTPException(
@@ -183,42 +197,36 @@ async def register(user_data: UserRegister, background_tasks: BackgroundTasks, d
     except Exception:
         pass  # Never block registration over notification failure
 
-    # Create Stripe customer (best-effort — don't block registration)
-    try:
-        import stripe
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-        if stripe.api_key and not stripe.api_key.startswith("sk_test_mock"):
-            customer = stripe.Customer.create(
-                email=user_data.email,
-                metadata={"user_id": str(new_user.id)}
-            )
-            # Could store customer.id on user model if needed
-    except Exception:
-        pass  # Stripe is optional at registration time
-
     return new_user
 
 
 @router.post("/login", response_model=Token, summary="Login", description="Authenticate with email and password. Returns a JWT access token valid for 24 hours. Logging in from a new device automatically invalidates any existing session.")
-async def login(credentials: UserLogin, db: Session = Depends(get_db), redis_manager: RedisManager = Depends(get_redis_manager)):
+async def login(credentials: UserLogin, db: Session = Depends(get_db), redis_manager: RedisManager = Depends(get_redis_manager),
+                _limit=Depends(rate_limit("login", 30, 60))):
     """Login and get JWT token. Enforces single active session per user via Redis."""
-    user = _find_user_by_email(db, credentials.email)
-    if not user:
+    fail_key = f"login_fail:{normalize_email(credentials.email)}"
+    if await redis_manager.hits_in_window(fail_key) >= LOGIN_MAX_FAILURES:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed attempts. Try again in 15 minutes or reset your password.",
+            headers={"Retry-After": str(LOGIN_LOCKOUT_SECONDS)},
         )
+    user = _find_user_by_email(db, credentials.email)
 
-    # bcrypt is CPU-bound (~100ms) — run in thread pool to avoid blocking the event loop
+    # bcrypt is CPU-bound (~100ms) — run in thread pool to avoid blocking the event loop.
+    # An unknown email is hashed against a dummy too, so response time doesn't reveal
+    # which emails have accounts.
     loop = asyncio.get_event_loop()
     password_ok = await loop.run_in_executor(
-        None, partial(verify_password, credentials.password, user.hashed_password)
+        None, partial(verify_password, credentials.password, user.hashed_password if user else _dummy_hash())
     )
-    if not password_ok:
+    if not user or not password_ok:
+        await redis_manager.hit_limit(fail_key, LOGIN_MAX_FAILURES, LOGIN_LOCKOUT_SECONDS)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
+    await redis_manager.redis.delete(fail_key)
 
     if not user.is_active:
         raise HTTPException(
@@ -286,7 +294,8 @@ def log_auth_setup_status() -> None:
              summary="Send signup code",
              description="Email a 6-digit verification code (valid 10 minutes). The response is the same whether or not an account already exists; existing accounts get a sign-in notice instead of a code.")
 async def signup_request_otp(payload: SignupOtpRequest, db: Session = Depends(get_db),
-                             redis_manager: RedisManager = Depends(get_redis_manager)):
+                             redis_manager: RedisManager = Depends(get_redis_manager),
+                             _limit=Depends(rate_limit("signup_otp", 10, 600))):
     email = normalize_email(payload.email)
     if _is_disposable_email(email):
         raise HTTPException(
@@ -369,7 +378,8 @@ async def signup_complete(payload: SignupComplete, background_tasks: BackgroundT
              summary="Request password reset",
              description="Email a single-use reset link (valid 30 minutes) if an account exists. The response never reveals whether it does.")
 async def password_forgot(payload: PasswordForgotRequest, db: Session = Depends(get_db),
-                          redis_manager: RedisManager = Depends(get_redis_manager)):
+                          redis_manager: RedisManager = Depends(get_redis_manager),
+                          _limit=Depends(rate_limit("password_forgot", 10, 600))):
     email = normalize_email(payload.email)
     _require_email_delivery()
     redis = redis_manager.redis

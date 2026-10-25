@@ -23,12 +23,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+WEAK_JWT_SECRETS = {"change-me-in-production", "secret", "test-secret-key", "test-jwt-secret"}
+
+
+def _check_jwt_secret() -> None:
+    """A guessable JWT secret lets anyone mint an admin token. Refuse to start in production
+    with one; elsewhere just warn."""
+    secret = settings.JWT_SECRET
+    if len(secret) >= 32 and secret.lower() not in WEAK_JWT_SECRETS:
+        return
+    message = "JWT_SECRET is weak (use at least 32 random characters, e.g. `openssl rand -hex 32`)"
+    if settings.ENVIRONMENT == "production":
+        raise RuntimeError(message)
+    logger.warning(message)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     logger.info("🚀 Starting application...")
     
+    _check_jwt_secret()
+
     # Create database tables
     Base.metadata.create_all(bind=engine)
     logger.info("✅ Database tables created")
@@ -44,9 +61,6 @@ async def lifespan(app: FastAPI):
             ("token_budget",      "INTEGER DEFAULT 0", "provider_keys"),
             ("tokens_consumed",   "INTEGER DEFAULT 0", "provider_keys"),
             # Gateway additions
-            ("provider",          "VARCHAR(50)",  "usage_logs"),
-            ("guardrail_log",     "TEXT",         "usage_logs"),
-            ("cache_hit",         "BOOLEAN DEFAULT FALSE", "usage_logs"),
             # Per-user gateway config
             ("allowed_models",       "TEXT DEFAULT '[]'", "users"),
             ("rpm_limit_override",   "INTEGER",           "users"),
@@ -58,8 +72,22 @@ async def lifespan(app: FastAPI):
                     conn.execute(text(f'ALTER TABLE "{tbl}" ADD COLUMN "{col}" {col_type}'))
                     conn.commit()
                     logger.info(f"Migrated: {tbl}.{col} added")
-            except Exception:
-                pass  # Table may not exist yet — create_all handles it
+            except Exception as e:
+                logger.warning(f"Migration of {tbl}.{col} skipped: {e}")  # table may not exist yet
+
+        # Indexes: the first makes a paid order unique at the database level (the webhook's
+        # lock + lookup is the first line of defence); the rest serve the monitors' queries.
+        for name, ddl in [
+            ("uq_transactions_cashfree_order_id", "CREATE UNIQUE INDEX IF NOT EXISTS uq_transactions_cashfree_order_id ON transactions (cashfree_order_id)"),
+            ("ix_usage_logs_rental_created", "CREATE INDEX IF NOT EXISTS ix_usage_logs_rental_created ON usage_logs (rental_id, created_at)"),
+            ("ix_usage_logs_created_at", "CREATE INDEX IF NOT EXISTS ix_usage_logs_created_at ON usage_logs (created_at)"),
+            ("ix_rentals_status_expires", "CREATE INDEX IF NOT EXISTS ix_rentals_status_expires ON rentals (status, expires_at)"),
+        ]:
+            try:
+                conn.execute(text(ddl))
+                conn.commit()
+            except Exception as e:
+                logger.warning(f"Index {name} not created: {e}")
     
     # Seed admin user (idempotent — skips if already exists)
     from backend.database.models import User, UserRole
@@ -85,21 +113,15 @@ async def lifespan(app: FastAPI):
     # Report which sign-in features are configured (setting names only, never values)
     auth.log_auth_setup_status()
     
-    # Start spending monitor background worker
-    asyncio.create_task(start_spending_monitor())
-    logger.info("✅ Spending monitor started")
-    
-    # Start expiration monitor background worker
-    asyncio.create_task(expiration_monitor.start())
-    logger.info("✅ Expiration monitor started")
-    
-    # Start capacity reconciler
-    asyncio.create_task(capacity_reconciler.start())
-    logger.info("✅ Capacity reconciler started")
-    
-    # Start cost protection worker
-    asyncio.create_task(cost_protection_worker.start())
-    logger.info("✅ Cost protection worker started")
+    # Background workers. The task handles are kept: the event loop only holds weak
+    # references, so an unreferenced task can be garbage-collected mid-run.
+    app.state.worker_tasks = [
+        asyncio.create_task(start_spending_monitor()),
+        asyncio.create_task(expiration_monitor.start()),
+        asyncio.create_task(capacity_reconciler.start()),
+        asyncio.create_task(cost_protection_worker.start()),
+    ]
+    logger.info("✅ Workers started: spending, expiration, capacity reconciler, cost protection")
     
     yield
     

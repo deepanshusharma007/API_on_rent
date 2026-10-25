@@ -20,7 +20,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         method = request.method
         path = request.url.path
         client_ip = request.client.host if request.client else "unknown"
-        user_agent = request.headers.get("user-agent", "")[:80]
 
         # Add request ID to state for downstream use
         request.state.request_id = request_id

@@ -78,7 +78,7 @@ class CostProtectionWorker:
 
     async def _notify_admin(self, level: str, message: str, utilization: float,
                             spent: float, budget: float):
-        """Send admin notification via multiple channels."""
+        """Notify the admin: Redis alert for the dashboard, audit log file, email."""
         alert_data = {
             "level": level,
             "message": message,
@@ -97,45 +97,7 @@ class CostProtectionWorker:
         except Exception as e:
             logger.debug(f"Redis alert store failed: {e}")
 
-        # 2. Store in DB via SpendingAlert (offloaded to thread pool)
-        try:
-            from backend.database.connection import SessionLocal
-            from backend.database.models import SpendingAlert
-
-            def _store_alert():
-                db = SessionLocal()
-                try:
-                    alert = SpendingAlert(
-                        user_id=0,  # System-level alert
-                        amount_usd=spent,
-                        window_minutes=60,
-                        was_suspended=level == "critical",
-                    )
-                    db.add(alert)
-                    db.commit()
-                finally:
-                    db.close()
-
-            await asyncio.get_event_loop().run_in_executor(None, _store_alert)
-        except Exception as e:
-            logger.debug(f"DB alert store failed: {e}")
-
-        # 3. Webhook notification (if configured)
-        webhook_url = getattr(settings, 'ADMIN_WEBHOOK_URL', None)
-        if webhook_url:
-            try:
-                import aiohttp
-                async with aiohttp.ClientSession() as session:
-                    await session.post(
-                        webhook_url,
-                        json=alert_data,
-                        timeout=aiohttp.ClientTimeout(total=5)
-                    )
-                logger.info(f"Webhook notification sent to {webhook_url}")
-            except Exception as e:
-                logger.warning(f"Webhook notification failed: {e}")
-
-        # 4. Log to file for audit trail
+        # 2. Log to file for audit trail
         try:
             import os
             log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
@@ -146,17 +108,17 @@ class CostProtectionWorker:
         except Exception:
             pass
 
-        # 5. Email notification to admin
+        # 3. Email notification to admin
         try:
             from backend.services.email_service import email_service
             admin_email = getattr(settings, 'ADMIN_EMAIL', None)
             if admin_email:
-                email_service.send_spending_alert(
+                await asyncio.get_event_loop().run_in_executor(None, lambda: email_service.send_spending_alert(
                     email=admin_email,
                     utilization_pct=utilization * 100,
                     spent=spent,
-                    budget=budget
-                )
+                    budget=budget,
+                ))
         except Exception as e:
             logger.debug(f"Admin email notification failed: {e}")
 

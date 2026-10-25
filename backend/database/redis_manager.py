@@ -1,7 +1,7 @@
 """Redis operations manager for caching, rate limiting, and state management."""
 import json
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+from datetime import datetime
 from backend.config import settings
 
 # Import Redis (real or fake based on config)
@@ -9,6 +9,13 @@ if settings.USE_FAKE_REDIS:
     import fakeredis.aioredis as redis
 else:
     import redis.asyncio as redis
+
+
+BALANCE_TTL_SECONDS = 2 * 86400
+
+# Admin kill-switch: models in this set are refused by the proxy. A "disabled" set (rather
+# than an "enabled" one) means an empty or missing set is safe: everything is on by default.
+DISABLED_MODELS_KEY = "gateway:disabled_models"
 
 
 class RedisManager:
@@ -50,16 +57,47 @@ class RedisManager:
         balance = await self.redis.get(key)
         return int(balance) if balance else 0
     
+    async def get_live_balance(self, rental_id: int, fallback: int) -> int:
+        """Current balance, or `fallback` when Redis no longer has one for this rental."""
+        value = await self.redis.get(f"balance:{rental_id}")
+        return int(value) if value is not None else fallback
+
     async def set_token_balance(self, rental_id: int, balance: int):
-        """Set token balance for rental."""
+        """Set token balance for rental. Expires after 2 days (rentals last at most 24h)
+        so balances of finished rentals don't pile up in Redis."""
         key = f"balance:{rental_id}"
-        await self.redis.set(key, balance)
+        await self.redis.set(key, balance, ex=BALANCE_TTL_SECONDS)
     
     async def deduct_tokens(self, rental_id: int, tokens: int) -> int:
         """Atomically deduct tokens and return new balance."""
         key = f"balance:{rental_id}"
         return await self.redis.decrby(key, tokens)
     
+    # ==================== Disabled Models ====================
+
+    async def get_disabled_models(self) -> set:
+        """Model IDs the admin has switched off."""
+        return set(await self.redis.smembers(DISABLED_MODELS_KEY))
+
+    async def set_model_disabled(self, model_id: str, disabled: bool):
+        if disabled:
+            await self.redis.sadd(DISABLED_MODELS_KEY, model_id)
+        else:
+            await self.redis.srem(DISABLED_MODELS_KEY, model_id)
+
+    # ==================== Suspended Users ====================
+
+    async def block_user(self, user_id: int):
+        """Mark a user suspended. The proxy refuses all of their keys (rental and internal)
+        immediately, without having to find and delete each key."""
+        await self.redis.set(f"blocked_user:{user_id}", "1")
+
+    async def unblock_user(self, user_id: int):
+        await self.redis.delete(f"blocked_user:{user_id}")
+
+    async def is_user_blocked(self, user_id: int) -> bool:
+        return bool(await self.redis.exists(f"blocked_user:{user_id}"))
+
     # ==================== Single-Device Session Management ====================
 
     async def set_user_session(self, user_id: int, session_id: str, ttl_seconds: int = 86400):
@@ -83,27 +121,35 @@ class RedisManager:
     async def check_rate_limit(self, rental_id: int, rpm_limit: int) -> bool:
         """Check if request is within RPM limit. Returns True if allowed.
 
-        Uses atomic INCR + EXPIRE pipeline to avoid check-then-set race conditions.
+        Fixed 60s window: the expiry is set only when the window opens, so a
+        client that keeps sending cannot keep the counter alive forever.
         """
-        key = f"rpm:{rental_id}"
+        return await self.hit_limit(f"rpm:{rental_id}", rpm_limit, 60)
+
+    async def hit_limit(self, key: str, limit: int, window_seconds: int) -> bool:
+        """Count one hit in a fixed window. Returns True while the count is within `limit`."""
         pipe = self.redis.pipeline()
         pipe.incr(key)
-        pipe.expire(key, 60)
-        results = await pipe.execute()
-        current_count = results[0]
-        return current_count <= rpm_limit
+        pipe.ttl(key)
+        current_count, ttl = await pipe.execute()
+        if current_count == 1 or ttl < 0:
+            # New window, or a key that lost its expiry (crash between INCR and EXPIRE).
+            await self.redis.expire(key, window_seconds)
+        return current_count <= limit
+
+    async def hits_in_window(self, key: str) -> int:
+        """Current count of a fixed-window counter without adding a hit."""
+        value = await self.redis.get(key)
+        return int(value) if value else 0
     
     # ==================== IP Pinning ====================
     
-    async def get_pinned_ip(self, rental_id: int) -> Optional[str]:
-        """Get pinned IP address for rental."""
+    async def pin_ip(self, rental_id: int, ip_address: str) -> str:
+        """Atomically pin the IP on first use. Returns the IP the key is pinned to, which
+        is `ip_address` for the first caller, so two parallel first requests can't both win."""
         key = f"ip:{rental_id}"
+        await self.redis.set(key, ip_address, nx=True, ex=BALANCE_TTL_SECONDS)
         return await self.redis.get(key)
-    
-    async def set_pinned_ip(self, rental_id: int, ip_address: str):
-        """Pin IP address to rental."""
-        key = f"ip:{rental_id}"
-        await self.redis.set(key, ip_address)
     
     # ==================== Circuit Breaker State ====================
     
@@ -127,7 +173,8 @@ class RedisManager:
         """Increment failure count for provider. Returns new count."""
         key = f"failures:{provider}"
         count = await self.redis.incr(key)
-        await self.redis.expire(key, 300)  # Reset after 5 minutes
+        if count == 1 or await self.redis.ttl(key) < 0:
+            await self.redis.expire(key, 300)  # Window of 5 minutes from the first failure
         return count
     
     async def reset_failure_count(self, provider: str):
@@ -135,97 +182,8 @@ class RedisManager:
         key = f"failures:{provider}"
         await self.redis.delete(key)
     
-    # ==================== Semantic Cache ====================
+    # ==================== Response Cache ====================
     
-    async def get_cached_response(self, prompt_hash: str) -> Optional[Dict[str, Any]]:
-        """Get cached AI response by prompt hash."""
-        key = f"cache:{prompt_hash}"
-        data = await self.redis.get(key)
-        return json.loads(data) if data else None
-    
-    async def set_cached_response(self, prompt_hash: str, response_data: Dict[str, Any], ttl_seconds: int = 300):
-        """Cache AI response with TTL."""
-        key = f"cache:{prompt_hash}"
-        await self.redis.setex(key, ttl_seconds, json.dumps(response_data))
-    
-    async def store_prompt_embedding(self, prompt_hash: str, embedding: List[float]):
-        """Store prompt embedding for similarity search."""
-        key = f"embedding:{prompt_hash}"
-        await self.redis.set(key, json.dumps(embedding))
-    
-    async def get_all_prompt_embeddings(self) -> Dict[str, List[float]]:
-        """Get all stored prompt embeddings for similarity comparison.
-
-        Uses a pipeline batch GET instead of one round-trip per key.
-        """
-        pattern = "embedding:*"
-        all_keys = []
-
-        cursor = 0
-        while True:
-            cursor, keys = await self.redis.scan(cursor, match=pattern, count=100)
-            all_keys.extend(keys)
-            if cursor == 0:
-                break
-
-        if not all_keys:
-            return {}
-
-        # Batch fetch all values in a single pipeline round-trip
-        pipe = self.redis.pipeline()
-        for key in all_keys:
-            pipe.get(key)
-        values = await pipe.execute()
-
-        embeddings = {}
-        for key, data in zip(all_keys, values):
-            if data:
-                prompt_hash = (key.decode('utf-8') if isinstance(key, bytes) else key).replace('embedding:', '')
-                embeddings[prompt_hash] = json.loads(data)
-
-        return embeddings
-    
-    # ==================== Spending Tracking ====================
-    
-    async def add_spending(self, user_id: int, amount_usd: float):
-        """Add spending to user's rolling window."""
-        key = f"spending:{user_id}"
-        timestamp = datetime.utcnow().timestamp()
-        await self.redis.zadd(key, {str(timestamp): amount_usd})
-        await self.redis.expire(key, 600)  # 10 minutes
-    
-    async def get_spending_in_window(self, user_id: int, window_minutes: int = 10) -> float:
-        """Get total spending in the last N minutes."""
-        key = f"spending:{user_id}"
-        cutoff = (datetime.utcnow() - timedelta(minutes=window_minutes)).timestamp()
-        
-        # Remove old entries
-        await self.redis.zremrangebyscore(key, 0, cutoff)
-        
-        # Sum remaining entries
-        entries = await self.redis.zrange(key, 0, -1, withscores=True)
-        total = sum(score for _, score in entries)
-        return total
-    
-    # ==================== Session Management ====================
-    
-    async def set_session(self, session_id: str, user_data: Dict[str, Any], ttl_seconds: int = 86400):
-        """Set user session data."""
-        key = f"session:{session_id}"
-        await self.redis.setex(key, ttl_seconds, json.dumps(user_data))
-    
-    async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get user session data."""
-        key = f"session:{session_id}"
-        data = await self.redis.get(key)
-        return json.loads(data) if data else None
-    
-    async def delete_session(self, session_id: str):
-        """Delete user session."""
-        key = f"session:{session_id}"
-        await self.redis.delete(key)
-
-
 # Global Redis manager instance (initialized in main.py)
 redis_manager: Optional[RedisManager] = None
 redis_client = None
@@ -253,7 +211,6 @@ async def init_redis():
 
 async def close_redis():
     """Close Redis connection."""
-    global redis_client
     if redis_client:
         await redis_client.close()
 

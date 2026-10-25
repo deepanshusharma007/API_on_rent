@@ -269,7 +269,7 @@ def test_cashfree_checkout_still_available_to_normal_user(app, seed, monkeypatch
     monkeypatch.setattr(payment.httpx, "AsyncClient", FakeCashfree)
 
     with TestClient(app) as client:
-        resp = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "gateway"})
+        resp = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "openai"})
 
     assert resp.status_code == 200, resp.text
     assert resp.json()["payment_session_id"] == "sess_test"
@@ -608,3 +608,109 @@ def test_redis_unavailable_returns_retryable_error(app, db, redis_mgr, order_id,
     assert resp.status_code == 503
     assert "redis down" not in resp.text
     assert _counts(db) == (0, 0)
+
+
+# -- 5: review fixes: paid amount, checkout lock, order ownership -----------------
+
+def _body_with_amount(order_id: str, amount, currency: str = "INR") -> bytes:
+    return json.dumps({
+        "type": "PAYMENT_SUCCESS_WEBHOOK",
+        "data": {"order": {"order_id": order_id, "order_amount": amount, "order_currency": currency},
+                 "payment": {"cf_payment_id": 1, "payment_status": "SUCCESS"}},
+    }).encode()
+
+
+@pytest.mark.parametrize("amount,currency", [(1.0, "INR"), (499.0, "USD")], ids=["underpaid", "wrong-currency"])
+def test_webhook_with_wrong_amount_or_currency_creates_no_rental(app, db, order_id, amount, currency):
+    body = _body_with_amount(order_id, amount, currency)
+
+    with TestClient(app) as client:
+        resp = _post(client, body, _signed_headers(body))
+
+    assert resp.status_code == 200 and resp.json()["status"] == "rejected"   # acknowledged: a retry can't fix it
+    assert _counts(db) == (0, 0)
+
+
+def test_webhook_accepts_the_amount_the_order_was_created_for_even_if_price_changed(app, db, redis_mgr, seed, order_id):
+    """The customer paid 399 when the plan cost 399; the price is 499 by the time the webhook arrives."""
+    body = _body_with_amount(order_id, 399.0)
+
+    with TestClient(app) as client:
+        _run(client, redis_mgr.redis.set(f"order_amount:{order_id}", "399.0"))
+        resp = _post(client, body, _signed_headers(body))
+
+    assert resp.status_code == 200 and resp.json()["status"] == "success", resp.text
+    assert db.query(Transaction).one().amount == 399.0       # what was actually paid
+
+
+def test_checkout_rejects_unknown_provider(app, seed):
+    user, _admin, plan = seed
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    with TestClient(app) as client:
+        resp = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "a_b_c"})
+
+    assert resp.status_code == 400
+
+
+def test_checkout_failure_does_not_block_retry_and_hides_provider_error(app, seed, monkeypatch):
+    user, _admin, plan = seed
+    app.dependency_overrides[get_current_user] = lambda: user
+    outcomes = iter([500, 200])
+
+    class FakeCashfree:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers=None, json=None):
+            if next(outcomes) == 500:
+                return httpx.Response(500, text="secret-internal-cashfree-detail")
+            return httpx.Response(200, json={"payment_session_id": "sess", "order_id": json["order_id"], "cf_order_id": "1"})
+    monkeypatch.setattr(payment.httpx, "AsyncClient", FakeCashfree)
+
+    with TestClient(app) as client:
+        first = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "openai"})
+        retry = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "openai"})
+        double_click = client.post("/api/checkout/session", json={"plan_id": plan.id, "provider": "openai"})
+
+    assert first.status_code == 502 and "secret-internal" not in first.text
+    assert retry.status_code == 200                      # the failed attempt released the lock
+    assert double_click.status_code == 429               # a real duplicate is still stopped
+
+
+def test_verify_order_only_for_own_orders(app, seed, monkeypatch):
+    user, admin, plan = seed
+    app.dependency_overrides[get_current_user] = lambda: user
+    reached_cashfree = []
+
+    class FakeCashfree:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def get(self, url, headers=None):
+            reached_cashfree.append(url)
+            return httpx.Response(200, json={"order_status": "PAID", "order_amount": 499.0})
+    monkeypatch.setattr(payment.httpx, "AsyncClient", FakeCashfree)
+
+    with TestClient(app) as client:
+        mine = client.get(f"/api/checkout/verify/order_{plan.id}_{user.id}_openai_1700000000")
+        theirs = client.get(f"/api/checkout/verify/order_{plan.id}_{admin.id}_openai_1700000000")
+        garbage = client.get("/api/checkout/verify/not-an-order")
+
+    assert mine.status_code == 200 and mine.json()["order_status"] == "PAID"
+    assert theirs.status_code == 404 and garbage.status_code == 404
+    assert len(reached_cashfree) == 1                    # others' orders never reach Cashfree
+
+
+def test_invoice_shows_what_was_paid_not_the_current_price(app, db, redis_mgr, seed, order_id):
+    user, _admin, plan = seed
+    app.dependency_overrides[get_current_user] = lambda: user
+    body = _body_with_amount(order_id, 499.0)
+    with TestClient(app) as client:
+        assert _post(client, body, _signed_headers(body)).status_code == 200
+        plan.price = 999.0                               # price changes after the purchase
+        db.commit()
+        rental = db.query(Rental).one()
+        invoice = client.get(f"/api/invoice/{rental.id}")
+
+    assert invoice.status_code == 200 and invoice.json()["amount_inr"] == 499.0

@@ -10,6 +10,23 @@ import time
 BASE_URL = "http://localhost:8000"
 
 
+def _signed_in_user(prefix):
+    """Register through the legacy endpoint and log in; returns (email, access_token).
+
+    Legacy POST /auth/register has no email check, so it is closed by default
+    (REQUIRE_EMAIL_OTP=true). Start the backend with REQUIRE_EMAIL_OTP=false to run the
+    tests that need a fresh account; they are skipped otherwise.
+    """
+    email = f"{prefix}_{int(time.time())}@test.com"
+    registered = requests.post(f"{BASE_URL}/auth/register", json={"email": email, "password": "testpass1234"})
+    if registered.status_code not in (201, 400):
+        pytest.skip(f"Legacy /auth/register returned {registered.status_code} (closed by REQUIRE_EMAIL_OTP, "
+                    "or rate limited); start the backend with REQUIRE_EMAIL_OTP=false to run this")
+    login = requests.post(f"{BASE_URL}/auth/login", json={"email": email, "password": "testpass1234"})
+    assert login.status_code == 200
+    return email, login.json()["access_token"]
+
+
 class TestEndToEndFlow:
     """Full user flow: register → login → browse plans → purchase → use API → check dashboard."""
 
@@ -36,19 +53,13 @@ class TestEndToEndFlow:
             "email": f"e2etest_{int(time.time())}@test.com",
             "password": "testpass1234"
         })
-        # 201 = new user, 400 = already exists (both acceptable in test)
-        assert r.status_code in [201, 400]
+        # 201 = new user, 400 = already exists, 403 = legacy registration closed (the default),
+        # 429 = rate limited (10 per hour per IP)
+        assert r.status_code in [201, 400, 403, 429]
 
     def test_03_login_user(self):
         """Login and get JWT token."""
-        # First register
-        email = f"e2e_login_{int(time.time())}@test.com"
-        requests.post(f"{BASE_URL}/auth/register", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-
-        # Then login
+        email, _token = _signed_in_user("e2e_login")
         r = requests.post(f"{BASE_URL}/auth/login", json={
             "email": email,
             "password": "testpass1234"
@@ -65,16 +76,7 @@ class TestEndToEndFlow:
 
     def test_05_get_me_with_token(self):
         """GET /auth/me with valid token returns user data."""
-        email = f"e2e_me_{int(time.time())}@test.com"
-        requests.post(f"{BASE_URL}/auth/register", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        login = requests.post(f"{BASE_URL}/auth/login", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        token = login.json()["access_token"]
+        email, token = _signed_in_user("e2e_me")
 
         r = requests.get(f"{BASE_URL}/auth/me", headers={
             "Authorization": f"Bearer {token}"
@@ -90,48 +92,23 @@ class TestEndToEndFlow:
         data = r.json()
         assert isinstance(data, list)
 
-    def test_07_purchase_rental(self):
-        """Purchase a rental and get virtual key."""
-        # Register + login
-        email = f"e2e_buy_{int(time.time())}@test.com"
-        requests.post(f"{BASE_URL}/auth/register", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        login = requests.post(f"{BASE_URL}/auth/login", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        token = login.json()["access_token"]
-
-        # Get plans
+    def test_07_direct_purchase_is_admin_only(self):
+        """Customers buy through Cashfree checkout; direct rental creation is admin-only."""
+        _email, token = _signed_in_user("e2e_buy")
         plans = requests.get(f"{BASE_URL}/api/plans").json()
         if not plans:
             pytest.skip("No plans available")
 
-        # Purchase
         r = requests.post(f"{BASE_URL}/api/rentals/purchase", json={
             "plan_id": plans[0]["id"],
             "payment_method_id": "pm_test_e2e"
         }, headers={"Authorization": f"Bearer {token}"})
 
-        assert r.status_code == 201
-        data = r.json()
-        assert "virtual_key" in data
-        assert data["virtual_key"].startswith("vk_")
+        assert r.status_code == 403
 
     def test_08_active_rentals(self):
         """GET /api/rentals/active returns user's rentals."""
-        email = f"e2e_active_{int(time.time())}@test.com"
-        requests.post(f"{BASE_URL}/auth/register", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        login = requests.post(f"{BASE_URL}/auth/login", json={
-            "email": email,
-            "password": "testpass1234"
-        })
-        token = login.json()["access_token"]
+        _email, token = _signed_in_user("e2e_active")
 
         r = requests.get(f"{BASE_URL}/api/rentals/active", headers={
             "Authorization": f"Bearer {token}"

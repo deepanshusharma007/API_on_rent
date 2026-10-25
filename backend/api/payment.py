@@ -6,6 +6,7 @@ import base64
 import logging
 import secrets
 import time
+import html as html_lib
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
@@ -13,7 +14,7 @@ from redis.exceptions import WatchError
 from sqlalchemy.orm import Session
 
 from backend.database.connection import get_db
-from backend.database.models import Plan, Transaction, User
+from backend.database.models import Plan, Rental, Transaction, User
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.api.dependencies import get_current_user
 from backend.services.virtual_key_service import create_rental
@@ -25,6 +26,13 @@ router = APIRouter()
 
 CASHFREE_API_VERSION = "2023-08-01"
 WEBHOOK_LOCK_SECONDS = 120  # upper bound for processing one webhook delivery
+CHECKOUT_LOCK_SECONDS = 60  # blocks a double-click, not a retry after a cancelled payment
+ORDER_AMOUNT_TTL_SECONDS = 3 * 86400
+PROVIDERS = ("openai", "anthropic", "gemini")
+
+
+def _order_amount_key(order_id: str) -> str:
+    return f"order_amount:{order_id}"
 
 
 def _cashfree_base_url() -> str:
@@ -122,6 +130,11 @@ async def create_checkout_session(
     redis_manager: RedisManager = Depends(get_redis_manager)
 ):
     """Create a Cashfree payment order and return payment_session_id for checkout."""
+    # The provider is part of the order id the webhook parses (split on "_"), so only the
+    # known names are accepted: anything else could corrupt it.
+    if request.provider not in PROVIDERS:
+        raise HTTPException(status_code=400, detail=f"Provider must be one of: {', '.join(PROVIDERS)}")
+
     loop = asyncio.get_event_loop()
     plan = await loop.run_in_executor(
         None, lambda: db.query(Plan).filter(Plan.id == request.plan_id, Plan.is_active == True).first()
@@ -129,20 +142,28 @@ async def create_checkout_session(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    # Idempotency lock: prevent duplicate orders for same user+plan+provider within 5 minutes.
+    # Idempotency lock: stops a double-click from creating two orders for the same
+    # user+plan+provider. Released again if this attempt fails, so the user can retry.
     lock_key = f"checkout_lock:{current_user.id}:{request.plan_id}:{request.provider}"
+    lock_held = False
     try:
-        redis = await redis_manager.get_client()
-        acquired = await redis.set(lock_key, "1", nx=True, ex=300)
-        if not acquired:
+        lock_held = bool(await redis_manager.redis.set(lock_key, "1", nx=True, ex=CHECKOUT_LOCK_SECONDS))
+        if not lock_held:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="A payment for this plan is already in progress. Please complete or wait 5 minutes before trying again.",
+                detail="A payment for this plan is already being created. Please wait a moment and try again.",
             )
     except HTTPException:
         raise
     except Exception as e:
         logger.warning(f"Redis lock unavailable, proceeding without idempotency guard: {e}")
+
+    async def _release_lock():
+        if lock_held:
+            try:
+                await redis_manager.redis.delete(lock_key)
+            except Exception:
+                pass  # it expires on its own
 
     # Capacity check before accepting payment
     try:
@@ -153,6 +174,7 @@ async def create_checkout_session(
             estimated_cost=plan.price * 0.4
         )
         if not capacity_check["allowed"]:
+            await _release_lock()
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"This plan is temporarily sold out. {capacity_check['reason']}"
@@ -192,18 +214,27 @@ async def create_checkout_session(
 
         if resp.status_code not in (200, 201):
             logger.error(f"Cashfree order creation failed: {resp.status_code} {resp.text}")
+            await _release_lock()
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Payment service error: {resp.text}"
+                detail="The payment service could not create the order. Please try again."
             )
 
         data = resp.json()
         if "payment_session_id" not in data:
             logger.error(f"Cashfree response missing payment_session_id: {data}")
+            await _release_lock()
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Payment service returned unexpected response: {data.get('message', str(data))}"
+                detail="The payment service returned an unexpected response. Please try again."
             )
+        # Remember what this order should cost, so the webhook can verify the paid amount
+        # even if the plan's price changes while the customer is paying.
+        try:
+            await redis_manager.redis.set(
+                _order_amount_key(order_id), str(round(float(plan.price), 2)), ex=ORDER_AMOUNT_TTL_SECONDS)
+        except Exception as e:
+            logger.warning(f"Could not store expected amount for order {order_id}: {e}")
         return CheckoutResponse(
             payment_session_id=data["payment_session_id"],
             order_id=data.get("order_id", order_id),
@@ -214,15 +245,17 @@ async def create_checkout_session(
         raise
     except httpx.RequestError as e:
         logger.error(f"Cashfree request error: {e}")
+        await _release_lock()
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Payment service unavailable"
         )
     except Exception as e:
         logger.error(f"Unexpected checkout error: {e}", exc_info=True)
+        await _release_lock()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Checkout failed: {str(e)}"
+            detail="Checkout failed. Please try again."
         )
 
 
@@ -267,7 +300,6 @@ async def cashfree_webhook(
     payment_data = data.get("data", {}).get("payment", {})
 
     order_id = order_data.get("order_id", "")
-    cf_payment_id = str(payment_data.get("cf_payment_id", ""))
     payment_status = payment_data.get("payment_status", "")
 
     if payment_status != "SUCCESS":
@@ -313,6 +345,25 @@ async def cashfree_webhook(
             logger.error(f"Plan {plan_id} not found for paid order {order_id}")
             raise HTTPException(status_code=500, detail="Payment processing failed, will retry")
 
+        # The signature proves the webhook is Cashfree's, not that the customer paid the right
+        # amount. Check what was paid against what this order was created for.
+        paid_amount = order_data.get("order_amount")
+        currency = order_data.get("order_currency", "INR")
+        if paid_amount is not None:
+            try:
+                stored = await redis_manager.redis.get(_order_amount_key(order_id))
+                expected = float(stored) if stored else round(float(plan.price), 2)
+                if currency != "INR" or abs(float(paid_amount) - expected) > 0.01:
+                    # Retrying can't fix a wrong amount, so acknowledge it (200) and flag it loudly
+                    logger.critical(
+                        f"Payment amount mismatch for order {order_id}: paid {paid_amount} {currency}, "
+                        f"expected {expected} INR. No rental created; review in Cashfree."
+                    )
+                    return {"status": "rejected", "message": "Amount mismatch"}
+            except (TypeError, ValueError):
+                logger.critical(f"Unreadable amount in webhook for order {order_id}: {paid_amount!r}")
+                return {"status": "rejected", "message": "Invalid amount"}
+
         # Activate first; the payment is recorded only once the rental exists, so a failed
         # activation is never mistaken for a completed order when Cashfree redelivers.
         try:
@@ -333,7 +384,7 @@ async def cashfree_webhook(
             transaction = Transaction(
                 user_id=user_id,
                 rental_id=rental_id,
-                amount=plan.price,
+                amount=float(paid_amount) if paid_amount is not None else plan.price,
                 description=f"Cashfree payment: {plan.name}",
                 cashfree_order_id=order_id,
             )
@@ -420,7 +471,14 @@ async def verify_order_status(
     order_id: str,
     current_user: User = Depends(get_current_user),
 ):
-    """Verify Cashfree order payment status (called after redirect)."""
+    """Verify Cashfree order payment status (called after redirect). Only your own orders."""
+    try:
+        _plan_id, order_user_id, _provider = _parse_order_id(order_id)
+    except (IndexError, ValueError):
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order_user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Order not found")   # same answer as a missing order
+
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
@@ -438,11 +496,20 @@ async def verify_order_status(
             "order_amount": data.get("order_amount"),
         }
 
-    except httpx.RequestError as e:
+    except httpx.RequestError:
         raise HTTPException(status_code=502, detail="Payment service unavailable")
 
 
 # ==================== INVOICE / RECEIPT GENERATION ====================
+
+def _paid_amount(db: Session, rental: Rental, plan: Plan) -> float:
+    """What the customer actually paid for this rental (the plan's price may have changed
+    since); falls back to the plan's price for rentals without a payment record."""
+    txn = db.query(Transaction).filter(
+        Transaction.rental_id == rental.id, Transaction.amount > 0
+    ).order_by(Transaction.id).first()
+    return float(txn.amount) if txn else float(plan.price)
+
 
 class InvoiceResponse(BaseModel):
     invoice_number: str
@@ -474,11 +541,11 @@ async def get_invoice(
             Rental.user_id == current_user.id
         ).first()
         if not rental:
-            return None, None
+            return None, None, None
         plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
-        return rental, plan
+        return rental, plan, _paid_amount(db, rental, plan)
 
-    rental, plan = await loop.run_in_executor(None, _fetch_rental_plan)
+    rental, plan, paid = await loop.run_in_executor(None, _fetch_rental_plan)
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
     if not plan:
@@ -492,7 +559,7 @@ async def get_invoice(
         customer_email=current_user.email,
         plan_name=plan.name,
         plan_description=plan.description or f"{plan.duration_minutes} min, {plan.token_cap} tokens",
-        amount_inr=plan.price,
+        amount_inr=paid,
         tokens_included=plan.token_cap,
         duration_minutes=plan.duration_minutes,
         rental_id=rental.id,
@@ -519,11 +586,11 @@ async def get_invoice_html(
             Rental.user_id == current_user.id
         ).first()
         if not rental:
-            return None, None
+            return None, None, None
         plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
-        return rental, plan
+        return rental, plan, _paid_amount(db, rental, plan)
 
-    rental, plan = await loop.run_in_executor(None, _fetch_html_data)
+    rental, plan, paid = await loop.run_in_executor(None, _fetch_html_data)
     if not rental:
         raise HTTPException(status_code=404, detail="Rental not found")
     if not plan:
@@ -564,7 +631,7 @@ async def get_invoice_html(
 
         <div class="section">
             <h3>Bill To</h3>
-            <p>{current_user.email}</p>
+            <p>{html_lib.escape(current_user.email)}</p>
         </div>
 
         <div class="section">
@@ -580,14 +647,14 @@ async def get_invoice_html(
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{plan.name}</td>
+                        <td>{html_lib.escape(plan.name)}</td>
                         <td>{plan.token_cap:,}</td>
                         <td>{plan.duration_minutes} min</td>
-                        <td style="text-align:right">${plan.price:.2f}</td>
+                        <td style="text-align:right">&#8377;{paid:.2f}</td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="3">Total</td>
-                        <td style="text-align:right">${plan.price:.2f} INR</td>
+                        <td style="text-align:right">&#8377;{paid:.2f} INR</td>
                     </tr>
                 </tbody>
             </table>
