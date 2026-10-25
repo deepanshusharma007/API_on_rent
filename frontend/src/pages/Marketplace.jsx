@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, History, Key, Settings, HelpCircle,
@@ -44,12 +44,12 @@ function SidebarLink({ item }) {
       display: 'flex', alignItems: 'center', gap: '10px',
       padding: '10px 12px', borderRadius: '8px', marginBottom: '2px',
       textDecoration: 'none',
-      background: isActive ? 'rgba(192,193,255,0.12)' : 'transparent',
+      background: isActive ? 'rgba(18,58,44,0.12)' : 'transparent',
       color: isActive ? 'var(--primary)' : 'var(--on-surface-2)',
       fontSize: '0.875rem', fontFamily: 'var(--font-body)', fontWeight: isActive ? 600 : 400,
       transition: 'background 120ms, color 120ms',
     }}
-      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--on-surface-2)'; } }}
+      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(18,58,44,0.05)'; e.currentTarget.style.color = 'var(--on-surface-2)'; } }}
       onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-3)'; } }}
     >
       <Icon size={15} />{item.label}
@@ -62,16 +62,16 @@ function PlanCard({ plan, selected, onClick }) {
   return (
     <button onClick={onClick} style={{
       textAlign: 'left', padding: '20px', borderRadius: '12px', cursor: 'pointer',
-      background: selected ? 'rgba(192,193,255,0.08)' : '#111520',
-      border: `1px solid ${selected ? 'rgba(192,193,255,0.35)' : isPopular ? 'rgba(192,193,255,0.2)' : 'rgba(255,255,255,0.07)'}`,
+      background: selected ? 'rgba(18,58,44,0.08)' : 'var(--card)',
+      border: `1px solid ${selected ? 'rgba(18,58,44,0.35)' : isPopular ? 'rgba(18,58,44,0.2)' : 'rgba(18,58,44,0.12)'}`,
       transition: 'border-color 150ms, background 150ms',
       position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', gap: '0', overflow: 'hidden',
     }}
-      onMouseEnter={e => { if (!selected) { e.currentTarget.style.borderColor = 'rgba(192,193,255,0.3)'; e.currentTarget.style.background = '#141820'; } }}
-      onMouseLeave={e => { if (!selected) { e.currentTarget.style.borderColor = isPopular ? 'rgba(192,193,255,0.2)' : 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = '#111520'; } }}
+      onMouseEnter={e => { if (!selected) { e.currentTarget.style.borderColor = 'rgba(18,58,44,0.3)'; e.currentTarget.style.background = 'var(--surface-high)'; } }}
+      onMouseLeave={e => { if (!selected) { e.currentTarget.style.borderColor = isPopular ? 'rgba(18,58,44,0.2)' : 'rgba(18,58,44,0.12)'; e.currentTarget.style.background = 'var(--card)'; } }}
     >
       {isPopular && (
-        <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--primary)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '3px 10px', borderBottomLeftRadius: '8px', letterSpacing: '0.04em' }}>POPULAR</div>
+        <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--primary)', color: '#fff', fontSize: '0.6875rem', fontWeight: 700, padding: '3px 10px', borderBottomLeftRadius: '8px', letterSpacing: '0.04em' }}>POPULAR</div>
       )}
       {selected && (
         <div style={{ position: 'absolute', top: '14px', left: '14px', color: 'var(--primary)' }}><CheckCircle2 size={16} /></div>
@@ -80,7 +80,7 @@ function PlanCard({ plan, selected, onClick }) {
         <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-3)', marginBottom: '6px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           {plan.duration_label || formatDuration(plan)}
         </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#e8edf8', fontFamily: 'var(--font-head)', lineHeight: 1.1, marginBottom: '8px' }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--on-surface)', fontFamily: 'var(--font-head)', lineHeight: 1.1, marginBottom: '8px' }}>
           <IndianRupee size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />{plan.price}
         </div>
         <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-3)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -98,9 +98,7 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
   const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
   const [bannerUp, setBannerUp] = useState(() => sessionStorage.getItem('banner_dismissed') !== 'true');
 
   useEffect(() => {
@@ -142,29 +140,29 @@ export default function Marketplace() {
       {/* Sidebar */}
       <aside style={{
         width: '220px', flexShrink: 0, position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0,
-        height: bannerUp ? 'calc(100vh - 40px)' : '100vh', background: '#0d1117',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        height: bannerUp ? 'calc(100vh - 40px)' : '100vh', background: 'var(--bg-alt)',
+        borderRight: '1px solid rgba(18,58,44,0.09)',
         display: 'flex', flexDirection: 'column', zIndex: 40, overflowY: 'auto',
       }} className="app-sidebar">
         <div style={{ padding: '20px 16px 12px' }}>
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.875rem', color: '#e8edf8', transition: 'color 120ms' }}
+            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.875rem', color: 'var(--on-surface)', transition: 'color 120ms' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-              onMouseLeave={e => e.currentTarget.style.color = '#e8edf8'}>Developer Console</div>
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface)'}>Developer Console</div>
           </Link>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>
             {user?.email?.split('@')[0] || 'User'}
           </div>
         </div>
         <nav style={{ padding: '4px 12px', flex: 1 }}>
           {SIDEBAR_NAV.map(item => <SidebarLink key={item.id} item={item} />)}
         </nav>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '12px 12px' }}>
+        <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)', padding: '12px 12px' }}>
           <button onClick={logout} style={{
             display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px',
             background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-3)',
             fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px', transition: 'color 120ms',
-          }} onMouseEnter={e => e.currentTarget.style.color = '#f87171'} onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}>
+          }} onMouseEnter={e => e.currentTarget.style.color = 'var(--error)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}>
             <LogOut size={13} /> Sign out
           </button>
         </div>
@@ -174,7 +172,7 @@ export default function Marketplace() {
       <main style={{ marginLeft: '220px', flex: 1, padding: '32px clamp(16px,3vw,40px)', maxWidth: '900px', paddingTop: bannerUp ? 'calc(32px + 40px)' : '32px' }} className="app-main">
         {/* Header */}
         <motion.div variants={fadeUp(0)} initial="hidden" animate="show" style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.4rem,3vw,1.75rem)', fontWeight: 700, color: '#e8edf8', marginBottom: '6px' }}>
+          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(1.4rem,3vw,1.75rem)', fontWeight: 700, color: 'var(--on-surface)', marginBottom: '6px' }}>
             Get API Access
           </h1>
           <p style={{ color: 'var(--on-surface-3)', fontSize: '0.9rem' }}>
@@ -188,13 +186,13 @@ export default function Marketplace() {
           {[
             { icon: Route,      label: 'Smart Routing' },
             { icon: RefreshCw,  label: 'Auto Fallback' },
-            { icon: Database,   label: 'Semantic Cache' },
+            { icon: Database,   label: 'Response Cache' },
             { icon: Shield,     label: 'Guardrails' },
           ].map(({ icon: Icon, label }) => (
             <span key={label} style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               padding: '5px 12px', borderRadius: '20px',
-              border: '1px solid rgba(192,193,255,0.15)', background: 'rgba(192,193,255,0.05)',
+              border: '1px solid rgba(18,58,44,0.15)', background: 'rgba(18,58,44,0.05)',
               fontSize: '0.75rem', color: 'var(--primary)', fontFamily: 'var(--font-body)',
             }}>
               <Icon size={12} />{label}
@@ -209,7 +207,7 @@ export default function Marketplace() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{
                   width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: step >= n ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+                  background: step >= n ? 'var(--primary)' : 'rgba(18,58,44,0.14)',
                   color: step >= n ? '#fff' : 'var(--on-surface-3)',
                   fontSize: '0.75rem', fontWeight: 700, transition: 'background 300ms',
                 }}>{n}</div>
@@ -223,18 +221,18 @@ export default function Marketplace() {
         {/* STEP 1: Choose Plan */}
         <motion.div variants={fadeUp(0.1)} initial="hidden" animate="show">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-            <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(192,193,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>1</div>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#e8edf8' }}>Choose a plan</span>
+            <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(18,58,44,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>1</div>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: 'var(--on-surface)' }}>Choose a plan</span>
           </div>
 
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: '12px' }}>
               {[1,2,3,4].map(i => (
-                <div key={i} style={{ height: '130px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                <div key={i} style={{ height: '130px', borderRadius: '12px', background: 'rgba(18,58,44,0.05)', animation: 'pulse 1.5s ease-in-out infinite' }} />
               ))}
             </div>
           ) : plans.length === 0 ? (
-            <div style={{ padding: '24px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', textAlign: 'center' }}>
+            <div style={{ padding: '24px', borderRadius: '12px', background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.09)', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', textAlign: 'center' }}>
               No plans available
             </div>
           ) : (
@@ -252,16 +250,16 @@ export default function Marketplace() {
           {selectedPlan && (
             <motion.div key="checkout" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }} style={{ marginTop: '32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(192,193,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>2</div>
-                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: '#e8edf8' }}>Checkout</span>
+                <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(18,58,44,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>2</div>
+                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 600, color: 'var(--on-surface)' }}>Checkout</span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '16px', alignItems: 'start' }} className="checkout-grid">
                 {/* Order summary */}
-                <div style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px' }}>
+                <div style={{ background: 'var(--bg-alt)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '12px', padding: '20px' }}>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-3)', marginBottom: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order Summary</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#e8edf8' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface)' }}>
                       <span>Plan</span>
                       <span style={{ fontWeight: 600 }}>{plan => plan.name || formatDuration(selectedPlan)}{selectedPlan.duration_label || formatDuration(selectedPlan)}</span>
                     </div>
@@ -275,17 +273,17 @@ export default function Marketplace() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
                       <span>Access</span>
-                      <span style={{ color: '#34d399', fontWeight: 600 }}>all models</span>
+                      <span style={{ color: 'var(--secondary)', fontWeight: 600 }}>all models</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
                       <span>Rate limit</span>
                       <span>{selectedPlan.rpm_limit} req/min</span>
                     </div>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '4px' }}>
+                    <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)', paddingTop: '10px', marginTop: '4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--on-surface-3)' }}>
                         <span>Subtotal</span><span>₹{selectedPlan.price}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#e8edf8', fontWeight: 700, marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: 'var(--on-surface)', fontWeight: 700, marginTop: '8px' }}>
                         <span>Total</span><span>₹{selectedPlan.price}</span>
                       </div>
                     </div>
@@ -293,13 +291,13 @@ export default function Marketplace() {
                 </div>
 
                 {/* Pay card */}
-                <div style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ background: 'var(--bg-alt)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
                     <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-3)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>💳</div>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(18,58,44,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>💳</div>
                       <div>
-                        <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>UPI / Cashfree</div>
+                        <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}>UPI / Cashfree</div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-3)' }}>Secure payment gateway</div>
                       </div>
                     </div>
@@ -312,7 +310,7 @@ export default function Marketplace() {
                   <button onClick={handlePurchase} disabled={purchasing} style={{
                     width: '100%', padding: '14px', borderRadius: '10px', border: 'none',
                     cursor: purchasing ? 'not-allowed' : 'pointer',
-                    background: purchasing ? 'rgba(255,255,255,0.1)' : 'var(--primary)',
+                    background: purchasing ? 'rgba(18,58,44,0.18)' : 'var(--primary)',
                     color: purchasing ? 'var(--on-surface-3)' : 'var(--on-primary)',
                     fontFamily: 'var(--font-body)', fontSize: '1rem', fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -321,14 +319,14 @@ export default function Marketplace() {
                     onMouseEnter={e => { if (!purchasing) e.currentTarget.style.filter = 'brightness(1.08)'; }}
                     onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}>
                     {purchasing ? (
-                      <><span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Processing...</>
+                      <><span style={{ width: '16px', height: '16px', border: '2px solid rgba(18,58,44,0.4)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Processing...</>
                     ) : (
                       <><IndianRupee size={16} />Pay ₹{selectedPlan.price}</>
                     )}
                   </button>
 
                   <button onClick={() => setSelectedPlan(null)} style={{
-                    width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)',
+                    width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid rgba(18,58,44,0.14)',
                     background: 'transparent', cursor: 'pointer', color: 'var(--on-surface-3)',
                     fontFamily: 'var(--font-body)', fontSize: '0.8125rem',
                   }}>Change plan</button>

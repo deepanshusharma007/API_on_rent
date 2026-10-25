@@ -21,16 +21,16 @@ const PERKS = [
 
 const inputStyle = {
   width: '100%', padding: '13px 40px 13px 16px',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'rgba(18,58,44,0.05)',
+  border: '1px solid rgba(18,58,44,0.18)',
   borderRadius: '10px', outline: 'none',
-  fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#e8edf8',
+  fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface)',
   boxSizing: 'border-box', transition: 'border-color 150ms',
 };
 
 const labelStyle = {
-  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
-  fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
+  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
+  fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(18,58,44,0.5)',
   marginBottom: '8px',
 };
 
@@ -38,8 +38,8 @@ const linkButtonStyle = {
   background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer', color: 'var(--primary)',
 };
 
-const focusOn = e => { e.target.style.borderColor = 'rgba(192,193,255,0.35)'; };
-const focusOff = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; };
+const focusOn = e => { e.target.style.borderColor = 'rgba(18,58,44,0.35)'; };
+const focusOff = e => { e.target.style.borderColor = 'rgba(18,58,44,0.18)'; };
 
 const STEPS = { email: 1, code: 2, password: 3 };
 
@@ -173,59 +173,58 @@ export default function Register() {
     const green = color === 'green';
     return (
       <button type="submit" disabled={loading || blocked} style={{
-        width: '100%', padding: '14px', borderRadius: '10px', border: 'none',
+        width: '100%', padding: '14px', borderRadius: '999px', border: 'none',
         cursor: loading ? 'not-allowed' : 'pointer',
-        background: loading ? 'rgba(78,222,163,0.2)' : (green ? 'linear-gradient(135deg, #2ab87a 0%, #4edea3 100%)' : 'linear-gradient(135deg, #8083ff 0%, #c0c1ff 100%)'),
-        color: loading ? 'rgba(255,255,255,0.4)' : (green ? '#003824' : '#0b0066'),
-        fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700,
+        background: loading ? 'rgba(86,111,8,0.2)' : (green ? 'var(--secondary)' : 'var(--primary)'),
+        color: loading ? 'rgba(18,58,44,0.5)' : (green ? 'var(--on-secondary)' : 'var(--on-primary)'),
+        fontFamily: 'var(--font-body)', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-        boxShadow: loading ? 'none' : '0 4px 24px -6px rgba(78,222,163,0.4)',
         opacity: loading ? 0.7 : (blocked ? 0.45 : 1), transition: 'filter 150ms',
       }}
         onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.07)'; }}
         onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
       >
         {loading
-          ? <span aria-hidden="true" style={{ width: '16px', height: '16px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#003824', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+          ? <span aria-hidden="true" style={{ width: '16px', height: '16px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: 'var(--on-secondary)', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
           : <>{label} <Zap size={16} fill="currentColor" /></>}
       </button>
     );
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0b1120', position: 'relative', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-alt)', position: 'relative', overflow: 'hidden', fontFamily: 'var(--font-body)' }}>
 
       {bannerUp && <div style={{ height: '40px', flexShrink: 0 }} />}
 
       {/* Dot-grid */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(192,193,255,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(78,222,163,0.06) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(18,58,44,0.07) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '600px', height: '400px', borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(86,111,8,0.06) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* Status text */}
-      <div style={{ position: 'fixed', top: '20px', left: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7, color: 'rgba(192,193,255,0.25)', letterSpacing: '0.04em', pointerEvents: 'none' }}>
+      <div className="auth-deco" style={{ position: 'fixed', top: '20px', left: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', lineHeight: 1.7, color: 'rgba(18,58,44,0.25)', letterSpacing: '0.04em', pointerEvents: 'none' }}>
         AUTH_MODULE_v1.0.2 // NEW_ACCOUNT_FLOW<br />
         STATUS: INITIALIZING_IDENTITY
       </div>
-      <div style={{ position: 'fixed', bottom: '20px', right: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7, color: 'rgba(192,193,255,0.2)', letterSpacing: '0.04em', textAlign: 'right', pointerEvents: 'none' }}>
+      <div className="auth-deco" style={{ position: 'fixed', bottom: '20px', right: '24px', zIndex: 2, fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', lineHeight: 1.7, color: 'rgba(18,58,44,0.2)', letterSpacing: '0.04em', textAlign: 'right', pointerEvents: 'none' }}>
         ENCRYPTION: AES-256-GCM<br />NODE: IN-MUM-01
       </div>
 
       {/* Navbar */}
-      <nav style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(20px,4vw,40px)', height: '56px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <Link to="/" style={{ textDecoration: 'none', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8', letterSpacing: '-0.02em' }}>
-          AI<span style={{ color: 'var(--primary)' }}>Rent</span>
+      <nav style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(20px,4vw,40px)', height: '56px', borderBottom: '1px solid rgba(18,58,44,0.07)' }}>
+        <Link to="/" style={{ textDecoration: 'none', fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '1.6rem', lineHeight: 1, color: 'var(--on-surface)' }}>
+          AIRent
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div className="auth-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {['Marketplace', 'Docs', 'Pricing', 'About'].map(l => (
-            <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', transition: 'color 120ms' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#e8edf8'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+            <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.6)', textDecoration: 'none', transition: 'color 120ms' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(18,58,44,0.6)'}
             >{l}</Link>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link to="/login" style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Login</Link>
-          <Link to="/register" style={{ padding: '7px 18px', borderRadius: '8px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, background: 'var(--primary)', color: 'var(--on-primary)' }}>Sign Up</Link>
+          <Link to="/login" style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.6)', textDecoration: 'none' }}>Login</Link>
+          <Link to="/register" style={{ padding: '7px 18px', borderRadius: '999px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, background: 'var(--primary)', color: 'var(--on-primary)' }}>Sign Up</Link>
         </div>
       </nav>
 
@@ -234,22 +233,22 @@ export default function Register() {
         <div style={{ width: '100%', maxWidth: '420px' }}>
 
           <motion.div variants={fadeUp(0.04)} initial="hidden" animate="show" style={{
-            background: 'rgba(13,18,30,0.9)', border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,252,245,0.94)', border: '1px solid rgba(18,58,44,0.14)',
             borderRadius: '16px', padding: 'clamp(28px,5vw,40px)', backdropFilter: 'blur(12px)',
           }}>
             <div style={{ marginBottom: '28px' }}>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.08em', color: 'rgba(192,193,255,0.45)', marginBottom: '10px' }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.08em', color: 'rgba(18,58,44,0.45)', marginBottom: '10px' }}>
                 STEP {STEPS[step]} OF 3
               </p>
-              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.8rem,4vw,2.4rem)', lineHeight: 1.1, letterSpacing: '-0.03em', color: '#e8edf8', marginBottom: '8px' }}>
+              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 500, fontSize: 'clamp(2rem,5vw,2.8rem)', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--on-surface)', marginBottom: '8px' }}>
                 {step === 'email' && <>Join the<br />Network</>}
                 {step === 'code' && <>Check your<br />email</>}
                 {step === 'password' && <>Create your<br />password</>}
               </h1>
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
                 {step === 'email' && 'Free account. First rental in 60 seconds.'}
-                {step === 'code' && <>Enter the 6-digit code we sent to <strong style={{ color: '#e8edf8' }}>{email.trim()}</strong>.</>}
-                {step === 'password' && <>Email verified: <strong style={{ color: '#e8edf8' }}>{email.trim()}</strong></>}
+                {step === 'code' && <>Enter the 6-digit code we sent to <strong style={{ color: 'var(--on-surface)' }}>{email.trim()}</strong>.</>}
+                {step === 'password' && <>Email verified: <strong style={{ color: 'var(--on-surface)' }}>{email.trim()}</strong></>}
               </p>
             </div>
 
@@ -269,9 +268,9 @@ export default function Register() {
                   onError={msg => { setError(msg); toast.error(msg); }} />
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
-                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)' }}>OR SIGN UP WITH EMAIL</span>
-                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(18,58,44,0.12)' }} />
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(18,58,44,0.3)' }}>OR SIGN UP WITH EMAIL</span>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(18,58,44,0.12)' }} />
                 </div>
 
                 <form onSubmit={handleEmailSubmit}>
@@ -281,7 +280,7 @@ export default function Register() {
                     <div style={{ position: 'relative' }}>
                       <input id="signup-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                         placeholder="you@example.com" required style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
-                      <Mail size={15} aria-hidden="true" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }} />
+                      <Mail size={15} aria-hidden="true" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(18,58,44,0.34)', pointerEvents: 'none' }} />
                     </div>
                   </div>
                   {submitButton(resendIn > 0 ? `Send code (${formatSeconds(resendIn)})` : 'Send verification code', 'green', emailUnavailable)}
@@ -300,13 +299,13 @@ export default function Register() {
                     style={{ ...inputStyle, padding: '13px 16px', fontFamily: 'var(--font-mono)', fontSize: '1.4rem', letterSpacing: '0.5em', textAlign: 'center' }}
                     onFocus={focusOn} onBlur={focusOff} />
                 </div>
-                <p id="signup-code-help" aria-live="polite" style={{ fontSize: '0.8rem', color: expiresIn > 0 ? 'rgba(255,255,255,0.45)' : '#fca5a5', marginBottom: '20px', lineHeight: 1.5 }}>
+                <p id="signup-code-help" aria-live="polite" style={{ fontSize: '0.8rem', color: expiresIn > 0 ? 'rgba(18,58,44,0.45)' : 'var(--error)', marginBottom: '20px', lineHeight: 1.5 }}>
                   {expiresIn > 0 ? `Code expires in ${formatSeconds(expiresIn)}.` : 'This code has expired. Request a new one below.'}
                   {' '}If you already have an account with this email, we've sent sign-in options instead.
                 </p>
                 {submitButton('Verify email', 'purple')}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '18px', fontSize: '0.85rem' }}>
-                  <button type="button" onClick={changeEmail} style={{ ...linkButtonStyle, color: 'rgba(255,255,255,0.5)' }}>← Use a different email</button>
+                  <button type="button" onClick={changeEmail} style={{ ...linkButtonStyle, color: 'rgba(18,58,44,0.6)' }}>← Use a different email</button>
                   <button type="button" onClick={sendCode} disabled={loading || resendIn > 0}
                     style={{ ...linkButtonStyle, opacity: resendIn > 0 ? 0.5 : 1, cursor: resendIn > 0 ? 'default' : 'pointer' }}>
                     {resendIn > 0 ? `Resend code in ${formatSeconds(resendIn)}` : 'Resend code'}
@@ -325,7 +324,7 @@ export default function Register() {
                       onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" required autoFocus
                       aria-describedby="signup-strength" style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
                     <button type="button" onClick={() => setShowPass(v => !v)} aria-label={showPass ? 'Hide password' : 'Show password'} aria-pressed={showPass}
-                      style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', lineHeight: 1 }}>
+                      style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(18,58,44,0.45)', lineHeight: 1 }}>
                       {showPass ? <Eye size={15} /> : <Lock size={15} />}
                     </button>
                   </div>
@@ -343,7 +342,7 @@ export default function Register() {
               </form>
             )}
 
-            <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.35)', marginTop: '24px' }}>
+            <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.45)', marginTop: '24px' }}>
               Already have an account?{' '}
               <Link to="/login" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
             </p>
@@ -353,7 +352,7 @@ export default function Register() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        input::placeholder { color: rgba(18,58,44,0.3); }
       `}</style>
     </div>
   );

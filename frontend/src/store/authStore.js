@@ -34,7 +34,7 @@ const useAuthStore = create(
                 try {
                     const meResponse = await authAPI.getMe();
                     user = meResponse.data;
-                } catch (_) {}
+                } catch { /* profile is optional here */ }
 
                 set({
                     user,
@@ -146,7 +146,7 @@ const useAuthStore = create(
 
             logout: async () => {
                 // Tell backend to delete the Redis session (best-effort)
-                try { await authAPI.logout(); } catch (_) {}
+                try { await authAPI.logout(); } catch { /* best-effort */ }
                 localStorage.removeItem('auth_token');
                 set({
                     user: null,

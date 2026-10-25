@@ -4,7 +4,7 @@ import { authAPI } from '../api/client';
 let pending = null;
 
 /** Sign-in options from the backend (GET /auth/config), fetched once per page load. */
-export function loadAuthConfig() {
+function loadAuthConfig() {
   if (!pending) {
     pending = authAPI.getConfig()
       .then(r => r.data)

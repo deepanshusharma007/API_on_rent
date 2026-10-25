@@ -33,7 +33,7 @@ function LatencyChart() {
         <div key={i} style={{
           flex: 1, borderRadius: '3px 3px 0 0',
           height: `${(v / max) * 100}%`,
-          background: i === BAR_DATA.length - 1 ? 'var(--secondary)' : 'rgba(78,222,163,0.3)',
+          background: i === BAR_DATA.length - 1 ? 'var(--secondary)' : 'rgba(86,111,8,0.3)',
         }} />
       ))}
     </div>
@@ -43,9 +43,9 @@ function LatencyChart() {
 /* â”€â”€ config row â”€â”€ */
 function ConfigRow({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(18,58,44,0.07)' }}>
       <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: '#e8edf8' }}>{value}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface)' }}>{value}</span>
     </div>
   );
 }
@@ -53,10 +53,10 @@ function ConfigRow({ label, value }) {
 /* â”€â”€ history status badge â”€â”€ */
 function StatusBadge({ status }) {
   const cfg = status === 'active'
-    ? { color: 'var(--secondary)', bg: 'rgba(78,222,163,0.1)', dot: 'var(--secondary)', label: 'COMPLETED' }
-    : { color: 'var(--on-surface-3)', bg: 'rgba(255,255,255,0.05)', dot: 'rgba(255,255,255,0.3)', label: 'EXPIRED' };
+    ? { color: 'var(--secondary)', bg: 'rgba(86,111,8,0.1)', dot: 'var(--secondary)', label: 'COMPLETED' }
+    : { color: 'var(--on-surface-3)', bg: 'rgba(18,58,44,0.07)', dot: 'rgba(18,58,44,0.4)', label: 'EXPIRED' };
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '999px', background: cfg.bg, fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: cfg.color }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '999px', background: cfg.bg, fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em', color: cfg.color }}>
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: cfg.dot }} />
       {cfg.label}
     </span>
@@ -102,20 +102,22 @@ export default function Dashboard() {
 
   const connectWebSocket = (rentalId) => {
     if (wsRefs.current[rentalId]) return;
-    const token = localStorage.getItem('auth_token');
-    const ws = new WebSocket(`${WS_BASE}/ws/usage/${rentalId}?token=${token}`);
+    const ws = new WebSocket(`${WS_BASE}/ws/rentals/${rentalId}`);
+    // The first message authenticates the socket (a token in the URL would end up in logs).
+    ws.onopen = () => ws.send(JSON.stringify({ token: localStorage.getItem('auth_token') }));
     ws.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.type === 'usage_update') {
+        if (data.type !== 'rental_update') return;
+        if (data.status === 'active') {
           setActiveRentals(prev => prev.map(r =>
             r.id === rentalId ? { ...r, tokens_used: data.tokens_used, tokens_remaining: data.tokens_remaining } : r
           ));
-        } else if (data.type === 'rental_expired') {
+        } else {
           setActiveRentals(prev => prev.filter(r => r.id !== rentalId));
-          loadRentals();
+          ws.close();   // the 30s poll refreshes the lists
         }
-      } catch {}
+      } catch { /* ignore malformed websocket messages */ }
     };
     ws.onerror = () => ws.close();
     ws.onclose = () => { delete wsRefs.current[rentalId]; };
@@ -158,30 +160,29 @@ export default function Dashboard() {
 
   const firstActive = activeRentals[0] || null;
   const totalCap = firstActive ? (firstActive.tokens_used + firstActive.tokens_remaining) : 0;
-  const usedPct  = totalCap ? Math.round((firstActive.tokens_used / totalCap) * 100) : 0;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
       {/* â•â• SIDEBAR â•â• */}
       <aside className="app-sidebar" style={{
-        width: '220px', flexShrink: 0, background: '#0d1017',
-        borderRight: '1px solid rgba(255,255,255,0.07)',
+        width: '220px', flexShrink: 0, background: 'var(--bg-alt)',
+        borderRight: '1px solid rgba(18,58,44,0.12)',
         display: 'flex', flexDirection: 'column',
         position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, transition: 'top 200ms ease',
         overflowY: 'auto',
       }}>
         {/* Logo */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(18,58,44,0.09)' }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
-            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1rem', color: '#e8edf8', letterSpacing: '-0.02em', transition: 'color 120ms' }}
+            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1rem', color: 'var(--on-surface)', letterSpacing: '-0.02em', transition: 'color 120ms' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-              onMouseLeave={e => e.currentTarget.style.color = '#e8edf8'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface)'}
             >
               Developer<span style={{ color: 'var(--primary)' }}>Console</span>
             </div>
           </Link>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)', marginTop: '3px', letterSpacing: '0.04em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)', marginTop: '3px', letterSpacing: '0.04em' }}>
             AIRent Infrastructure
           </div>
         </div>
@@ -201,7 +202,7 @@ export default function Dashboard() {
                   fontFamily: 'var(--font-body)', fontSize: '0.875rem',
                   transition: 'background 120ms, color 120ms',
                 }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#e8edf8'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(18,58,44,0.07)'; e.currentTarget.style.color = 'var(--on-surface)'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-2)'; }}
                 >
                   <Icon size={15} />
@@ -214,7 +215,7 @@ export default function Dashboard() {
                 display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
                 padding: '10px 12px', borderRadius: '8px', marginBottom: '2px',
                 border: 'none', cursor: 'pointer', textAlign: 'left',
-                background: isActive ? 'rgba(192,193,255,0.12)' : 'transparent',
+                background: isActive ? 'rgba(18,58,44,0.12)' : 'transparent',
                 color: isActive ? 'var(--primary)' : 'var(--on-surface-2)',
                 fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: isActive ? 600 : 400,
                 transition: 'background 120ms, color 120ms',
@@ -222,7 +223,7 @@ export default function Dashboard() {
                 <Icon size={15} />
                 {item.label}
                 {item.id === 'active' && activeRentals.length > 0 && (
-                  <span style={{ marginLeft: 'auto', minWidth: '18px', height: '16px', padding: '0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: 'var(--on-primary)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700 }}>
+                  <span style={{ marginLeft: 'auto', minWidth: '18px', height: '16px', padding: '0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary)', color: 'var(--on-primary)', borderRadius: '999px', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700 }}>
                     {activeRentals.length}
                   </span>
                 )}
@@ -232,15 +233,15 @@ export default function Dashboard() {
         </nav>
 
         {/* Bottom: user + actions */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 12px' }}>
+        <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)', padding: '16px 12px' }}>
           {/* User */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 4px', marginBottom: '8px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.75rem', color: 'var(--on-primary)' }}>
               {user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', fontWeight: 600, color: '#e8edf8', lineHeight: 1.2 }}>{user?.email?.split('@')[0] || 'User'}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>Developer</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', lineHeight: 1.2 }}>{user?.email?.split('@')[0] || 'User'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>Developer</div>
             </div>
           </div>
 
@@ -256,9 +257,9 @@ export default function Dashboard() {
           >
             <HelpCircle size={13} /> Support
           </Link>
-          <button onClick={async () => { await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px', transition: 'color 120ms', marginTop: '4px' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#fca5a5'}
-            onMouseLeave={e => e.currentTarget.style.color = '#f87171'}
+          <button onClick={async () => { await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px', transition: 'color 120ms', marginTop: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--error)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--error)'}
           >
             <LogOut size={13} /> Log out
           </button>
@@ -280,7 +281,7 @@ export default function Dashboard() {
           {/* Page header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px' }}>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '6px' }}>
+              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: 'var(--on-surface)', letterSpacing: '-0.02em', marginBottom: '6px' }}>
                 {activeTab === 'active' ? 'Active Rentals' : activeTab === 'history' ? 'Usage History' : 'API Keys'}
               </h1>
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>
@@ -289,7 +290,7 @@ export default function Dashboard() {
             </div>
             {/* System status */}
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>SYSTEM STATUS</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>SYSTEM STATUS</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 6px var(--secondary)' }} />
                 <span style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--secondary)' }}>Operational</span>
@@ -301,7 +302,7 @@ export default function Dashboard() {
           <AnimatePresence>
             {paymentSuccess && (
               <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '10px', background: 'rgba(78,222,163,0.08)', border: '1px solid rgba(78,222,163,0.25)' }}>
+                style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', borderRadius: '10px', background: 'rgba(86,111,8,0.08)', border: '1px solid rgba(86,111,8,0.25)' }}>
                 <CheckCircle2 size={16} color="var(--secondary)" />
                 <div>
                   <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--secondary)' }}>Payment confirmed!</p>
@@ -315,30 +316,30 @@ export default function Dashboard() {
           {activeTab === 'active' && (
             loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }} className="dash-main-grid">
-                <div style={{ background: '#111520', borderRadius: '14px', height: '320px', animation: 'pulse 1.5s infinite' }} />
+                <div style={{ background: 'var(--card)', borderRadius: '14px', height: '320px', animation: 'pulse 1.5s infinite' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ background: '#111520', borderRadius: '14px', height: '140px', animation: 'pulse 1.5s infinite' }} />
-                  <div style={{ background: '#111520', borderRadius: '14px', height: '160px', animation: 'pulse 1.5s infinite' }} />
+                  <div style={{ background: 'var(--card)', borderRadius: '14px', height: '140px', animation: 'pulse 1.5s infinite' }} />
+                  <div style={{ background: 'var(--card)', borderRadius: '14px', height: '160px', animation: 'pulse 1.5s infinite' }} />
                 </div>
               </div>
             ) : activeRentals.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '80px 0' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(192,193,255,0.08)', border: '1px solid rgba(192,193,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(18,58,44,0.08)', border: '1px solid rgba(18,58,44,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                   <Zap size={20} color="var(--primary)" />
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: '#e8edf8', marginBottom: '8px' }}>No active rentals</h3>
+                <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--on-surface)', marginBottom: '8px' }}>No active rentals</h3>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', marginBottom: '24px' }}>Purchase a plan to get your virtual API key instantly.</p>
-                <button onClick={() => navigate('/marketplace')} style={{ padding: '11px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'var(--on-primary)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', fontWeight: 700 }}>
+                <button onClick={() => navigate('/marketplace')} style={{ padding: '11px 24px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: 'var(--primary)', color: 'var(--on-primary)', fontFamily: 'var(--font-body)', fontSize: '0.9rem', fontWeight: 700 }}>
                   Browse Plans
                 </button>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }} className="dash-main-grid">
                 {/* Active rental card */}
-                <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
                   {/* Card top bar */}
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '6px', background: 'rgba(78,222,163,0.12)', border: '1px solid rgba(78,222,163,0.25)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--secondary)' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(18,58,44,0.09)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '6px', background: 'rgba(86,111,8,0.12)', border: '1px solid rgba(86,111,8,0.25)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--secondary)' }}>
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--secondary)', animation: 'pulse-dot 2s infinite' }} />
                       LIVE SESSION
                     </span>
@@ -346,8 +347,8 @@ export default function Dashboard() {
                       <Key size={11} /> IP Pinned: {firstActive.ip_address || '—'}
                     </span>
                     <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '2px' }}>TIME REMAINING</div>
-                      <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.5rem', color: '#e8edf8', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '2px' }}>TIME REMAINING</div>
+                      <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)', letterSpacing: '-0.02em', lineHeight: 1 }}>
                         <CountdownTimer ttlSeconds={firstActive.ttl_seconds} expiresAt={firstActive.expires_at} onExpire={() => { setActiveRentals(prev => prev.filter(r => r.id !== firstActive.id)); loadRentals(); }} size="lg" />
                       </div>
                     </div>
@@ -355,7 +356,7 @@ export default function Dashboard() {
 
                   {/* Provider + instance */}
                   <div style={{ padding: '20px 20px 14px' }}>
-                    <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.6rem', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '4px' }}>
+                    <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '1.6rem', color: 'var(--on-surface)', letterSpacing: '-0.02em', marginBottom: '4px' }}>
                       {firstActive.provider || firstActive.plan_name || 'Active Session'}
                     </h2>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>
@@ -365,20 +366,20 @@ export default function Dashboard() {
 
                   {/* Virtual key */}
                   <div style={{ padding: '0 20px 18px' }}>
-                    <div style={{ background: '#0d1117', border: '1px solid rgba(192,193,255,0.15)', borderRadius: '10px', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>● VIRTUAL KEY</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#f59e0b', letterSpacing: '0.04em' }}>
+                    <div style={{ background: 'var(--bg-alt)', border: '1px solid rgba(18,58,44,0.15)', borderRadius: '10px', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(18,58,44,0.07)' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--primary)' }}>● VIRTUAL KEY</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--warn)', letterSpacing: '0.04em' }}>
                           <AlertTriangle size={10} /> Visible Only Once
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px' }}>
-                        <div style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ flex: 1, fontFamily: 'var(--font-code)', fontSize: '0.8rem', color: 'var(--on-surface-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {firstActive.virtual_key}
                         </div>
-                        <button onClick={() => copyKey(firstActive.virtual_key)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: '#e8edf8', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap', transition: 'background 120ms' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+                        <button onClick={() => copyKey(firstActive.virtual_key)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '11px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'rgba(18,58,44,0.12)', color: 'var(--on-surface)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap', transition: 'background 120ms' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,58,44,0.2)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(18,58,44,0.12)'}
                         >
                           <Copy size={11} /> {copiedKey === firstActive.virtual_key ? 'COPIED' : 'COPY'}
                         </button>
@@ -399,7 +400,7 @@ export default function Dashboard() {
                       <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>
                         ⓘ Auto-terminates at 100% or time expiration.
                       </span>
-                      <button style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, color: '#f97316', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em' }}>
+                      <button style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700, color: '#c2410c', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.04em' }}>
                         TERMINATE NOW
                       </button>
                     </div>
@@ -409,39 +410,39 @@ export default function Dashboard() {
                 {/* Right column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {/* Peak latency */}
-                  <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>PEAK LATENCY</div>
+                  <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>PEAK LATENCY</div>
                     <div style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: '2rem', color: 'var(--secondary)', letterSpacing: '-0.03em' }}>24ms</div>
                     <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-3)', marginBottom: '4px' }}>Mumbai - AWS Node</div>
                     <LatencyChart />
                   </div>
 
                   {/* Active config */}
-                  <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>ACTIVE RENTAL CONFIG</div>
+                  <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>ACTIVE RENTAL CONFIG</div>
                     <ConfigRow label="Models Available" value="8 models" />
                     <ConfigRow label="Rate Limit"       value={`${firstActive.rpm_limit || 60} req/min`} />
                     <ConfigRow label="Token Cap"        value={firstActive.tokens_remaining != null ? `${Math.round(firstActive.tokens_remaining / 1000)}K left` : '—'} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
                       <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>Endpoint</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 600, color: '#e8edf8' }}>/v1/chat/completions</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 600, color: 'var(--on-surface)' }}>/v1/chat/completions</span>
                     </div>
                   </div>
 
                   {/* Gateway features card */}
-                  <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '20px' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>GATEWAY FEATURES</div>
+                  <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '14px' }}>GATEWAY FEATURES</div>
                     {[
                       { Icon: Route,     label: 'Smart Routing'  },
                       { Icon: RefreshCw, label: 'Auto Fallback'  },
-                      { Icon: Database,  label: 'Semantic Cache' },
+                      { Icon: Database,  label: 'Response Cache' },
                       { Icon: Shield,    label: 'Guardrails'     },
                     ].map(({ Icon, label }) => (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(18,58,44,0.05)' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-2)' }}>
                           <Icon size={12} style={{ color: 'var(--primary)' }} />{label}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, color: '#34d399', letterSpacing: '0.06em' }}>ON</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--secondary)', letterSpacing: '0.06em' }}>ON</span>
                       </div>
                     ))}
                   </div>
@@ -454,17 +455,17 @@ export default function Dashboard() {
           {activeTab === 'history' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-                <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: 'var(--on-surface-2)', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', cursor: 'pointer', transition: 'background 120ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(18,58,44,0.18)', background: 'rgba(18,58,44,0.05)', color: 'var(--on-surface-2)', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', cursor: 'pointer', transition: 'background 120ms' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,58,44,0.14)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(18,58,44,0.05)'}
                 >
                   Download CSV ↓
                 </button>
               </div>
 
-              <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '14px', overflow: 'hidden' }}>
                 {/* Table header */}
-                <div className="history-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: '#141820' }}>
+                <div className="history-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '12px 20px', borderBottom: '1px solid rgba(18,58,44,0.12)', background: 'var(--surface-high)' }}>
                   {['Date', 'Provider', 'Duration', 'Tokens Used', 'Status'].map(h => (
                     <span key={h} style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--on-surface-3)' }}>{h}</span>
                   ))}
@@ -478,14 +479,14 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   historyRentals.map((r, i) => (
-                    <div className="history-grid" key={r.id} onClick={() => handleInvoice(r.id)} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '16px 20px', borderBottom: i < historyRentals.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', cursor: 'pointer', transition: 'background 120ms', alignItems: 'center' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                    <div className="history-grid" key={r.id} onClick={() => handleInvoice(r.id)} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr 1fr 1fr', padding: '16px 20px', borderBottom: i < historyRentals.length - 1 ? '1px solid rgba(18,58,44,0.07)' : 'none', cursor: 'pointer', transition: 'background 120ms', alignItems: 'center' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,58,44,0.03)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8' }}>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface)' }}>
                         {new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}, {new Date(r.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })}
                       </span>
-                      <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8' }}>
+                      <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)' }}>
                         {r.provider || r.plan_name || '—'}
                       </span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--on-surface-2)' }}>
@@ -505,10 +506,10 @@ export default function Dashboard() {
           {/* â”€â”€ API KEYS TAB â”€â”€ */}
           {activeTab === 'keys' && (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(192,193,255,0.08)', border: '1px solid rgba(192,193,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(18,58,44,0.08)', border: '1px solid rgba(18,58,44,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                 <Key size={20} color="var(--primary)" />
               </div>
-              <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: '#e8edf8', marginBottom: '8px' }}>API Keys</h3>
+              <h3 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--on-surface)', marginBottom: '8px' }}>API Keys</h3>
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)' }}>Your active virtual keys are shown in the Active Rentals tab.</p>
             </div>
           )}
@@ -516,15 +517,15 @@ export default function Dashboard() {
         </div>
 
         {/* Simple footer */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '24px clamp(24px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)', padding: '24px clamp(24px,4vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: '#e8edf8', marginBottom: '4px' }}>AIRent</div>
+            <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--on-surface)', marginBottom: '4px' }}>AIRent</div>
             <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--on-surface-3)' }}>© 2024 AIRent. Built for the Indian Developer Ecosystem.</div>
           </div>
           <div style={{ display: 'flex', gap: '20px' }}>
-            {['Privacy', 'Terms', 'Status', 'GitHub'].map(l => (
-              <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-3)', textDecoration: 'none', transition: 'color 120ms' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#e8edf8'}
+            {[['Privacy', '/privacy-policy'], ['Terms', '/terms'], ['Status', '/status']].map(([l, to]) => (
+              <Link key={l} to={to} style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--on-surface-3)', textDecoration: 'none', transition: 'color 120ms', padding: '12px 0' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface)'}
                 onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}
               >{l}</Link>
             ))}
@@ -541,13 +542,13 @@ export default function Dashboard() {
           >
             <motion.div key="settings-panel" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22, ease: [0.22,1,0.36,1] }}
               onClick={e => e.stopPropagation()}
-              style={{ width: '100%', maxWidth: '440px', background: '#111520', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', overflow: 'hidden' }}
+              style={{ width: '100%', maxWidth: '440px', background: 'var(--card)', border: '1px solid rgba(18,58,44,0.18)', borderRadius: '16px', overflow: 'hidden' }}
             >
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(18,58,44,0.12)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Settings size={16} color="var(--primary)" />
-                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8' }}>Settings</span>
+                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>Settings</span>
                 </div>
                 <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-3)', padding: '4px', display: 'flex', alignItems: 'center' }}>
                   <X size={16} />
@@ -556,20 +557,20 @@ export default function Dashboard() {
               {/* Body */}
               <div style={{ padding: '24px' }}>
                 {/* Account info */}
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>ACCOUNT</div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#0b0066' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>ACCOUNT</div>
+                <div style={{ background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '10px', padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-primary)' }}>
                     {user?.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.9rem', color: '#e8edf8' }}>{user?.email?.split('@')[0]}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.9rem', color: 'var(--on-surface)' }}>{user?.email?.split('@')[0]}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--on-surface-3)' }}>{user?.email}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--primary)', marginTop: '2px', letterSpacing: '0.04em' }}>{user?.role || 'USER'}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--primary)', marginTop: '2px', letterSpacing: '0.04em' }}>{user?.role || 'USER'}</div>
                   </div>
                 </div>
 
                 {/* Links */}
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>QUICK LINKS</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>QUICK LINKS</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
                   {[
                     { label: 'Privacy Policy',   to: '/privacy-policy' },
@@ -578,16 +579,16 @@ export default function Dashboard() {
                     { label: 'Contact Support',  to: '/contact' },
                   ].map(l => (
                     <Link key={l.to} to={l.to} onClick={() => setShowSettings(false)} style={{ padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', transition: 'background 120ms, color 120ms', display: 'block' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#e8edf8'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(18,58,44,0.07)'; e.currentTarget.style.color = 'var(--on-surface)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-2)'; }}
                     >{l.label}</Link>
                   ))}
                 </div>
 
                 {/* Logout */}
-                <button onClick={async () => { setShowSettings(false); await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.25)', background: 'rgba(248,113,113,0.06)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, color: '#f87171', transition: 'background 120ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.06)'}
+                <button onClick={async () => { setShowSettings(false); await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid rgba(179,38,30,0.25)', background: 'rgba(179,38,30,0.06)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--error)', transition: 'background 120ms' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(179,38,30,0.12)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(179,38,30,0.06)'}
                 >
                   <LogOut size={14} /> Sign out of account
                 </button>

@@ -66,7 +66,7 @@ export default function ResetPassword() {
               value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" style={inputStyle}
               aria-describedby="reset-strength" />
             <button type="button" onClick={() => setShowPass(v => !v)} aria-label={showPass ? 'Hide password' : 'Show password'}
-              style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', lineHeight: 1 }}>
+              style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(18,58,44,0.45)', lineHeight: 1 }}>
               {showPass ? <Eye size={15} /> : <Lock size={15} />}
             </button>
           </div>

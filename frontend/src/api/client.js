@@ -28,7 +28,7 @@ apiClient.interceptors.request.use((config) => {
             const stored = JSON.parse(localStorage.getItem('auth-storage') || '{}');
             token = stored?.state?.token || null;
             if (token) localStorage.setItem('auth_token', token); // re-sync
-        } catch (_) {}
+        } catch { /* storage unavailable: carry on without a token */ }
     }
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -98,11 +98,6 @@ export const authAPI = {
 };
 
 // Providers API (public — no auth needed)
-export const providersAPI = {
-    getActiveProviders: () =>
-        apiClient.get('/api/active-providers'),
-};
-
 // Marketplace API
 export const marketplaceAPI = {
     getPlans: () =>

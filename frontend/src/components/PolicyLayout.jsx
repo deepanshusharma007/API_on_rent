@@ -9,7 +9,7 @@ const fadeUp = (d = 0) => ({ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, 
 
 export function PolicyPage({ children }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Navbar />
       {children}
       <Footer />
@@ -19,23 +19,23 @@ export function PolicyPage({ children }) {
 
 export function PolicyHero({ icon: Icon, badge, title, updated }) {
   return (
-    <section style={{ paddingTop: 'clamp(88px,12vw,128px)', paddingBottom: 'clamp(40px,5vw,64px)', paddingLeft: 'clamp(20px,5vw,56px)', paddingRight: 'clamp(20px,5vw,56px)', background: '#0d1017' }}>
+    <section style={{ paddingTop: 'clamp(88px,12vw,128px)', paddingBottom: 'clamp(40px,5vw,64px)', paddingLeft: 'clamp(20px,5vw,56px)', paddingRight: 'clamp(20px,5vw,56px)', background: 'var(--bg-alt)' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
         <motion.div variants={fadeUp(0)} initial="hidden" animate="show" style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '999px', border: '1px solid rgba(192,193,255,0.2)', background: 'rgba(192,193,255,0.05)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--primary)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '999px', border: '1px solid rgba(18,58,44,0.2)', background: 'rgba(18,58,44,0.05)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--primary)' }}>
             {Icon && <Icon size={11} />}
             {badge?.toUpperCase() || 'LEGAL'}
           </div>
         </motion.div>
         <motion.h1
           variants={fadeUp(0.06)} initial="hidden" animate="show"
-          style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '-0.03em', color: '#e8edf8', marginBottom: '14px' }}
+          style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '-0.03em', color: 'var(--on-surface)', marginBottom: '14px' }}
         >
           {title}
         </motion.h1>
         {updated && (
           <motion.span variants={fadeUp(0.12)} initial="hidden" animate="show"
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)', letterSpacing: '0.08em' }}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)', letterSpacing: '0.08em' }}
           >
             LAST UPDATED: {updated?.toUpperCase()}
           </motion.span>
@@ -47,7 +47,7 @@ export function PolicyHero({ icon: Icon, badge, title, updated }) {
 
 export function PolicyBody({ children }) {
   return (
-    <section style={{ flex: 1, padding: 'clamp(40px,6vw,72px) clamp(20px,5vw,56px) clamp(64px,8vw,96px)', background: '#0a0d14' }}>
+    <section style={{ flex: 1, padding: 'clamp(40px,6vw,72px) clamp(20px,5vw,56px) clamp(64px,8vw,96px)', background: 'var(--bg)' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0' }}>
         {children}
       </div>
@@ -60,14 +60,14 @@ export function PolicySection({ number, title, children }) {
     <motion.div
       variants={fadeUp(0)} initial="hidden" whileInView="show" viewport={VP}
       id={`section-${number}`}
-      style={{ scrollMarginTop: '96px', padding: '32px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ scrollMarginTop: '96px', padding: '32px 0', borderTop: '1px solid rgba(18,58,44,0.09)' }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: '20px', alignItems: 'start' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--on-surface-4)', letterSpacing: '0.04em', paddingTop: '5px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', gap: '20px', alignItems: 'start', overflowWrap: 'anywhere' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-4)', letterSpacing: '0.04em', paddingTop: '5px' }}>
           {String(number).padStart(2, '0')}
         </span>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.0625rem', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '16px' }}>
+          <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1.0625rem', color: 'var(--on-surface)', letterSpacing: '-0.02em', marginBottom: '16px' }}>
             {title}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontFamily: 'var(--font-body)', fontSize: '0.9rem', lineHeight: 1.8, color: 'var(--on-surface-2)' }}>
@@ -80,14 +80,14 @@ export function PolicySection({ number, title, children }) {
 }
 
 export function Highlight({ children }) {
-  return <strong style={{ color: '#e8edf8', fontWeight: 600 }}>{children}</strong>;
+  return <strong style={{ color: 'var(--on-surface)', fontWeight: 600 }}>{children}</strong>;
 }
 
 export function PolicyLink({ href, children }) {
   return (
-    <a href={href} style={{ color: 'var(--secondary)', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(78,222,163,0.35)', transition: 'text-decoration-color 120ms' }}
+    <a href={href} style={{ color: 'var(--secondary)', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(86,111,8,0.35)', transition: 'text-decoration-color 120ms' }}
       onMouseEnter={e => e.currentTarget.style.textDecorationColor = 'var(--secondary)'}
-      onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'rgba(78,222,163,0.35)'}
+      onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'rgba(86,111,8,0.35)'}
     >
       {children}
     </a>
@@ -111,9 +111,9 @@ export function SummaryBox({ items }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '12px' }}>
       {items.map(({ icon: Icon, label, sub }) => (
-        <div key={label} style={{ padding: '20px', background: '#111520', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', textAlign: 'center' }}>
+        <div key={label} style={{ padding: '20px', background: 'var(--card)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '12px', textAlign: 'center' }}>
           {Icon && <Icon size={18} style={{ color: 'var(--secondary)', margin: '0 auto 10px', display: 'block' }} />}
-          <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: '#e8edf8', letterSpacing: '-0.01em', marginBottom: '4px' }}>{label}</p>
+          <p style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface)', letterSpacing: '-0.01em', marginBottom: '4px' }}>{label}</p>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.775rem', color: 'var(--on-surface-3)', lineHeight: 1.5 }}>{sub}</p>
         </div>
       ))}

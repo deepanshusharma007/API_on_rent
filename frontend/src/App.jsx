@@ -14,7 +14,8 @@ import StatusPage from './pages/StatusPage';
 import Playground from './pages/Playground';
 
 // Public pages
-import LandingPage from './pages/LandingPage';
+import Landing3D from './pages/Landing3D';
+import Orbit3D from './pages/Orbit3D';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import FAQ from './pages/FAQ';
@@ -27,6 +28,9 @@ import ApiDocs from './pages/ApiDocs';
 import useAuthStore from './store/authStore';
 import AnnouncementBanner from './components/AnnouncementBanner';
 
+// Same base URL the axios client uses, so local dev never talks to production
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -36,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   // Keep Render backend alive (free tier sleeps after 15min inactivity)
   useEffect(() => {
-    const ping = () => fetch('https://api-on-rent-backend.onrender.com/health').catch(() => {});
+    const ping = () => fetch(`${API_BASE_URL}/health`).catch(() => {});
     ping(); // immediate ping on load
     const id = setInterval(ping, 5 * 60 * 1000);
     return () => clearInterval(id);
@@ -48,7 +52,7 @@ function App() {
     const checkSession = () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
-      fetch('https://api-on-rent-backend.onrender.com/auth/me', {
+      fetch(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => {
         if (res.status === 401) {
@@ -71,15 +75,18 @@ function App() {
           position="top-right"
           toastOptions={{
             style: {
-              background: 'var(--c-surface, #161b22)',
-              color: 'var(--c-text, #e6edf3)',
-              border: '1px solid var(--c-border, #30363d)',
+              background: 'var(--c-surface)',
+              color: 'var(--c-text)',
+              border: '1px solid var(--c-border)',
+              borderRadius: '12px',
             },
           }}
         />
         <Routes>
           {/* ── Public / Marketing pages ── */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Landing3D />} />
+          <Route path="/3d" element={<Navigate to="/" replace />} />
+          <Route path="/orbit" element={<Orbit3D />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/faq" element={<FAQ />} />

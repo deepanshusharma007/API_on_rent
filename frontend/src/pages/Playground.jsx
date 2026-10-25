@@ -109,30 +109,30 @@ export default function Playground() {
   };
 
   const inputStyle = {
-    width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', outline: 'none',
-    fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8',
+    width: '100%', padding: '12px 16px', background: 'rgba(18,58,44,0.05)',
+    border: '1px solid rgba(18,58,44,0.18)', borderRadius: '10px', outline: 'none',
+    fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface)',
     boxSizing: 'border-box', transition: 'border-color 150ms',
   };
 
   const monoLabel = {
-    display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
-    fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)', marginBottom: '8px',
+    display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
+    fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(18,58,44,0.5)', marginBottom: '8px',
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#0a0d14', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)', fontFamily: 'var(--font-body)', '--app-banner-h': bannerUp ? '40px' : '0px' }}>
 
       {/* â”€â”€ SIDEBAR â”€â”€ */}
-      <aside className="app-sidebar" style={{ width: '220px', flexShrink: 0, background: '#0d1017', borderRight: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, overflowY: 'auto', transition: 'top 200ms ease' }}>
-        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <aside className="app-sidebar" style={{ width: '220px', flexShrink: 0, background: 'var(--bg-alt)', borderRight: '1px solid rgba(18,58,44,0.12)', display: 'flex', flexDirection: 'column', position: 'fixed', top: bannerUp ? '40px' : '0px', left: 0, bottom: 0, zIndex: 50, overflowY: 'auto', transition: 'top 200ms ease' }}>
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(18,58,44,0.09)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.75rem', color: 'var(--on-primary)' }}>
               {user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <div>
-              <Link to="/" style={{ textDecoration: 'none' }}><div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.875rem', color: '#e8edf8', transition: 'color 120ms' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.color = '#e8edf8'}>API Playground</div></Link>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>AIRent Infrastructure</div>
+              <Link to="/" style={{ textDecoration: 'none' }}><div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '0.875rem', color: 'var(--on-surface)', transition: 'color 120ms' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface)'}>API Playground</div></Link>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)', letterSpacing: '0.04em' }}>AIRent Infrastructure</div>
             </div>
           </div>
         </div>
@@ -141,13 +141,13 @@ export default function Playground() {
             const Icon = item.icon;
             return (
               <Link key={item.id} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', marginBottom: '2px', textDecoration: 'none', background: 'transparent', color: 'var(--on-surface-2)', fontFamily: 'var(--font-body)', fontSize: '0.875rem', transition: 'background 120ms, color 120ms' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#e8edf8'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(18,58,44,0.07)'; e.currentTarget.style.color = 'var(--on-surface)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-2)'; }}
               ><Icon size={15} />{item.label}</Link>
             );
           })}
         </nav>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 12px' }}>
+        <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)', padding: '16px 12px' }}>
           <button style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-3)', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface-2)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}
@@ -156,9 +156,9 @@ export default function Playground() {
             onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface-2)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--on-surface-3)'}
           ><HelpCircle size={13} /> Support</Link>
-          <button onClick={async () => { await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', color: '#f87171', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px', transition: 'color 120ms', marginTop: '4px' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#fca5a5'}
-            onMouseLeave={e => e.currentTarget.style.color = '#f87171'}
+          <button onClick={async () => { await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', fontFamily: 'var(--font-body)', fontSize: '0.8125rem', borderRadius: '6px', transition: 'color 120ms', marginTop: '4px' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--error)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--error)'}
           ><LogOut size={13} /> Log out</button>
         </div>
       </aside>
@@ -178,12 +178,12 @@ export default function Playground() {
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: '#e8edf8', letterSpacing: '-0.02em', marginBottom: '6px' }}>API Playground</h1>
+              <h1 style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(1.6rem,3vw,2.2rem)', color: 'var(--on-surface)', letterSpacing: '-0.02em', marginBottom: '6px' }}>API Playground</h1>
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface-2)' }}>Test your virtual key live — real requests, real responses.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 6px var(--secondary)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--secondary)' }}>LIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--secondary)' }}>LIVE</span>
             </div>
           </div>
 
@@ -191,11 +191,11 @@ export default function Playground() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }} className="pg-grid">
 
             {/* LEFT — Request */}
-            <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', overflow: 'hidden' }}>
               {/* Panel header */}
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(18,58,44,0.09)', background: 'var(--surface-high)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Terminal size={13} color="var(--primary)" />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--on-surface-2)' }}>REQUEST</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--on-surface-2)' }}>REQUEST</span>
               </div>
 
               <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -203,9 +203,9 @@ export default function Playground() {
                 <div>
                   <label style={monoLabel}>VIRTUAL API KEY</label>
                   <input type="text" value={virtualKey} onChange={e => setVirtualKey(e.target.value)} placeholder="vk_xxxxxxxxxxxxxxxx"
-                    style={{ ...inputStyle, fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    style={{ ...inputStyle, fontFamily: 'var(--font-code)', fontSize: '0.8rem' }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
                   />
                 </div>
 
@@ -213,10 +213,10 @@ export default function Playground() {
                 <div style={{ position: 'relative' }}>
                   <label style={monoLabel}>MODEL</label>
                   <button onClick={() => setModelOpen(o => !o)} style={{
-                    width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${modelOpen ? 'rgba(192,193,255,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                    width: '100%', padding: '12px 16px', background: 'rgba(18,58,44,0.05)',
+                    border: `1px solid ${modelOpen ? 'rgba(18,58,44,0.35)' : 'rgba(18,58,44,0.18)'}`,
                     borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8', textAlign: 'left',
+                    fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface)', textAlign: 'left',
                   }}>
                     <span>{selectedModel ? `${selectedModel.label} · ${selectedModel.provider || ""}` : 'Select a model'}</span>
                     <ChevronDown size={14} color="var(--on-surface-3)" style={{ transform: modelOpen ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }} />
@@ -224,21 +224,21 @@ export default function Playground() {
                   <AnimatePresence>
                     {modelOpen && (
                       <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
-                        style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: '#141820', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden', zIndex: 20 }}>
+                        style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: 'var(--surface-high)', border: '1px solid rgba(18,58,44,0.18)', borderRadius: '10px', overflow: 'hidden', zIndex: 20 }}>
                         {allModels.length === 0
                           ? <div style={{ padding: '16px', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-3)', textAlign: 'center' }}>No models available</div>
                           : allModels.map(m => (
                             <button key={m.id} onClick={() => { setModel(m.id); setModelOpen(false); }} style={{
-                              width: '100%', padding: '11px 16px', background: model === m.id ? 'rgba(192,193,255,0.08)' : 'transparent',
+                              width: '100%', padding: '11px 16px', background: model === m.id ? 'rgba(18,58,44,0.08)' : 'transparent',
                               border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                              fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: model === m.id ? 'var(--primary)' : '#e8edf8',
+                              fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: model === m.id ? 'var(--primary)' : 'var(--on-surface)',
                               textAlign: 'left', transition: 'background 120ms',
                             }}
-                              onMouseEnter={e => { if (model !== m.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                              onMouseEnter={e => { if (model !== m.id) e.currentTarget.style.background = 'rgba(18,58,44,0.05)'; }}
                               onMouseLeave={e => { if (model !== m.id) e.currentTarget.style.background = 'transparent'; }}
                             >
                               <span>{m.label}</span>
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>{m.provider}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)' }}>{m.provider}</span>
                             </button>
                           ))
                         }
@@ -252,8 +252,8 @@ export default function Playground() {
                   <label style={monoLabel}>PROMPT</label>
                   <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={5} placeholder="Enter your prompt..."
                     style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
                   />
                 </div>
 
@@ -262,15 +262,15 @@ export default function Playground() {
                   <div style={{ flex: 1 }}>
                     <label style={monoLabel}>MAX TOKENS</label>
                     <input type="number" value={maxTokens} onChange={e => setMaxTokens(Number(e.target.value))} style={inputStyle}
-                      onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', cursor: 'pointer' }} onClick={() => setStreaming(v => !v)}>
-                    <div style={{ width: '38px', height: '20px', borderRadius: '10px', position: 'relative', background: streaming ? 'var(--secondary)' : 'rgba(255,255,255,0.08)', border: `1px solid ${streaming ? 'rgba(78,222,163,0.4)' : 'rgba(255,255,255,0.12)'}`, transition: 'all 200ms', flexShrink: 0 }}>
-                      <div style={{ position: 'absolute', top: '3px', width: '12px', height: '12px', borderRadius: '50%', background: streaming ? '#003824' : 'rgba(255,255,255,0.3)', left: streaming ? '22px' : '3px', transition: 'left 200ms' }} />
+                    <div style={{ width: '38px', height: '20px', borderRadius: '10px', position: 'relative', background: streaming ? 'var(--secondary)' : 'rgba(18,58,44,0.14)', border: `1px solid ${streaming ? 'rgba(86,111,8,0.4)' : 'rgba(18,58,44,0.2)'}`, transition: 'all 200ms', flexShrink: 0 }}>
+                      <div style={{ position: 'absolute', top: '3px', width: '12px', height: '12px', borderRadius: '50%', background: streaming ? 'var(--on-secondary)' : 'rgba(18,58,44,0.4)', left: streaming ? '22px' : '3px', transition: 'left 200ms' }} />
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, color: streaming ? 'var(--secondary)' : 'var(--on-surface-3)', letterSpacing: '0.08em', userSelect: 'none' }}>STREAM</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, color: streaming ? 'var(--secondary)' : 'var(--on-surface-3)', letterSpacing: '0.08em', userSelect: 'none' }}>STREAM</span>
                   </div>
                 </div>
 
@@ -279,12 +279,12 @@ export default function Playground() {
                   <button onClick={sendRequest} disabled={loading} style={{
                     flex: 1, padding: '13px', borderRadius: '10px', border: 'none',
                     cursor: loading ? 'not-allowed' : 'pointer',
-                    background: loading ? 'rgba(192,193,255,0.15)' : 'linear-gradient(135deg, #8083ff 0%, #c0c1ff 100%)',
-                    color: loading ? 'rgba(255,255,255,0.4)' : '#0b0066',
+                    background: loading ? 'rgba(18,58,44,0.15)' : 'var(--primary)',
+                    color: loading ? 'rgba(18,58,44,0.5)' : 'var(--on-primary)',
                     fontFamily: 'var(--font-head)', fontSize: '0.9rem', fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     opacity: loading ? 0.7 : 1, transition: 'filter 150ms',
-                    boxShadow: loading ? 'none' : '0 4px 20px -6px rgba(192,193,255,0.3)',
+                    boxShadow: loading ? 'none' : '0 4px 20px -6px rgba(18,58,44,0.3)',
                   }}
                     onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.07)'; }}
                     onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
@@ -293,40 +293,40 @@ export default function Playground() {
                     {loading ? 'Sending...' : 'Send Request'}
                   </button>
                   <button onClick={generateCurl} title="Copy as cURL" style={{
-                    padding: '13px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.04)', cursor: 'pointer', color: 'var(--on-surface-2)',
+                    padding: '13px 16px', borderRadius: '10px', border: '1px solid rgba(18,58,44,0.18)',
+                    background: 'rgba(18,58,44,0.05)', cursor: 'pointer', color: 'var(--on-surface-2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 120ms',
                   }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,58,44,0.14)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(18,58,44,0.05)'}
                   ><Code2 size={15} /></button>
                 </div>
               </div>
             </div>
 
             {/* RIGHT — Response */}
-            <div style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#141820', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid rgba(18,58,44,0.14)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(18,58,44,0.09)', background: 'var(--surface-high)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Terminal size={13} color="var(--secondary)" />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--on-surface-2)' }}>RESPONSE</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--on-surface-2)' }}>RESPONSE</span>
                   {response?.streaming && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--secondary)' }}>
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--secondary)', animation: 'pulse-dot 1s infinite' }} /> STREAMING
                     </span>
                   )}
                 </div>
-                {responseTime && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>{responseTime}ms</span>}
+                {responseTime && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)' }}>{responseTime}ms</span>}
               </div>
 
               <div style={{ flex: 1, padding: '20px' }}>
                 <AnimatePresence mode="wait">
                   {!response && !loading && (
                     <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ height: '100%', minHeight: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '12px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(192,193,255,0.06)', border: '1px solid rgba(192,193,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(18,58,44,0.06)', border: '1px solid rgba(18,58,44,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Zap size={18} color="var(--on-surface-4)" />
                       </div>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.08em', color: 'var(--on-surface-4)' }}>AWAITING REQUEST</p>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.08em', color: 'var(--on-surface-4)' }}>AWAITING REQUEST</p>
                     </motion.div>
                   )}
                   {loading && !response && (
@@ -335,15 +335,15 @@ export default function Playground() {
                     </motion.div>
                   )}
                   {response?.error && (
-                    <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '16px', borderRadius: '10px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)' }}>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em', color: '#f87171', marginBottom: '8px' }}>ERROR</p>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#fca5a5', lineHeight: 1.6 }}>{response.error}</p>
+                    <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '16px', borderRadius: '10px', background: 'rgba(179,38,30,0.06)', border: '1px solid rgba(179,38,30,0.2)' }}>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--error)', marginBottom: '8px' }}>ERROR</p>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--error)', lineHeight: 1.6 }}>{response.error}</p>
                     </motion.div>
                   )}
                   {response?.content && (
                     <motion.div key="content" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ padding: '16px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', maxHeight: '320px', overflowY: 'auto' }}>
-                        <pre style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: '#e8edf8', whiteSpace: 'pre-wrap', lineHeight: 1.75, margin: 0 }}>
+                      <div style={{ padding: '16px', borderRadius: '10px', background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.12)', maxHeight: '320px', overflowY: 'auto' }}>
+                        <pre style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface)', whiteSpace: 'pre-wrap', lineHeight: 1.75, margin: 0 }}>
                           {response.content}
                           {response.streaming && <span style={{ color: 'var(--secondary)', animation: 'pulse-dot 0.8s infinite' }}>▌</span>}
                         </pre>
@@ -351,24 +351,24 @@ export default function Playground() {
                       {response.usage && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px' }}>
                           {[{ label: 'INPUT', val: response.usage.prompt_tokens }, { label: 'OUTPUT', val: response.usage.completion_tokens }, { label: 'TOTAL', val: response.usage.total_tokens }].map(({ label, val }) => (
-                            <div key={label} style={{ padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>{label}</div>
-                              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8' }}>{val}</div>
+                            <div key={label} style={{ padding: '12px', borderRadius: '8px', background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.12)', textAlign: 'center' }}>
+                              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '4px' }}>{label}</div>
+                              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>{val}</div>
                             </div>
                           ))}
                         </div>
                       )}
-                      {response.model && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--on-surface-3)' }}>MODEL: <span style={{ color: 'var(--on-surface-2)' }}>{response.model}</span></span>}
+                      {response.model && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--on-surface-3)' }}>MODEL: <span style={{ color: 'var(--on-surface-2)' }}>{response.model}</span></span>}
                      {gatewayMeta && (
                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                         {gatewayMeta.cacheHit && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, color: '#34d399' }}>CACHE HIT</span>}
-                         {gatewayMeta.provider && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(192,193,255,0.06)', border: '1px solid rgba(192,193,255,0.15)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--primary)' }}>{gatewayMeta.provider}</span>}
-                         {gatewayMeta.fallbackUsed && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: '#fbbf24' }}>FALLBACK</span>}
+                         {gatewayMeta.cacheHit && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(86,111,8,0.1)', border: '1px solid rgba(86,111,8,0.25)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, color: 'var(--secondary)' }}>CACHE HIT</span>}
+                         {gatewayMeta.provider && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(18,58,44,0.06)', border: '1px solid rgba(18,58,44,0.15)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--primary)' }}>{gatewayMeta.provider}</span>}
+                         {gatewayMeta.fallbackUsed && <span style={{ padding: '3px 10px', borderRadius: '20px', background: 'rgba(168,100,0,0.08)', border: '1px solid rgba(168,100,0,0.2)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--warn)' }}>FALLBACK</span>}
                        </div>
                      )}
-                      <button onClick={() => { navigator.clipboard.writeText(response.content); toast.success('Copied!'); }} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-2)', transition: 'background 120ms' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                      <button onClick={() => { navigator.clipboard.writeText(response.content); toast.success('Copied!'); }} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(18,58,44,0.18)', background: 'rgba(18,58,44,0.05)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.8rem', color: 'var(--on-surface-2)', transition: 'background 120ms' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,58,44,0.14)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(18,58,44,0.05)'}
                       ><Copy size={12} /> Copy response</button>
                     </motion.div>
                   )}
@@ -388,28 +388,28 @@ export default function Playground() {
           >
             <motion.div key="settings-panel" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22, ease: EASE }}
               onClick={e => e.stopPropagation()}
-              style={{ width: '100%', maxWidth: '440px', background: '#111520', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', overflow: 'hidden' }}
+              style={{ width: '100%', maxWidth: '440px', background: 'var(--card)', border: '1px solid rgba(18,58,44,0.18)', borderRadius: '16px', overflow: 'hidden' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid rgba(18,58,44,0.12)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Settings size={16} color="var(--primary)" />
-                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8' }}>Settings</span>
+                  <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>Settings</span>
                 </div>
                 <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--on-surface-3)', padding: '4px', display: 'flex', alignItems: 'center' }}><X size={16} /></button>
               </div>
               <div style={{ padding: '24px' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>ACCOUNT</div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#0b0066' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>ACCOUNT</div>
+                <div style={{ background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.12)', borderRadius: '10px', padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-primary)' }}>
                     {user?.email?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.9rem', color: '#e8edf8' }}>{user?.email?.split('@')[0]}</div>
+                    <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '0.9rem', color: 'var(--on-surface)' }}>{user?.email?.split('@')[0]}</div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--on-surface-3)' }}>{user?.email}</div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--primary)', marginTop: '2px', letterSpacing: '0.04em' }}>{user?.role || 'USER'}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--primary)', marginTop: '2px', letterSpacing: '0.04em' }}>{user?.role || 'USER'}</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>QUICK LINKS</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>QUICK LINKS</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
                   {[
                     { label: 'Privacy Policy',   to: '/privacy-policy' },
@@ -418,14 +418,14 @@ export default function Playground() {
                     { label: 'Contact Support',  to: '/contact' },
                   ].map(l => (
                     <Link key={l.to} to={l.to} onClick={() => setShowSettings(false)} style={{ padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface-2)', transition: 'background 120ms, color 120ms', display: 'block' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#e8edf8'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(18,58,44,0.07)'; e.currentTarget.style.color = 'var(--on-surface)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-2)'; }}
                     >{l.label}</Link>
                   ))}
                 </div>
-                <button onClick={async () => { setShowSettings(false); await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.25)', background: 'rgba(248,113,113,0.06)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, color: '#f87171', transition: 'background 120ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(248,113,113,0.06)'}
+                <button onClick={async () => { setShowSettings(false); await logout(); navigate('/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid rgba(179,38,30,0.25)', background: 'rgba(179,38,30,0.06)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, color: 'var(--error)', transition: 'background 120ms' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(179,38,30,0.12)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(179,38,30,0.06)'}
                 >
                   <LogOut size={14} /> Sign out of account
                 </button>
@@ -439,7 +439,7 @@ export default function Playground() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
         @media (max-width: 860px) { .pg-grid { grid-template-columns: 1fr !important; } }
-        textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.2); }
+        textarea::placeholder, input::placeholder { color: rgba(18,58,44,0.3); }
       `}</style>
     </div>
   );

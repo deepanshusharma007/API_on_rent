@@ -23,9 +23,9 @@ function loadGoogleScript() {
 
 const fallbackStyle = {
   width: '100%', padding: '13px', borderRadius: '10px',
-  border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(18,58,44,0.18)', background: 'rgba(18,58,44,0.05)',
   cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: '0.9rem', fontWeight: 500,
-  color: '#e8edf8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+  color: 'var(--on-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
 };
 
 /**
@@ -84,7 +84,7 @@ export default function GoogleSignInButton({ onCredential, onError, text = 'cont
         </button>
       )}
       {status === 'loading' && (
-        <div style={{ ...fallbackStyle, cursor: 'default', color: 'rgba(255,255,255,0.4)' }} aria-busy="true">
+        <div style={{ ...fallbackStyle, cursor: 'default', color: 'rgba(18,58,44,0.5)' }} aria-busy="true">
           <GoogleMark /> Loading Google sign-in…
         </div>
       )}
