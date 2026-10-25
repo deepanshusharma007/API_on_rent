@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: apirental_secret
       POSTGRES_DB: apirental
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"   # local access only; the backend reaches it over the compose network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
     container_name: apirental-redis
     command: redis-server --appendonly yes --requirepass redis_secret
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -46,12 +46,19 @@ services:
       - DATABASE_URL=postgresql://apirental:apirental_secret@postgres:5432/apirental
       - REDIS_URL=redis://:redis_secret@redis:6379/0
       - USE_FAKE_REDIS=false
-      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (openssl rand -hex 32)}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
       - OPENAI_API_KEYS=${OPENAI_API_KEYS:-}
       - ANTHROPIC_API_KEYS=${ANTHROPIC_API_KEYS:-}
       - GEMINI_API_KEYS=${GEMINI_API_KEYS:-}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - CASHFREE_CLIENT_ID=${CASHFREE_CLIENT_ID:-}
+      - CASHFREE_CLIENT_SECRET=${CASHFREE_CLIENT_SECRET:-}
+      - CASHFREE_WEBHOOK_SECRET=${CASHFREE_WEBHOOK_SECRET:-}
+      - CASHFREE_ENVIRONMENT=${CASHFREE_ENVIRONMENT:-sandbox}
     depends_on:
       postgres:
         condition: service_healthy
