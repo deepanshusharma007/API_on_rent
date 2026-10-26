@@ -32,7 +32,7 @@ export default function ForgotPassword() {
           If an account exists for <strong>{sentTo}</strong>, we've sent a link to reset your password.
           The link expires in 30 minutes and can be used once.
         </FormMessage>
-        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: '20px' }}>
+        <p style={{ fontSize: '0.85rem', color: 'rgba(18,58,44,0.6)', lineHeight: 1.6, marginBottom: '20px' }}>
           Didn't get it? Check spam, or wait a minute and{' '}
           <button type="button" onClick={() => setSentTo('')}
             style={{ background: 'none', border: 'none', padding: 0, color: 'var(--primary)', cursor: 'pointer', font: 'inherit' }}>
@@ -53,14 +53,14 @@ export default function ForgotPassword() {
           <div style={{ position: 'relative' }}>
             <input id="forgot-email" type="email" autoComplete="email" required value={email}
               onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle} />
-            <Mail size={15} aria-hidden="true" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }} />
+            <Mail size={15} aria-hidden="true" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(18,58,44,0.34)', pointerEvents: 'none' }} />
           </div>
         </div>
         <button type="submit" disabled={loading || emailUnavailable} style={{ ...primaryButtonStyle(loading), ...(emailUnavailable ? { opacity: 0.45, cursor: 'not-allowed' } : {}) }}>
           {loading ? <Spinner /> : 'Send reset link'}
         </button>
       </form>
-      <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.35)', marginTop: '24px' }}>
+      <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'rgba(18,58,44,0.45)', marginTop: '24px' }}>
         Remembered it? <Link to="/login" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
       </p>
     </AuthShell>

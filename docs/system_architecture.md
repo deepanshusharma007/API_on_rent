@@ -72,15 +72,11 @@ backend/
 │   ├── auth_utils.py         # hash_password, verify_password, create_jwt
 │   ├── capacity_manager.py   # Token/RPM reservation + overbooking
 │   ├── circuit_breaker.py    # Per-provider failure tracking (Redis)
-│   ├── cost_estimator.py     # Pre-request cost estimate (tiktoken)
+│   ├── cost_estimator.py     # Published per-model prices -> UsageLog.cost_usd
+│   ├── cache.py              # Redis response cache (temperature=0 only)
+│   ├── router.py             # Model catalogue, provider key pool, fallback chains
 │   ├── drain_rate.py         # Per-model token multipliers
 │   ├── email_service.py      # SMTP: key delivery, alerts
-│   ├── fallback_chain.py     # Provider fallback order
-│   ├── key_rotation.py       # Load-balanced key selection by token budget
-│   ├── pii_masker.py         # Regex PII redaction (emails, phones, SSNs, cards)
-│   ├── prompt_filter.py      # Regex + Gemini Flash AI safety pre-scan
-│   ├── provider_health.py    # Provider health probes
-│   ├── semantic_cache.py     # Sentence-transformers embedding cache (Redis)
 │   └── virtual_key_service.py  # create_rental: generate vk_xxx, store in Redis+DB
 ├── workers/
 │   ├── capacity_reconciler.py  # Periodically sync Redis capacity vs DB
@@ -226,40 +222,29 @@ POST /v1/chat/completions
       First use: SET rental:{id}:ip {client_ip}
       Subsequent: compare -> mismatch -> 403
 
-  6 - PII masking
-      Regex redacts emails, phones, SSNs, card numbers in all messages
+  6 - Guardrails (middleware/guardrails/)
+      Balance check in credits (tokens x drain rate), PII redaction (emails, phones,
+      SSNs, Luhn-valid cards, IPs), prompt-injection patterns. List-form content is
+      handled like string content. Blocked -> 400 / 402
 
-  7 - Prompt safety filter
-      Regex blocklist (fast) -> Gemini Flash AI pre-scan (async, best-effort)
-      Blocked -> 400
+  7 - Cache lookup (temperature=0 requests only)
+      Key = user + model + full request. Hit: deduct credits, skip the provider call
 
-  8 - Cost pre-check (optional, PRE_REQUEST_COST_CHECK=true)
-      tiktoken estimate vs current token balance in Redis
+  8 - Route + circuit breaker + fallback
+      Key pool: least-recently-used active key whose token budget is not spent
+      Breaker trips at 5 provider failures (not caller errors: 400/413/422), 60s recovery
+      Fallback chain per model; billing uses the model that actually answered
 
-  9 - Semantic cache lookup
-      sentence-transformers embedding -> cosine similarity >= 0.95 = hit
-      Cache hit: deduct tokens, return cached response, skip provider call
+  9 - LiteLLM call
+      Streaming (SSE) or non-streaming
+      Client disconnect detection -> cancels upstream call mid-stream
 
-  10 - Key selection (load balancer)
-       Budgeted keys: pick key with max(token_budget - tokens_consumed)
-       Unlimited keys (budget=0): round-robin by usage_count
-       Exhausted budgeted keys: skipped automatically
+  10 - Accounting
+       Redis: deduct rental credit balance (tokens x drain_rate)
+       DB: Rental counters (atomic SQL increments) + UsageLog with real cost_usd
+       Platform spend tracker (capacity:budget:spent) for the admin budget view
 
-  11 - Circuit breaker + provider fallback
-       Trips at 5 failures, 60s recovery
-       Fallback order: OpenAI -> Anthropic -> Google Gemini
-
-  12 - LiteLLM call
-       Streaming (SSE) or non-streaming
-       Client disconnect detection -> cancels upstream call mid-stream
-
-  13 - Token accounting
-       Redis: deduct rental token balance (tokens x drain_rate)
-       DB: key_rotation.deduct_tokens(api_key, raw_tokens)
-       DB: write UsageLog (thread pool, non-blocking)
-
-  14 - Cache response
-       semantic_cache.cache_response(prompt, model, response)
+  11 - Cache response (temperature=0 only)
 ```
 
 ---
@@ -296,22 +281,12 @@ POST /v1/chat/completions
 
 ---
 
-## Key Load Balancer (`key_rotation.py`)
+## Provider Key Pool (`router.py`)
 
-Selects the provider API key with the most remaining token budget for each request:
-
-```
-1. Get all active ProviderKey rows for the provider
-2. Split into: budgeted (token_budget > 0) and unlimited (token_budget = 0)
-3. Among budgeted: filter out exhausted (tokens_consumed >= token_budget)
-   Pick: max(token_budget - tokens_consumed)
-4. If none available: fall back to unlimited keys, round-robin by usage_count
-5. After request completes: deduct_tokens(api_key, actual_tokens) -> DB
-```
-
-- Keys near exhaustion are deprioritized automatically
-- Multiple keys per provider distribute load by remaining capacity
-- Admin sets `token_budget` per key in Admin Panel -> API Keys tab
+Each request uses the active `ProviderKey` for the provider that was used longest ago and
+records the pick (`last_used_at`, `usage_count`), so keys rotate. A key with a non-zero
+`token_budget` that has been spent (`tokens_consumed >= token_budget`) is skipped. Keys fall
+back to the `*_API_KEYS` environment variables when the pool has none.
 
 ---
 
@@ -325,21 +300,20 @@ Hybrid reservation to prevent overselling:
 
 ---
 
-## Semantic Cache (`semantic_cache.py`)
+## Response Cache (`cache.py`)
 
-- `sentence-transformers` generates embeddings for incoming prompts
-- Stored as JSON in Redis, keyed by prompt hash
-- Cosine similarity >= 0.95 = cache hit
-- Hit: user pays drain-rate tokens, provider not called -> reduces provider cost
+- Only `temperature: 0` requests are cached: an unset temperature means a different answer each time
+- Key is scoped to the user and the full request (model, messages, parameters)
+- Hit: the user still pays the drain-rate credits, the provider is not called
 
 ---
 
 ## Circuit Breaker (`circuit_breaker.py`)
 
-- Per-provider failure counter in Redis
-- Trips at 5 consecutive failures -> provider unavailable for 60s
-- Auto-recovers after timeout; events logged to `CircuitBreakerEvent` table
-- FallbackChain consults circuit breaker to build the list of live providers
+- Per-provider failure counter in Redis (5-minute window from the first failure)
+- Trips at `CIRCUIT_BREAKER_FAILURE_THRESHOLD` failures -> provider unavailable for `CIRCUIT_BREAKER_TIMEOUT_SECONDS`
+- Only provider-side failures count; a request the provider rejected as invalid (400/413/422) does not
+- The router consults the breaker to build the list of live providers
 
 ---
 
@@ -378,13 +352,13 @@ cache:{prompt_hash}               STRING  JSON cached LLM response
 | Virtual keys, not forwarded real keys | Users never see provider keys; we control access, billing, revocation |
 | Redis for real-time data | TTLs, rate counters, token balances need sub-ms latency |
 | LiteLLM for multi-provider | Single API surface for OpenAI/Anthropic/Gemini - simplifies fallback and key rotation |
-| Load-balance by token budget | Routes traffic away from near-exhausted keys automatically; no manual rebalancing |
+| Least-recently-used key pool | Spreads load across provider keys; spent keys are skipped |
 | Hybrid capacity reservation | Hard-reserve RPM (cannot overcommit), soft-reserve tokens with 1.5x overbooking |
 | Per-model drain rates | GPT-4o costs 10x more than Gemini Flash - drain tokens proportionally to actual cost |
 | Cashfree webhook idempotency | `cashfree_order_id` unique check prevents double-rentals from Cashfree retry storms |
-| Redis SET NX checkout lock | 5-min TTL prevents duplicate Cashfree orders from rapid double-clicks |
+| Redis SET NX checkout lock | 60s TTL stops duplicate Cashfree orders from rapid double-clicks; released if the attempt fails |
 | IP pinning | Prevents key sharing - key locks to first-use IP after first request |
-| Semantic cache | Same-meaning prompts reuse cached responses; reduces provider API cost |
+| Exact-match cache (temperature=0) | Repeat deterministic requests skip the provider; reduces provider API cost |
 | Disconnect detection in streaming | Cancels upstream LiteLLM call if client drops mid-stream - saves tokens |
 
 ---

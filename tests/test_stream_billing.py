@@ -534,7 +534,9 @@ def test_internal_key_stream_exact_usage(client, db, redis_mgr, user, acompletio
     resp = _stream(client, "ik_stream")
 
     assert resp.status_code == 200 and _events(resp.text)[-1] == "[DONE]"
-    assert _run(client, redis_mgr.get_token_balance(f"ik_{key.id}")) == -EXACT_CREDITS   # balance:ik_<id>, as before
+    # Internal keys are metered on the key row (token_budget), not in a Redis balance
+    db.refresh(key)
+    assert key.tokens_used == TOKENS
 
 
 def test_internal_key_stream_disconnect_charges_estimate(app, db, redis_mgr, user, acompletion):
@@ -545,9 +547,9 @@ def test_internal_key_stream_disconnect_charges_estimate(app, db, redis_mgr, use
     async def scenario():
         acompletion.return_value = _provider_stream(_text_chunk("Hel"), then="hang")
         await _asgi_stream(app, "ik_stream", disconnect_when=asyncio.Event(), disconnect_after_first_chunk=True)
-        return await redis_mgr.get_token_balance(f"ik_{key.id}")
 
-    balance = asyncio.run(scenario())
-    _tokens, credits = _estimated_credits("Hel")
+    asyncio.run(scenario())
+    tokens, _credits = _estimated_credits("Hel")
 
-    assert balance == -credits
+    db.refresh(key)
+    assert key.tokens_used == tokens

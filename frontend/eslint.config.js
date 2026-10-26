@@ -23,7 +23,8 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // `motion` and capitalised names are used as JSX elements, which plain ESLint can't see
+      'no-unused-vars': ['error', { varsIgnorePattern: '^(motion|[A-Z_])', argsIgnorePattern: '^[A-Z_]' }],
     },
   },
 ])

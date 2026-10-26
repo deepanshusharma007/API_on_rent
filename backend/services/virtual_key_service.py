@@ -115,3 +115,35 @@ async def get_rental_ttl(rental: Rental, redis_manager: RedisManager) -> int:
     """Get remaining TTL for rental in seconds."""
     ttl = await redis_manager.get_virtual_key_ttl(rental.virtual_key)
     return max(0, ttl)  # Return 0 if expired
+
+
+async def restore_rental_key(rental: Rental, db: Session, redis_manager: RedisManager) -> None:
+    """Re-activate a PAUSED or SUSPENDED rental that has not expired yet.
+
+    Rebuilds the Redis key with the time that is left and, if the balance expired from
+    Redis, restores it from the database (kept up to date on every request). The provider
+    the customer originally picked is only stored in the deleted key, so a restored rental
+    is not provider-restricted; its plan limits and model still apply."""
+    if rental.status not in (RentalStatus.PAUSED, RentalStatus.SUSPENDED):
+        raise ValueError(f"Rental is {rental.status.value}, not paused or suspended")
+    if rental.expires_at <= datetime.utcnow():
+        raise ValueError("Rental has already expired")
+    plan = db.query(Plan).filter(Plan.id == rental.plan_id).first()
+    if not plan:
+        raise ValueError("The rental's plan no longer exists")
+
+    rental_data = {
+        "rental_id": rental.id,
+        "user_id": rental.user_id,
+        "plan_id": rental.plan_id,
+        "model_id": plan.model_id,
+        "provider": None,
+        "token_cap": plan.token_cap,
+        "rpm_limit": plan.rpm_limit,
+        "drain_rate_multiplier": plan.drain_rate_multiplier,
+    }
+    await redis_manager.set_virtual_key_ttl(rental.virtual_key, rental.expires_at, rental_data)
+    if not await redis_manager.redis.exists(f"balance:{rental.id}"):
+        await redis_manager.set_token_balance(rental.id, max(rental.tokens_remaining, 0))
+    rental.status = RentalStatus.ACTIVE
+    db.commit()

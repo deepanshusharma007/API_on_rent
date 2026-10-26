@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { X, Zap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export default function AnnouncementBanner() {
+  const { pathname } = useLocation();
   const [dismissed, setDismissed] = useState(() =>
     sessionStorage.getItem('banner_dismissed') === 'true'
   );
 
-  if (dismissed) return null;
+  if (dismissed || pathname === '/' || pathname.startsWith('/orbit')) return null;
 
   const handleDismiss = () => {
     sessionStorage.setItem('banner_dismissed', 'true');
@@ -21,8 +23,8 @@ export default function AnnouncementBanner() {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-      background: '#d97706',        /* amber-600 — high visibility */
-      borderBottom: '2px solid #b45309',
+      background: 'var(--primary)',
+      borderBottom: '1px solid rgba(247,242,232,0.15)',
       height: '40px',
       display: 'flex', alignItems: 'center', overflow: 'hidden',
     }}>
@@ -33,12 +35,12 @@ export default function AnnouncementBanner() {
             <span key={i} style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: '0 48px', whiteSpace: 'nowrap',
-              fontSize: '0.8rem', fontWeight: 700, color: '#1c1917',
-              letterSpacing: '0.01em',
+              fontSize: '0.75rem', fontWeight: 500, color: 'var(--on-primary)',
+              letterSpacing: '0.04em',
             }}>
-              <Zap size={13} style={{ flexShrink: 0, color: '#78350f' }} />
+              <Zap size={13} style={{ flexShrink: 0, color: 'var(--lime)' }} />
               {msg}
-              <span style={{ margin: '0 8px', color: '#78350f', fontWeight: 900 }}>·</span>
+              <span style={{ margin: '0 8px', color: 'var(--lime)', fontWeight: 900 }}>·</span>
             </span>
           ))}
         </div>
@@ -50,11 +52,11 @@ export default function AnnouncementBanner() {
         aria-label="Dismiss"
         style={{
           flexShrink: 0, height: '100%', padding: '0 14px',
-          background: 'none', border: 'none', borderLeft: '2px solid #b45309',
-          color: '#1c1917', cursor: 'pointer', display: 'flex', alignItems: 'center',
+          background: 'none', border: 'none', borderLeft: '1px solid rgba(247,242,232,0.15)',
+          color: 'var(--on-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center',
           transition: 'background 150ms',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.12)'}
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(247,242,232,0.12)'}
         onMouseLeave={e => e.currentTarget.style.background = 'none'}
       >
         <X size={14} />

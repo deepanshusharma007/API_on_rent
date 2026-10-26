@@ -8,9 +8,7 @@ litellm==1.100.1
 
 # Database
 sqlalchemy==2.0.25
-asyncpg==0.29.0
 psycopg2-binary==2.9.9
-alembic==1.13.1
 
 # Redis
 redis==5.0.1
@@ -28,17 +26,9 @@ pydantic==2.10.0
 pydantic-settings==2.14.1
 email-validator==2.2.0
 
-# Semantic Caching & Embeddings
-numpy==1.26.3
-scikit-learn==1.4.0
-
 # Token Estimation
 tiktoken==0.8.0
 
 # HTTP Client
 httpx==0.28.1
 aiohttp==3.14.2
-
-# Utilities
-python-dateutil==2.8.2
-pytz==2023.3

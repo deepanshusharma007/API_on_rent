@@ -1,6 +1,6 @@
 """Middleware: detect prompt injection and jailbreak attempts."""
 import re
-from backend.middleware.guardrails.base import GuardrailMiddleware, RequestContext, BlockedResponse
+from backend.middleware.guardrails.base import GuardrailMiddleware, RequestContext, BlockedResponse, message_text
 from backend.config import settings
 
 INJECTION_PATTERNS = [
@@ -15,7 +15,6 @@ INJECTION_PATTERNS = [
     re.compile(r"roleplay\s+as\s+an?\s+unrestricted", re.I),
     re.compile(r"<\|im_start\|>|<\|im_end\|>"),
     re.compile(r"\[SYSTEM\]|\[/SYSTEM\]"),
-    re.compile(r"repeat\s+after\s+me", re.I),
 ]
 
 
@@ -23,10 +22,7 @@ def _detect(text: str) -> tuple[bool, str | None]:
     for i, pat in enumerate(INJECTION_PATTERNS):
         if pat.search(text):
             return True, f"pattern_{i+1}"
-    # Heuristic: excessive special chars
-    ratio = sum(1 for c in text if not c.isalnum() and not c.isspace()) / max(len(text), 1)
-    if ratio > 0.35:
-        return True, "excessive_special_chars"
+    # No symbol-ratio heuristic: it blocked ordinary code and JSON prompts.
     if len(text) > 50000:
         return True, "prompt_too_long"
     return False, None
@@ -43,21 +39,19 @@ class InjectionDetectorMiddleware(GuardrailMiddleware):
             return ctx
 
         for msg in ctx.messages:
-            content = msg.get("content", "")
-            if isinstance(content, str):
-                detected, reason = _detect(content)
-                if detected:
-                    ctx.injection_detected = True
-                    ctx.guardrails_log.append({
-                        "middleware": self.name,
-                        "result": "blocked",
-                        "reason": reason,
-                    })
-                    return BlockedResponse(
-                        status_code=400,
-                        detail="Request blocked: potential prompt injection detected.",
-                        middleware=self.name,
-                    )
+            detected, reason = _detect(message_text(msg))
+            if detected:
+                ctx.injection_detected = True
+                ctx.guardrails_log.append({
+                    "middleware": self.name,
+                    "result": "blocked",
+                    "reason": reason,
+                })
+                return BlockedResponse(
+                    status_code=400,
+                    detail="Request blocked: potential prompt injection detected.",
+                    middleware=self.name,
+                )
 
         ctx.guardrails_log.append({"middleware": self.name, "result": "pass"})
         return ctx

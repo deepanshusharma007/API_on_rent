@@ -3,7 +3,9 @@ services:
     name: api-on-rent-backend
     runtime: python
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    # --proxy-headers: behind Render's proxy request.client is the proxy; this makes it the real
+    # client IP, which rate limiting and key IP-pinning depend on
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     envVars:
       - key: ENVIRONMENT
         value: production
@@ -29,6 +31,19 @@ services:
         value: production
       - key: CASHFREE_WEBHOOK_SECRET
         sync: false
+      # Render blocks outbound SMTP, so use the Gmail API (HTTPS) there
+      - key: EMAIL_TRANSPORT
+        value: gmail_api
+      - key: GMAIL_API_CLIENT_ID
+        sync: false
+      - key: GMAIL_API_CLIENT_SECRET
+        sync: false
+      - key: GMAIL_API_REFRESH_TOKEN
+        sync: false
+      - key: GMAIL_SENDER
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -43,9 +58,3 @@ services:
         sync: false
       - key: USE_FAKE_REDIS
         value: "false"
-      - key: PRE_REQUEST_COST_CHECK
-        value: "true"
-      - key: PII_MASKING_ENABLED
-        value: "true"
-      - key: SEMANTIC_CACHE_ENABLED
-        value: "true"

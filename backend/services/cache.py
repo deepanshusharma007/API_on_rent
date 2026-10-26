@@ -42,11 +42,12 @@ def _cache_key(model: str, messages: list, body: dict, user_id) -> Optional[str]
 
 
 def _should_cache(body: dict) -> bool:
-    """Only cache deterministic requests (temperature=0 or not set)."""
+    """Only cache deterministic requests: temperature explicitly 0. An unset temperature
+    means the provider default (1.0 for OpenAI), i.e. a different answer each time, and
+    replaying one of them for an hour would be wrong."""
     if body.get("stream"):
         return False
-    temp = body.get("temperature")
-    return temp is None or temp == 0
+    return body.get("temperature") == 0
 
 
 class GatewayCache:

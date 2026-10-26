@@ -3,21 +3,24 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask
 from sqlalchemy.orm import Session
-from typing import Optional
 import anyio
 import litellm
 import json
 import asyncio
 import functools
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.database.connection import get_db
-from backend.database.models import Rental, UsageLog, RentalStatus
+from backend.database.models import Rental, UsageLog, InternalKey
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.services.circuit_breaker import CircuitBreakerService
-from backend.services.router import GatewayRouter, infer_provider, get_all_models, normalize_model_id
+from backend.services.router import (
+    GatewayRouter, infer_provider, get_all_models, normalize_model_id,
+    is_supported_model,
+)
 from backend.services.cache import GatewayCache
+from backend.services.cost_estimator import CostEstimator
 from backend.services.drain_rate import get_drain_rate
 from backend.middleware.guardrails.base import RequestContext, ResponseContext, BlockedResponse
 from backend.middleware.guardrails.pipeline import run_input_pipeline, run_output_pipeline
@@ -42,6 +45,73 @@ ALLOWED_PARAMS = frozenset({
     "logit_bias", "logprobs", "top_logprobs",
 })
 SUPPORTED_PROVIDERS = ("openai", "anthropic", "gemini")
+
+
+def _is_client_error(exc: Exception) -> bool:
+    """True when the provider rejected the request's own content (bad params, too long).
+    That is the caller's mistake, so it must not count against the provider's circuit
+    breaker. Everything else still does: 401/403 (our key), 404 (a catalogue model the
+    provider no longer serves), 408/429 (provider limits) and 5xx."""
+    return getattr(exc, "status_code", None) in (400, 413, 422)
+
+
+def _cost_usd(model: str, prompt_tokens, completion_tokens) -> float:
+    """Provider cost of one request in USD from the published price table, or 0.0 when the
+    usage split is unknown or the model has no listed price."""
+    if not isinstance(prompt_tokens, int) or not isinstance(completion_tokens, int):
+        return 0.0
+    if model not in CostEstimator.PRICING:
+        logger.warning(f"No price listed for {model}: cost recorded as 0")
+        return 0.0
+    return CostEstimator().estimate_cost(model, prompt_tokens, completion_tokens)
+
+
+def _write_usage(db: Session, rental_id, model: str, tokens: int, credits: int,
+                 cost_usd: float, was_cached: bool) -> None:
+    """Record one request (runs in a worker thread). Counters are incremented in SQL, not
+    read-modify-write, so parallel requests never lose updates. Internal keys (ik_<id>) have
+    no rental row: their usage is counted on the key, which is what enforces token_budget."""
+    try:
+        if isinstance(rental_id, str):
+            key_id = int(rental_id.split("_", 1)[1])
+            db.query(InternalKey).filter(InternalKey.id == key_id).update(
+                {InternalKey.tokens_used: InternalKey.tokens_used + tokens})
+        else:
+            db.query(Rental).filter(Rental.id == rental_id).update({
+                Rental.tokens_used: Rental.tokens_used + tokens,
+                Rental.tokens_remaining: Rental.tokens_remaining - credits,
+                Rental.requests_made: Rental.requests_made + 1,
+            })
+            db.add(UsageLog(
+                rental_id=rental_id, model=model, tokens_used=tokens,
+                credits_consumed=credits, cost_usd=cost_usd, was_cached=was_cached,
+            ))
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
+def _billing_rate(requested: str, routed: str, served: str) -> float:
+    """Drain rate to charge. A retired ID served by its replacement keeps the rate of the
+    ID the client asked for; a real fallback to a different model is charged at that
+    model's own rate, so a cheaper fallback never bills the dearer model's price."""
+    return get_drain_rate(requested if served == routed else served)
+
+
+async def _record_spend(redis_manager: RedisManager, cost_usd: float) -> None:
+    """Add provider cost to the platform budget tracker (feeds the admin budget view and
+    the cost-protection worker). Best effort: never fails the request."""
+    if cost_usd <= 0:
+        return
+    try:
+        await redis_manager.redis.incrbyfloat("capacity:budget:spent", cost_usd)
+    except Exception as e:
+        logger.debug(f"Spend tracking skipped: {e}")
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
 
 
 # ==================== Streaming billing ====================
@@ -119,29 +189,24 @@ async def _settle_stream_usage(state: dict, *, rental_id, model: str, messages: 
         return
 
     credits = int(tokens * drain_rate)
-    try:
-        await redis_manager.deduct_tokens(rental_id, credits)
-    except Exception as e:
-        logger.error(
-            f"Stream billing failed for rental {rental_id}: could not deduct {credits} credits "
-            f"for {tokens} {source} tokens: {e}"
-        )
-        return
+    if not isinstance(rental_id, str):   # internal keys have no Redis balance
+        try:
+            await redis_manager.deduct_tokens(rental_id, credits)
+        except Exception as e:
+            logger.error(
+                f"Stream billing failed for rental {rental_id}: could not deduct {credits} credits "
+                f"for {tokens} {source} tokens: {e}"
+            )
+            return
     logger.info(f"Stream billed for rental {rental_id}: {tokens} tokens ({source} usage), {credits} credits")
 
-    def _log_usage():
-        try:
-            db.add(UsageLog(
-                rental_id=rental_id, model=model,
-                tokens_used=tokens, credits_consumed=credits,
-                cost_usd=0.0, was_cached=False,
-            ))
-            db.commit()
-        except Exception:
-            db.rollback()
-            raise
+    # A stream reports one total; price it as prompt tokens unless the split was reported.
+    prompt_tokens = state.get("reported_prompt") or tokens
+    cost = _cost_usd(model, prompt_tokens, max(tokens - prompt_tokens, 0))
+    await _record_spend(redis_manager, cost)
     try:
-        await asyncio.get_event_loop().run_in_executor(None, _log_usage)
+        await asyncio.get_event_loop().run_in_executor(
+            None, _write_usage, db, rental_id, model, tokens, credits, cost, False)
     except Exception as e:
         logger.error(
             f"Usage log write failed for rental {rental_id} ({tokens} {source} tokens, "
@@ -162,24 +227,28 @@ async def verify_virtual_key(
 
     if virtual_key.startswith("ik_"):
         import json as _json
-        from backend.database.models import InternalKey
-        from datetime import datetime as _dt
         key_row = db.query(InternalKey).filter(
             InternalKey.virtual_key == virtual_key,
             InternalKey.is_active == True,
         ).first()
         if not key_row:
             raise HTTPException(status_code=401, detail="Internal key invalid or revoked")
-        if key_row.expires_at and key_row.expires_at < _dt.utcnow():
-            raise HTTPException(status_code=401, detail="Internal key expired")
+        expires_at = key_row.expires_at
+        if expires_at is not None:
+            if expires_at.tzinfo is not None:   # stored values are naive UTC
+                expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
+            if expires_at < datetime.utcnow():
+                raise HTTPException(status_code=401, detail="Internal key expired")
         user = key_row.user
+        if not user or not user.is_active or await redis_manager.is_user_blocked(user.id):
+            raise HTTPException(status_code=401, detail="Internal key invalid or revoked")
         allowed_models = _json.loads(user.allowed_models or "[]")
         token_budget = user.token_budget or 0
         return {
             "rental_id": f"ik_{key_row.id}",
             "user_id": user.id,
             "allowed_models": allowed_models,
-            "tokens_remaining": token_budget - key_row.tokens_used if token_budget else 999_999_999,
+            "tokens_remaining": max(token_budget - key_row.tokens_used, 0) if token_budget else 999_999_999,
             "rpm_limit": user.rpm_limit_override or 60,
             "key_type": "internal",
             "internal_key_id": key_row.id,
@@ -191,6 +260,8 @@ async def verify_virtual_key(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="Virtual key expired or invalid. Please purchase a new plan.",
         )
+    if await redis_manager.is_user_blocked(rental_data["user_id"]):
+        raise HTTPException(status_code=403, detail="This account is suspended.")
     return rental_data
 
 
@@ -234,11 +305,20 @@ async def chat_completions(
     db: Session = Depends(get_db),
     redis_manager: RedisManager = Depends(get_redis_manager),
 ):
-    body = await request.json()
-    messages = body.get("messages", [])
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Request body must be valid JSON")
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+    messages = body.get("messages")
+    if not isinstance(messages, list) or not messages or not all(isinstance(m, dict) for m in messages):
+        raise HTTPException(status_code=400, detail="'messages' must be a non-empty list of message objects")
     model = body.get("model") or settings.GATEWAY_DEFAULT_MODEL
-    stream = body.get("stream", False)
+    stream = bool(body.get("stream", False))
     user_max_tokens = body.get("max_tokens", None)
+    if user_max_tokens is not None and (not isinstance(user_max_tokens, int) or user_max_tokens < 1):
+        raise HTTPException(status_code=400, detail="'max_tokens' must be a positive integer")
 
     # Provider-qualified ids ("gemini/gemini-1.5-flash") are accepted only for a supported
     # provider whose prefix matches the model. The bare id is used from here on, so the
@@ -250,6 +330,21 @@ async def chat_completions(
         if prefix not in SUPPORTED_PROVIDERS or "/" in bare or infer_provider(bare) != prefix:
             raise HTTPException(status_code=400, detail=f"Unsupported model '{model}'")
         model = bare
+
+    # Only catalogue models are served: anything else would reach the provider and be
+    # billed at a guessed drain rate. Admins can also switch a model off.
+    if not is_supported_model(model):
+        raise HTTPException(status_code=400, detail=f"Unsupported model '{model}'. See GET /v1/models.")
+    if model in await redis_manager.get_disabled_models():
+        raise HTTPException(status_code=403, detail=f"Model '{model}' is currently disabled.")
+
+    # Enforce what the rental was bought for: a model-specific plan and the chosen provider.
+    plan_model = rental_data.get("model_id")
+    if plan_model and normalize_model_id(plan_model) != normalize_model_id(model):
+        raise HTTPException(status_code=403, detail=f"This plan only includes '{plan_model}'.")
+    plan_provider = rental_data.get("provider")
+    if plan_provider and infer_provider(normalize_model_id(model)) != plan_provider:
+        raise HTTPException(status_code=403, detail=f"This rental only includes {plan_provider} models.")
 
     # Enforce per-user model allowlist (internal keys only)
     allowed_models = rental_data.get("allowed_models", [])
@@ -289,12 +384,10 @@ async def chat_completions(
         raise HTTPException(status_code=503, detail="Platform at capacity. Try again shortly.", headers={"Retry-After": "10"})
 
     # ── IP pinning ───────────────────────────────────────────────────────
-    client_ip = request.client.host
-    pinned_ip = await redis_manager.get_pinned_ip(rental_id)
-    if pinned_ip and pinned_ip != client_ip:
+    client_ip = _client_ip(request)
+    pinned_ip = await redis_manager.pin_ip(rental_id, client_ip)   # atomic: first request wins
+    if pinned_ip != client_ip:
         raise HTTPException(status_code=403, detail="IP address mismatch. This key is locked to another IP.")
-    elif not pinned_ip:
-        await redis_manager.set_pinned_ip(rental_id, client_ip)
 
     # ── Middleware: input pipeline ───────────────────────────────────────
     ctx = RequestContext(
@@ -304,6 +397,8 @@ async def chat_completions(
         user_id=user_id,
         tokens_remaining=tokens_remaining,
         body=body,
+        # Rental balances are credits (tokens x drain rate); an internal key's budget is raw tokens
+        drain_rate=1.0 if isinstance(rental_id, str) else drain_rate,
     )
     result = await run_input_pipeline(ctx)
     if isinstance(result, BlockedResponse):
@@ -317,17 +412,12 @@ async def chat_completions(
     if cached:
         tokens_used = cached.get("usage", {}).get("total_tokens", 0)
         credits = int(tokens_used * drain_rate)
-        await redis_manager.deduct_tokens(rental_id, credits)
-
-        def _log_cache():
-            db.add(UsageLog(
-                rental_id=rental_id, model=model,
-                tokens_used=tokens_used, credits_consumed=credits,
-                cost_usd=0.0, was_cached=True,
-            ))
-            db.commit()
+        if not isinstance(rental_id, str):
+            await redis_manager.deduct_tokens(rental_id, credits)
         try:
-            await asyncio.get_event_loop().run_in_executor(None, _log_cache)
+            # A cache hit costs the provider nothing, so cost_usd is 0
+            await asyncio.get_event_loop().run_in_executor(
+                None, _write_usage, db, rental_id, model, tokens_used, credits, 0.0, True)
         except Exception as e:
             logger.error(f"Usage log write failed for rental {rental_id}: {e}")
         cached["x_cache"] = "HIT"
@@ -352,12 +442,12 @@ async def chat_completions(
         if stream:
             stream_state = {
                 "opened": False, "completed": False, "failed": False,
-                "reported_total": 0, "text_parts": [], "settled": False,
+                "reported_total": 0, "reported_prompt": 0, "text_parts": [], "settled": False,
             }
             settle = functools.partial(
                 _settle_stream_usage, stream_state,
                 rental_id=rental_id, model=fallback_model, messages=messages,
-                tools=extra_params.get("tools"), drain_rate=drain_rate,
+                tools=extra_params.get("tools"), drain_rate=_billing_rate(model, routed_model, fallback_model),
                 redis_manager=redis_manager, db=db,
             )
 
@@ -379,6 +469,9 @@ async def chat_completions(
                                 reported = chunk.usage.total_tokens
                                 if isinstance(reported, (int, float)) and reported > state["reported_total"]:
                                     state["reported_total"] = int(reported)
+                                    prompt_part = getattr(chunk.usage, "prompt_tokens", None)
+                                    if isinstance(prompt_part, int):
+                                        state["reported_prompt"] = prompt_part
                             chunk_data = chunk.model_dump() if hasattr(chunk, "model_dump") else chunk.dict()
                             state["text_parts"].append(_chunk_output_text(chunk_data))
                             yield f"data: {json.dumps(chunk_data)}\n\n"
@@ -389,8 +482,12 @@ async def chat_completions(
                         # the client a generic message (raw errors can carry internal details).
                         state["failed"] = True
                         logger.warning(f"Provider {p}/{fm} stream failed: {e}")
-                        await circuit_breaker.record_failure(p, str(e))
-                        yield f"data: {json.dumps({'error': 'The AI provider returned an error. Please try again.'})}\n\n"
+                        if _is_client_error(e):
+                            message = "The provider rejected this request. Check the model and parameters."
+                        else:
+                            await circuit_breaker.record_failure(p, str(e))
+                            message = "The AI provider returned an error. Please try again."
+                        yield f"data: {json.dumps({'error': message})}\n\n"
                         return
 
                     # Bookkeeping after a successful stream: a failure here is ours, not the
@@ -426,29 +523,28 @@ async def chat_completions(
                 stream=False, max_tokens=max_tokens, **extra_params,
             )
         except Exception as e:
+            logger.warning(f"Provider {provider}/{fallback_model} failed: {e}")
+            if _is_client_error(e):
+                # The caller's request is at fault: trying another provider or tripping this
+                # provider's breaker would only hurt other customers.
+                raise HTTPException(status_code=400, detail="The provider rejected this request. Check the model and parameters.")
             last_error = str(e)
             await circuit_breaker.record_failure(provider, last_error)
-            logger.warning(f"Provider {provider}/{fallback_model} failed: {last_error}")
             continue
         await circuit_breaker.record_success(provider)
 
-        tokens_used = response.usage.total_tokens if hasattr(response, "usage") else 0
-        credits = int(tokens_used * drain_rate)
-        await redis_manager.deduct_tokens(rental_id, credits)
+        usage = getattr(response, "usage", None)
+        tokens_used = usage.total_tokens if usage else 0
+        # Bill the model that actually answered (see _billing_rate)
+        credits = int(tokens_used * _billing_rate(model, routed_model, fallback_model))
+        if not isinstance(rental_id, str):
+            await redis_manager.deduct_tokens(rental_id, credits)
 
-        def _persist(_t=tokens_used, _c=credits, _m=fallback_model):
-            rental = db.query(Rental).filter(Rental.id == rental_id).first()
-            if rental:
-                rental.tokens_used += _t
-                rental.requests_made += 1
-            db.add(UsageLog(
-                rental_id=rental_id, model=_m,
-                tokens_used=_t, credits_consumed=_c,
-                cost_usd=0.0, was_cached=False,
-            ))
-            db.commit()
+        cost = _cost_usd(fallback_model, getattr(usage, "prompt_tokens", None), getattr(usage, "completion_tokens", None))
+        await _record_spend(redis_manager, cost)
         try:
-            await asyncio.get_event_loop().run_in_executor(None, _persist)
+            await asyncio.get_event_loop().run_in_executor(
+                None, _write_usage, db, rental_id, fallback_model, tokens_used, credits, cost, False)
         except Exception as e:
             logger.error(f"Usage log write failed for rental {rental_id}: {e}")
 
@@ -474,7 +570,9 @@ async def chat_completions(
 
         return response_dict
 
-    raise HTTPException(status_code=503, detail=f"All providers failed. Last error: {last_error}")
+    # last_error stays in the server log (above): provider errors can contain key fragments
+    logger.error(f"All providers failed for rental {rental_id}: {last_error}")
+    raise HTTPException(status_code=503, detail="All providers are currently failing. Please try again shortly.")
 
 
 @router.get(
@@ -484,7 +582,7 @@ async def chat_completions(
 )
 async def list_models(db: Session = Depends(get_db)):
     """List all gateway models — active provider keys determine availability."""
-    from backend.database.models import ProviderKey, ProviderType
+    from backend.database.models import ProviderKey
 
     active_providers = set()
     try:

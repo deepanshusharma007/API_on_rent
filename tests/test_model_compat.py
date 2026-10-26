@@ -269,7 +269,7 @@ class TestChatCompletions:
         assert upstream.qualified_calls[-1] == "openai/gpt-4o-mini"
         assert body["x_model_used"] == "gpt-4o-mini"
         assert body["x_fallback_used"] is True
-        assert deductions == [(42, 800)]  # one charge, requested-model rate
+        assert deductions == [(42, 300)]  # one charge, at the rate of the model that answered (gpt-4o-mini 3x)
 
     def test_in_chain_fallback_is_reported(self):
         response, upstream, _ = _run_chat(
@@ -283,7 +283,8 @@ class TestChatCompletions:
             "claude-sonnet-5-5", {"anthropic"},
             failing={"claude-sonnet-5-5", "claude-haiku-5-5"})
         assert response.status_code == 503
-        assert "All providers failed" in response.json()["detail"]
+        assert "All providers" in response.json()["detail"]
+        assert "not found" not in response.json()["detail"]   # provider errors stay in the server log
         assert upstream.calls == ["claude-sonnet-5-5", "claude-haiku-5-5"]
         assert deductions == []
 

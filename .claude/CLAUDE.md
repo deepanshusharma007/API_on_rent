@@ -44,11 +44,11 @@ providers = list({k.provider.value if hasattr(k.provider, 'value') else k.provid
 ```
 backend/api/         admin.py auth.py marketplace.py payment.py proxy.py
 backend/database/    models.py connection.py redis_manager.py
-backend/services/    virtual_key_service.py capacity_manager.py email_service.py prompt_filter.py
+backend/services/    virtual_key_service.py capacity_manager.py email_service.py cost_estimator.py
 backend/config.py    backend/main.py
 frontend/src/api/    client.js
 frontend/src/pages/  Marketplace.jsx AdminPanel.jsx Dashboard.jsx Playground.jsx
-frontend/src/lib/    providerMeta.jsx motion.js
+frontend/src/lib/    motion.jsx authConfig.js authStyles.js passwordPolicy.js
 frontend/src/store/  authStore.js
 ```
 
@@ -81,7 +81,7 @@ order_id format: `order_{plan_id}_{user_id}_{provider}_{unix_ts}`
 Flow: `POST /api/checkout/session` → `payment_session_id` → Cashfree SDK → webhook `PAYMENT_SUCCESS_WEBHOOK` → create Rental + email key
 
 ## Proxy flow
-`POST /v1/chat/completions` Bearer vk_xxx → Redis key lookup → provider validation → rate limit → IP-pin → PII filter → AI pre-scan → semantic cache → LiteLLM → deduct tokens → log
+`POST /v1/chat/completions` Bearer vk_xxx → Redis key lookup (+ suspended-user check) → body/model validation → plan + provider enforcement → rate limit → IP-pin → guardrails (balance in credits, PII, injection) → cache (temperature=0 only) → LiteLLM with fallback → deduct credits → log usage + real cost
 
 ## Marketplace flow (3 steps)
 1. GET `/api/active-providers` → show provider cards
@@ -93,9 +93,12 @@ Public: `GET /api/plans` `GET /api/active-providers` `POST /api/webhooks/cashfre
 Auth: `POST /api/checkout/session` `GET /api/rentals/active` `POST /v1/chat/completions`
 Admin: `/admin/*` all behind `role=ADMIN`
 
-## Frontend Design Tokens
-bg=`#07070f` primary=`violet-600→fuchsia-600` success=`emerald-400` danger=`rose-400`
-`.glass-card` `.gradient-text` `.grid-pattern` `.blob-1/2/3`
+## Frontend Design Tokens (frontend/src/index.css)
+Off-white base 60 / forest ink 30 / lime highlight 10.
+bg=`#f7f2e8` card=`#fffcf5` ink/primary=`#123a2c` lime=`#bfe23a` olive text=`#566f08` danger=`#b3261e`
+Fonts: Cormorant Garamond (headings) · DM Sans (body, labels) · JetBrains Mono (code, `--font-code`).
+Shared classes: `.btn` (+`-primary` `-secondary` `-ghost`) pill buttons, `.field`, `.card`, `.badge`, `.eyebrow`.
+Landing (`/`) is the 3D key page: `pages/Landing3D.jsx` + `components/three/KeyScene.jsx`. `/orbit` is the draggable duration-planets page.
 
 ## code-review-graph MCP (use BEFORE Grep/Glob/Read)
 `semantic_search_nodes` `query_graph` `get_impact_radius` `detect_changes` `get_review_context` `get_affected_flows` `get_architecture_overview`

@@ -7,11 +7,12 @@ Transport is chosen with EMAIL_TRANSPORT (default "smtp"):
 
 Falls back to logging if the selected transport is not fully configured.
 """
+import html
 import logging
 import smtplib
+import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
 import os
 
 from backend.services.email_transport import GmailApiTransport
@@ -19,6 +20,11 @@ from backend.services.email_transport import GmailApiTransport
 logger = logging.getLogger(__name__)
 
 EMAIL_TRANSPORTS = ("smtp", "gmail_api")
+
+
+def _frontend_url() -> str:
+    """Public site URL for links in emails (never hard-code localhost)."""
+    return _config("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 
 
 def _config(name: str, default: str) -> str:
@@ -84,7 +90,7 @@ class EmailService:
             self.gmail.send(msg)
             return
         with smtplib.SMTP(self.host, self.port, timeout=10) as server:
-            server.starttls()
+            server.starttls(context=ssl.create_default_context())
             server.login(self.user, self.password)
             server.sendmail(self.from_email, to_email, msg.as_string())
 
@@ -137,7 +143,7 @@ class EmailService:
         <html><body style="font-family: sans-serif; color: #333;">
         <h2>Rental Expired</h2>
         <p>Your <strong>{plan_name}</strong> rental has expired. Your virtual key is no longer active.</p>
-        <p><a href="http://localhost:5173/marketplace" style="color: #7c3aed;">Browse new plans →</a></p>
+        <p><a href="{_frontend_url()}/marketplace" style="color: #7c3aed;">Browse new plans →</a></p>
         </body></html>
         """
         self._send(email, subject, body)
@@ -156,14 +162,19 @@ class EmailService:
             <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Budget</strong></td>
                 <td style="padding: 8px; border: 1px solid #ddd;">${budget:.2f}</td></tr>
         </table>
-        <p><a href="http://localhost:5173/admin" style="color: #7c3aed;">Open Admin Panel →</a></p>
+        <p><a href="{_frontend_url()}/admin" style="color: #7c3aed;">Open Admin Panel →</a></p>
         </body></html>
         """
         self._send(email, subject, body)
 
     def send_contact_form(self, sender_name: str, sender_email: str, subject: str, message: str, owner_email: str):
-        """Forward a contact-form submission to the site owner."""
-        email_subject = f"[AIRent Contact] {subject or 'New message'} — from {sender_name}"
+        """Forward a contact-form submission to the site owner. Everything the visitor typed is
+        HTML-escaped (the owner reads this as HTML) and single-lined where it goes in a header."""
+        one_line = lambda text: " ".join(str(text).split())
+        email_subject = f"[AIRent Contact] {one_line(subject) or 'New message'} — from {one_line(sender_name)}"
+        sender_email = one_line(sender_email)
+        sender_name, sender_email_h, subject_h = html.escape(sender_name), html.escape(sender_email), html.escape(subject or "")
+        message = html.escape(message)
         body = f"""
         <html><body style="font-family: sans-serif; color: #333; max-width: 600px;">
         <h2 style="color: #7c3aed;">New Contact Form Submission</h2>
@@ -174,11 +185,11 @@ class EmailService:
             </tr>
             <tr>
                 <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Email</td>
-                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;"><a href="mailto:{sender_email}">{sender_email}</a></td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;"><a href="mailto:{sender_email_h}">{sender_email_h}</a></td>
             </tr>
             <tr>
                 <td style="padding: 10px 14px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: 600;">Topic</td>
-                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">{subject or '(not selected)'}</td>
+                <td style="padding: 10px 14px; border: 1px solid #e5e7eb;">{subject_h or '(not selected)'}</td>
             </tr>
         </table>
         <h3 style="color: #374151; margin-top: 20px;">Message</h3>
@@ -186,7 +197,7 @@ class EmailService:
 {message}
         </div>
         <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
-            Reply directly to this email to respond to {sender_name} at {sender_email}.
+            Reply directly to this email to respond to {sender_name} at {sender_email_h}.
         </p>
         </body></html>
         """
@@ -236,7 +247,7 @@ class EmailService:
             </tr>
         </table>
         <p style="margin-top: 16px;">
-            <a href="http://localhost:5173/admin" style="color: #10b981; font-weight: 600;">Open Admin Panel →</a>
+            <a href="{_frontend_url()}/admin" style="color: #10b981; font-weight: 600;">Open Admin Panel →</a>
         </p>
         <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">
             This is an automated notification from AIRent.
@@ -289,20 +300,6 @@ class EmailService:
         </body></html>
         """
         return self._send(email, subject, body)
-
-    def send_token_low_warning(self, email: str, plan_name: str, tokens_remaining: int, pct: float):
-        """Notify user when their tokens are running low (< 10%)."""
-        subject = f"⚠️ Low tokens: {tokens_remaining:,} remaining"
-        body = f"""
-        <html><body style="font-family: sans-serif; color: #333;">
-        <h2>Token Balance Low</h2>
-        <p>Your <strong>{plan_name}</strong> rental is at <strong>{pct:.0f}%</strong> token usage.</p>
-        <p>Remaining: <strong>{tokens_remaining:,}</strong> tokens.</p>
-        <p>Consider purchasing a new plan before tokens run out.</p>
-        </body></html>
-        """
-        self._send(email, subject, body)
-
 
 # Global instance
 email_service = EmailService()

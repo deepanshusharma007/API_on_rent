@@ -20,9 +20,9 @@ describe('TokenProgressBar', () => {
         expect(screen.getByText('100.0%')).toBeInTheDocument();
     });
 
-    it('shows purple color for normal usage', () => {
+    it('shows the lime-to-olive bar for normal usage', () => {
         const { container } = render(<TokenProgressBar used={3000} remaining={7000} />);
-        const bar = container.querySelector('.from-purple-500');
+        const bar = container.querySelector('[class*="bfe23a"]');
         expect(bar).toBeInTheDocument();
     });
 
@@ -32,15 +32,15 @@ describe('TokenProgressBar', () => {
         expect(bar).toBeInTheDocument();
     });
 
-    it('shows yellow color for 70-89% usage', () => {
+    it('shows the amber bar for 70-89% usage', () => {
         const { container } = render(<TokenProgressBar used={8000} remaining={2000} />);
-        const bar = container.querySelector('.from-yellow-500');
+        const bar = container.querySelector('.from-amber-500');
         expect(bar).toBeInTheDocument();
     });
 
     it('renders small size variant', () => {
         const { container } = render(<TokenProgressBar used={5000} remaining={5000} size="sm" />);
-        const bar = container.querySelector('.h-1\\.5');
+        const bar = container.querySelector('div[style*="height: 4px"]');
         expect(bar).toBeInTheDocument();
     });
 

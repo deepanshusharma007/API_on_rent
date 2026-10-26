@@ -161,10 +161,6 @@ class CapacityManager:
 
         logger.info(f"🔓 Released: {token_cap} tokens, {rpm_limit} RPM")
 
-    async def record_spend(self, cost_usd: float):
-        """Record actual money spent on provider API."""
-        await self.redis.redis.incrbyfloat("capacity:budget:spent", cost_usd)
-
     # ==================== Dashboard ====================
 
     async def get_capacity_dashboard(self) -> Dict:

@@ -1,205 +1,153 @@
-"""WebSocket endpoint for real-time rental updates.
+"""WebSocket endpoints for real-time rental updates (live TTL countdown, balance, usage).
 
-Provides live TTL countdown, token balance, and usage updates
-so the frontend doesn't need to poll.
+Authentication: browsers cannot set headers on a WebSocket and a token in the URL ends up
+in server logs, so the client's FIRST message must be {"token": "<jwt>"}. Nothing is sent
+before that, and a rental socket is only served to the rental's owner (or an admin).
 """
 import asyncio
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime
-from typing import Dict, Set
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
-from backend.database.redis_manager import get_redis_manager
+
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+
+from backend.api.dependencies import authenticate_token
 from backend.database.connection import SessionLocal
-from backend.database.models import Rental, RentalStatus
+from backend.database.models import Rental, RentalStatus, UserRole
+from backend.database.redis_manager import get_redis_manager
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Track active connections: rental_id -> set of websockets
-active_connections: Dict[int, Set[WebSocket]] = {}
+AUTH_TIMEOUT_SECONDS = 10
+MAX_SOCKETS_PER_USER = 10   # each socket polls the database, so cap them
+
+# Close codes (4000-4999 are application-defined)
+CLOSE_UNAUTHORIZED = 4401
+CLOSE_FORBIDDEN = 4403
+CLOSE_TOO_MANY = 4429
+
+_open_sockets: dict[int, int] = defaultdict(int)
 
 
-class ConnectionManager:
-    """Manages WebSocket connections per rental."""
+async def _authenticate(websocket: WebSocket):
+    """Accept the socket and read the token message. Returns the user, or None after
+    closing the socket with the reason."""
+    await websocket.accept()
+    try:
+        first = await asyncio.wait_for(websocket.receive_text(), timeout=AUTH_TIMEOUT_SECONDS)
+        token = json.loads(first).get("token")
+        if not isinstance(token, str) or not token:
+            raise ValueError("no token")
+    except WebSocketDisconnect:
+        return None
+    except Exception:
+        await websocket.close(code=CLOSE_UNAUTHORIZED, reason="Authentication required")
+        return None
 
-    def __init__(self):
-        self.connections: Dict[int, Set[WebSocket]] = {}
+    db = SessionLocal()
+    try:
+        user = await authenticate_token(token, db, get_redis_manager())
+    except HTTPException:
+        await websocket.close(code=CLOSE_UNAUTHORIZED, reason="Invalid or expired token")
+        return None
+    finally:
+        db.close()
 
-    async def connect(self, websocket: WebSocket, rental_id: int):
-        await websocket.accept()
-        if rental_id not in self.connections:
-            self.connections[rental_id] = set()
-        self.connections[rental_id].add(websocket)
-        logger.info(f"WebSocket connected for rental {rental_id}")
-
-    def disconnect(self, websocket: WebSocket, rental_id: int):
-        if rental_id in self.connections:
-            self.connections[rental_id].discard(websocket)
-            if not self.connections[rental_id]:
-                del self.connections[rental_id]
-        logger.info(f"WebSocket disconnected for rental {rental_id}")
-
-    async def broadcast(self, rental_id: int, data: dict):
-        if rental_id in self.connections:
-            dead = set()
-            for ws in self.connections[rental_id]:
-                try:
-                    await ws.send_json(data)
-                except Exception:
-                    dead.add(ws)
-            for ws in dead:
-                self.connections[rental_id].discard(ws)
+    if _open_sockets[user.id] >= MAX_SOCKETS_PER_USER:
+        await websocket.close(code=CLOSE_TOO_MANY, reason="Too many open connections")
+        return None
+    return user
 
 
-manager = ConnectionManager()
+def _fetch_rentals(user_id: int, rental_id: int | None, is_admin: bool):
+    """Rentals to report (runs in a worker thread, short-lived session)."""
+    db = SessionLocal()
+    try:
+        query = db.query(Rental)
+        if rental_id is not None:
+            query = query.filter(Rental.id == rental_id)
+            if not is_admin:
+                query = query.filter(Rental.user_id == user_id)
+        else:
+            query = query.filter(Rental.user_id == user_id, Rental.status == RentalStatus.ACTIVE)
+        rentals = query.all()
+        # Detach plain values so the session can close before we await Redis
+        return [
+            {
+                "id": r.id, "virtual_key": r.virtual_key, "status": r.status.value,
+                "tokens_used": r.tokens_used, "requests_made": r.requests_made,
+                "expires_at": r.expires_at,
+            }
+            for r in rentals
+        ]
+    finally:
+        db.close()
+
+
+async def _snapshot(rental: dict) -> dict:
+    redis_mgr = get_redis_manager()
+    ttl_raw, balance = await asyncio.gather(
+        redis_mgr.get_virtual_key_ttl(rental["virtual_key"]),
+        redis_mgr.get_token_balance(rental["id"]),
+    )
+    ttl = ttl_raw if ttl_raw and ttl_raw > 0 else int((rental["expires_at"] - datetime.utcnow()).total_seconds())
+    ttl = max(0, ttl)
+    status = rental["status"]
+    if ttl <= 0 and status == "active":
+        status = "expired"
+    return {
+        "rental_id": rental["id"],
+        "ttl_seconds": ttl,
+        "tokens_remaining": balance,
+        "tokens_used": rental["tokens_used"],
+        "requests_made": rental["requests_made"],
+        "status": status,
+    }
+
+
+async def _stream(websocket: WebSocket, user, rental_id: int | None, interval: int):
+    loop = asyncio.get_event_loop()
+    is_admin = user.role == UserRole.ADMIN
+    _open_sockets[user.id] += 1
+    try:
+        while True:
+            rentals = await loop.run_in_executor(None, _fetch_rentals, user.id, rental_id, is_admin)
+            if rental_id is not None:
+                if not rentals:
+                    # Same answer for "missing" and "not yours": IDs can't be probed
+                    await websocket.send_json({"type": "error", "message": "Rental not found"})
+                    await websocket.close(code=CLOSE_FORBIDDEN)
+                    return
+                payload = {"type": "rental_update", **await _snapshot(rentals[0])}
+            else:
+                payload = {"type": "dashboard_update", "rentals": [await _snapshot(r) for r in rentals]}
+            payload["timestamp"] = datetime.utcnow().isoformat()
+            await websocket.send_json(payload)
+            await asyncio.sleep(interval)
+    except (WebSocketDisconnect, RuntimeError):
+        pass   # client went away
+    except Exception as e:
+        logger.warning(f"WebSocket stream error: {e}")
+    finally:
+        _open_sockets[user.id] -= 1
+        if _open_sockets[user.id] <= 0:
+            _open_sockets.pop(user.id, None)
 
 
 @router.websocket("/ws/rentals/{rental_id}")
 async def rental_websocket(websocket: WebSocket, rental_id: int):
-    """WebSocket for real-time rental updates.
-
-    Sends every 2 seconds:
-    - ttl_seconds: remaining time
-    - tokens_remaining: current token balance
-    - tokens_used: tokens consumed
-    - status: active/expired
-    """
-    await manager.connect(websocket, rental_id)
-
-    try:
-        while True:
-            try:
-                redis_mgr = get_redis_manager()
-                db = SessionLocal()
-
-                try:
-                    rental = await asyncio.get_event_loop().run_in_executor(
-                        None, lambda: db.query(Rental).filter(Rental.id == rental_id).first()
-                    )
-                    if not rental:
-                        await websocket.send_json({
-                            "type": "error",
-                            "message": "Rental not found"
-                        })
-                        break
-
-                    # Fetch TTL and token balance concurrently
-                    async def _zero(): return 0
-                    ttl_raw, token_balance = await asyncio.gather(
-                        redis_mgr.get_virtual_key_ttl(rental.virtual_key) if rental.virtual_key else _zero(),
-                        redis_mgr.get_token_balance(rental_id)
-                    )
-                    ttl = ttl_raw if ttl_raw and ttl_raw > 0 else max(0, int((rental.expires_at - datetime.utcnow()).total_seconds()))
-
-                    status = rental.status.value
-                    if ttl <= 0 and status == "active":
-                        status = "expired"
-
-                    update = {
-                        "type": "rental_update",
-                        "rental_id": rental_id,
-                        "ttl_seconds": max(0, ttl),
-                        "tokens_remaining": token_balance,
-                        "tokens_used": rental.tokens_used,
-                        "requests_made": rental.requests_made,
-                        "status": status,
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
-
-                    await websocket.send_json(update)
-
-                finally:
-                    db.close()
-
-            except WebSocketDisconnect:
-                break
-            except Exception as e:
-                logger.debug(f"WebSocket update error: {e}")
-
-            # Wait 2 seconds before next update
-            await asyncio.sleep(2)
-
-    except WebSocketDisconnect:
-        pass
-    finally:
-        manager.disconnect(websocket, rental_id)
+    """Live updates for one rental, every 2 seconds. Owner or admin only."""
+    user = await _authenticate(websocket)
+    if user:
+        await _stream(websocket, user, rental_id, interval=2)
 
 
 @router.websocket("/ws/dashboard")
 async def dashboard_websocket(websocket: WebSocket):
-    """WebSocket for dashboard — streams updates for ALL active rentals of a user.
-
-    Client sends: {"user_id": 123}
-    Server streams rental updates every 3 seconds.
-    """
-    await websocket.accept()
-
-    try:
-        # Wait for client to send user_id
-        init_data = await asyncio.wait_for(websocket.receive_json(), timeout=10)
-        user_id = init_data.get("user_id")
-        if not user_id:
-            await websocket.send_json({"type": "error", "message": "user_id required"})
-            return
-
-        while True:
-            try:
-                redis_mgr = get_redis_manager()
-                db = SessionLocal()
-
-                try:
-                    rentals = await asyncio.get_event_loop().run_in_executor(
-                        None,
-                        lambda: db.query(Rental).filter(
-                            Rental.user_id == user_id,
-                            Rental.status == RentalStatus.ACTIVE
-                        ).all()
-                    )
-
-                    async def _zero(): return 0
-
-                    # Fetch all TTLs and balances concurrently
-                    ttl_tasks = [
-                        redis_mgr.get_virtual_key_ttl(r.virtual_key) if r.virtual_key else _zero()
-                        for r in rentals
-                    ]
-                    balance_tasks = [redis_mgr.get_token_balance(r.id) for r in rentals]
-                    ttl_results, balance_results = await asyncio.gather(
-                        asyncio.gather(*ttl_tasks),
-                        asyncio.gather(*balance_tasks)
-                    )
-
-                    updates = []
-                    for rental, ttl_raw, token_balance in zip(rentals, ttl_results, balance_results):
-                        ttl = ttl_raw if ttl_raw and ttl_raw > 0 else max(
-                            0, int((rental.expires_at - datetime.utcnow()).total_seconds())
-                        )
-                        updates.append({
-                            "rental_id": rental.id,
-                            "ttl_seconds": max(0, ttl),
-                            "tokens_remaining": token_balance,
-                            "tokens_used": rental.tokens_used,
-                            "requests_made": rental.requests_made,
-                            "status": "expired" if ttl <= 0 else "active"
-                        })
-
-                    await websocket.send_json({
-                        "type": "dashboard_update",
-                        "rentals": updates,
-                        "timestamp": datetime.utcnow().isoformat()
-                    })
-
-                finally:
-                    db.close()
-
-            except WebSocketDisconnect:
-                break
-            except Exception as e:
-                logger.debug(f"Dashboard WS error: {e}")
-
-            await asyncio.sleep(3)
-
-    except (WebSocketDisconnect, asyncio.TimeoutError):
-        pass
+    """Live updates for all of the signed-in user's active rentals, every 3 seconds."""
+    user = await _authenticate(websocket)
+    if user:
+        await _stream(websocket, user, None, interval=3)

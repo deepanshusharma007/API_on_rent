@@ -97,16 +97,6 @@ class Rental(Base):
     usage_logs = relationship("UsageLog", back_populates="rental", cascade="all, delete-orphan")
 
 
-class VirtualKey(Base):
-    """Virtual API key model (legacy - now merged with Rental)."""
-    __tablename__ = "virtual_keys"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    key = Column(String(255), unique=True, index=True, nullable=False)
-    rental_id = Column(Integer, ForeignKey("rentals.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-
 class ProviderKey(Base):
     """Master API key pool for providers."""
     __tablename__ = "provider_keys"
@@ -132,7 +122,7 @@ class Transaction(Base):
     rental_id = Column(Integer, ForeignKey("rentals.id"))
     amount = Column(Float, nullable=False)  # USD
     description = Column(Text)
-    cashfree_order_id = Column(String(255), index=True)  # Cashfree order_id for idempotency
+    cashfree_order_id = Column(String(255), unique=True, index=True)  # Cashfree order_id; unique = one rental per paid order
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
@@ -154,19 +144,6 @@ class UsageLog(Base):
     
     # Relationships
     rental = relationship("Rental", back_populates="usage_logs")
-
-
-class CacheHit(Base):
-    """Semantic cache analytics model."""
-    __tablename__ = "cache_hits"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    rental_id = Column(Integer, ForeignKey("rentals.id"))
-    prompt_hash = Column(String(64), nullable=False)  # SHA256 of prompt
-    similarity_score = Column(Float, nullable=False)  # Cosine similarity
-    tokens_saved = Column(Integer, nullable=False)
-    cost_saved_usd = Column(Float, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class SpendingAlert(Base):
@@ -200,12 +177,3 @@ class InternalKey(Base):
     user = relationship("User", back_populates="internal_keys")
 
 
-class CircuitBreakerEvent(Base):
-    """Circuit breaker event log."""
-    __tablename__ = "circuit_breaker_events"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    provider = Column(SQLEnum(ProviderType), nullable=False)
-    event_type = Column(String(50), nullable=False)  # "trip", "recover", "failure"
-    error_message = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

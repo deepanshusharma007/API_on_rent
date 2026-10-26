@@ -57,7 +57,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      background: '#0b1120', position: 'relative', overflow: 'hidden',
+      background: 'var(--bg-alt)', position: 'relative', overflow: 'hidden',
       fontFamily: 'var(--font-body)',
     }}>
 
@@ -66,7 +66,7 @@ export default function Login() {
       {/* Dot-grid background */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-        backgroundImage: 'radial-gradient(rgba(192,193,255,0.07) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(18,58,44,0.07) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
       }} />
 
@@ -74,15 +74,15 @@ export default function Login() {
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: '600px', height: '400px', borderRadius: '50%',
-        background: 'radial-gradient(ellipse, rgba(100,100,220,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(191,226,58,0.3) 0%, transparent 70%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
 
       {/* Top-left status text */}
-      <div style={{
+      <div className="auth-deco" style={{
         position: 'fixed', top: '20px', left: '24px', zIndex: 2,
-        fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7,
-        color: 'rgba(192,193,255,0.25)', letterSpacing: '0.04em',
+        fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', lineHeight: 1.7,
+        color: 'rgba(18,58,44,0.25)', letterSpacing: '0.04em',
         pointerEvents: 'none',
       }}>
         AUTH_MODULE_v1.0.2 // SECURE_HANDSHAKE<br />
@@ -90,10 +90,10 @@ export default function Login() {
       </div>
 
       {/* Bottom-right node info */}
-      <div style={{
+      <div className="auth-deco" style={{
         position: 'fixed', bottom: '20px', right: '24px', zIndex: 2,
-        fontFamily: 'var(--font-mono)', fontSize: '0.65rem', lineHeight: 1.7,
-        color: 'rgba(192,193,255,0.2)', letterSpacing: '0.04em',
+        fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', lineHeight: 1.7,
+        color: 'rgba(18,58,44,0.2)', letterSpacing: '0.04em',
         textAlign: 'right', pointerEvents: 'none',
       }}>
         ENCRYPTION: AES-256-GCM<br />
@@ -105,21 +105,21 @@ export default function Login() {
         position: 'relative', zIndex: 10,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 clamp(20px,4vw,40px)', height: '56px',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid rgba(18,58,44,0.07)',
       }}>
-        <Link to="/" style={{ textDecoration: 'none', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: '1rem', color: '#e8edf8', letterSpacing: '-0.02em' }}>
-          AI<span style={{ color: 'var(--primary)' }}>Rent</span>
+        <Link to="/" style={{ textDecoration: 'none', fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '1.6rem', lineHeight: 1, color: 'var(--on-surface)' }}>
+          AIRent
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div className="auth-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {['Marketplace', 'Docs', 'Pricing', 'About'].map(l => (
-            <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', transition: 'color 120ms' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#e8edf8'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+            <Link key={l} to={`/${l.toLowerCase()}`} style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.6)', textDecoration: 'none', transition: 'color 120ms' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--on-surface)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(18,58,44,0.6)'}
             >{l}</Link>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)' }}>Login</span>
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.6)' }}>Login</span>
           <Link to="/register" style={{
             padding: '7px 18px', borderRadius: '8px', textDecoration: 'none',
             fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600,
@@ -142,8 +142,8 @@ export default function Login() {
 
           {/* Card */}
           <motion.div variants={fadeUp(0.04)} initial="hidden" animate="show" style={{
-            background: 'rgba(13,18,30,0.9)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,252,245,0.94)',
+            border: '1px solid rgba(18,58,44,0.14)',
             borderRadius: '16px',
             padding: 'clamp(28px,5vw,40px)',
             backdropFilter: 'blur(12px)',
@@ -152,9 +152,9 @@ export default function Login() {
             {/* Heading */}
             <div style={{ marginBottom: '32px' }}>
               <h1 style={{
-                fontFamily: 'var(--font-head)', fontWeight: 800,
-                fontSize: 'clamp(1.8rem,4vw,2.4rem)', lineHeight: 1.1,
-                letterSpacing: '-0.03em', color: '#e8edf8', marginBottom: '8px',
+                fontFamily: 'var(--font-head)', fontWeight: 500,
+                fontSize: 'clamp(2rem,5vw,2.8rem)', lineHeight: 1,
+                letterSpacing: '-0.02em', color: 'var(--on-surface)', marginBottom: '8px',
               }}>
                 Welcome Back,<br />Architect
               </h1>
@@ -168,8 +168,8 @@ export default function Login() {
               {/* Email */}
               <div style={{ marginBottom: '18px' }}>
                 <label htmlFor="login-email" style={{
-                  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
-                  fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
+                  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
+                  fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(18,58,44,0.5)',
                   marginBottom: '8px',
                 }}>SYSTEM.USER_EMAIL</label>
                 <div style={{ position: 'relative' }}>
@@ -178,16 +178,16 @@ export default function Login() {
                     placeholder="dev@air-ent.io" required
                     style={{
                       width: '100%', padding: '13px 40px 13px 16px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(18,58,44,0.05)',
+                      border: '1px solid rgba(18,58,44,0.18)',
                       borderRadius: '10px', outline: 'none',
-                      fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#e8edf8',
+                      fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface)',
                       boxSizing: 'border-box', transition: 'border-color 150ms',
                     }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
                   />
-                  <Mail size={15} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.25)', pointerEvents: 'none' }} />
+                  <Mail size={15} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(18,58,44,0.34)', pointerEvents: 'none' }} />
                 </div>
               </div>
 
@@ -195,17 +195,17 @@ export default function Login() {
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <label htmlFor="login-password" style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
-                    fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(192,193,255,0.5)',
+                    fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
+                    fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(18,58,44,0.5)',
                   }}>SYSTEM.ACCESS_KEY</label>
                   <Link to="/forgot-password" style={{
                     textDecoration: 'none',
-                    fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700,
-                    letterSpacing: '0.06em', color: 'rgba(192,193,255,0.4)',
+                    fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700,
+                    letterSpacing: '0.06em', color: 'rgba(18,58,44,0.4)',
                     transition: 'color 120ms', padding: 0,
                   }}
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(192,193,255,0.4)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(18,58,44,0.4)'}
                   >
                     FORGOT?
                   </Link>
@@ -218,21 +218,21 @@ export default function Login() {
                     placeholder="••••••••" required
                     style={{
                       width: '100%', padding: '13px 40px 13px 16px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(18,58,44,0.05)',
+                      border: '1px solid rgba(18,58,44,0.18)',
                       borderRadius: '10px', outline: 'none',
-                      fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#e8edf8',
+                      fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface)',
                       boxSizing: 'border-box', transition: 'border-color 150ms',
                     }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
                   />
                   <button
                     type="button" onClick={() => setShowPass(v => !v)}
                     aria-label={showPass ? 'Hide password' : 'Show password'} aria-pressed={showPass}
-                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(255,255,255,0.25)', lineHeight: 1, transition: 'color 120ms' }}
-                    onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(18,58,44,0.34)', lineHeight: 1, transition: 'color 120ms' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'rgba(18,58,44,0.6)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(18,58,44,0.34)'}
                   >
                     {showPass ? <Eye size={15} /> : <Lock size={15} />}
                   </button>
@@ -240,9 +240,9 @@ export default function Login() {
               </div>
 
               {/* Remember me */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', cursor: 'pointer', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', cursor: 'pointer', fontSize: '0.85rem', color: 'rgba(18,58,44,0.7)' }}>
                 <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
-                  style={{ width: '15px', height: '15px', accentColor: '#8083ff', cursor: 'pointer' }} />
+                  style={{ width: '15px', height: '15px', accentColor: 'var(--primary-dim)', cursor: 'pointer' }} />
                 Remember me for 30 days
               </label>
 
@@ -251,20 +251,18 @@ export default function Login() {
                 type="submit" disabled={loading}
                 style={{
                   width: '100%', padding: '14px',
-                  borderRadius: '10px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                  background: loading ? 'rgba(192,193,255,0.2)' : 'linear-gradient(135deg, #8083ff 0%, #c0c1ff 100%)',
-                  color: loading ? 'rgba(255,255,255,0.4)' : '#0b0066',
-                  fontFamily: 'var(--font-head)', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '999px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                  background: loading ? 'rgba(18,58,44,0.2)' : 'var(--primary)',
+                  color: loading ? 'rgba(18,58,44,0.5)' : 'var(--on-primary)',
+                  fontFamily: 'var(--font-body)', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   transition: 'filter 150ms, opacity 150ms', opacity: loading ? 0.7 : 1,
-                  boxShadow: loading ? 'none' : '0 4px 24px -6px rgba(192,193,255,0.4)',
-                  letterSpacing: '-0.01em',
                 }}
                 onMouseEnter={e => { if (!loading) e.currentTarget.style.filter = 'brightness(1.07)'; }}
                 onMouseLeave={e => { e.currentTarget.style.filter = 'none'; }}
               >
                 {loading ? (
-                  <span style={{ width: '16px', height: '16px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#0b0066', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                  <span style={{ width: '16px', height: '16px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: 'var(--on-primary)', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
                 ) : (
                   <>Authenticate <Zap size={16} fill="currentColor" /></>
                 )}
@@ -273,9 +271,9 @@ export default function Login() {
 
             {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)' }}>OR OAUTH2_PROVIDER</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.07)' }} />
+              <div style={{ flex: 1, height: '1px', background: 'rgba(18,58,44,0.12)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(18,58,44,0.3)' }}>OR OAUTH2_PROVIDER</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(18,58,44,0.12)' }} />
             </div>
 
             {/* Google Sign-In */}
@@ -283,7 +281,7 @@ export default function Login() {
               onError={msg => { setError(msg); toast.error(msg); }} />
 
             {/* Footer */}
-            <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(255,255,255,0.35)', marginTop: '24px' }}>
+            <p style={{ textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'rgba(18,58,44,0.45)', marginTop: '24px' }}>
               New here?{' '}
               <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, transition: 'opacity 120ms' }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
@@ -298,7 +296,7 @@ export default function Login() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        input::placeholder { color: rgba(18,58,44,0.3); }
       `}</style>
     </div>
   );

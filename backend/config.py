@@ -59,7 +59,9 @@ class Settings(BaseSettings):
 
     # Signup / login (email OTP, password reset, Google Sign-In)
     GOOGLE_CLIENT_ID: str = ""              # OAuth Web client ID; empty = Google Sign-In disabled
-    REQUIRE_EMAIL_OTP: bool = False         # True = legacy POST /auth/register is closed
+    # True = legacy POST /auth/register (no email check) is closed. On by default: an
+    # unverified account could otherwise be squatted on someone else's email address.
+    REQUIRE_EMAIL_OTP: bool = True
     REMEMBER_ME_DAYS: int = 30
     OTP_TTL_SECONDS: int = 600
     OTP_MAX_ATTEMPTS: int = 5
@@ -68,15 +70,6 @@ class Settings(BaseSettings):
     SIGNUP_TOKEN_TTL_SECONDS: int = 900
     PASSWORD_RESET_TTL_SECONDS: int = 1800
 
-    # Cost Estimation
-    PRE_REQUEST_COST_CHECK: bool = True
-    COST_ESTIMATION_BUFFER: float = 1.2
-    
-    # Semantic Caching
-    SEMANTIC_CACHE_ENABLED: bool = True
-    CACHE_SIMILARITY_THRESHOLD: float = 0.95
-    CACHE_TTL_SECONDS: int = 300
-    
     # Circuit Breaker
     CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = 5
     CIRCUIT_BREAKER_TIMEOUT_SECONDS: int = 60
@@ -85,18 +78,6 @@ class Settings(BaseSettings):
     SPENDING_ALERT_THRESHOLD_USD: float = 5.0
     SPENDING_ALERT_WINDOW_MINUTES: int = 10
     
-    # Drain Rates
-    DRAIN_RATE_GPT4O: int = 10
-    DRAIN_RATE_CLAUDE35: int = 8
-    DRAIN_RATE_GPT4O_MINI: int = 3
-    DRAIN_RATE_GEMINI_FLASH: int = 1
-    
-    # PII Masking (legacy — kept for backward compat)
-    PII_MASKING_ENABLED: bool = True
-    PII_MASK_EMAILS: bool = True
-    PII_MASK_PHONES: bool = True
-    PII_MASK_SSNS: bool = True
-
     # ── Gateway Guardrail Middleware ──────────────────────────────────────
     GUARDRAIL_TOKEN_ESTIMATOR: bool = True   # block if estimated tokens exceed cap
     GUARDRAIL_PII_BLOCK: bool = True         # detect PII in requests
@@ -110,7 +91,6 @@ class Settings(BaseSettings):
     # ── Gateway Router ────────────────────────────────────────────────────
     GATEWAY_DEFAULT_MODEL: str = "gpt-4o-mini"
     GATEWAY_GLOBAL_RPM: int = 500
-    PII_MASK_CREDIT_CARDS: bool = True
     
     # Cost Protection
     COST_PROTECTION_THRESHOLD: float = 0.90

@@ -35,7 +35,7 @@ API_on_rent/
 ├── backend/
 │   ├── api/             # Route handlers: auth, marketplace, payment, proxy, admin, status, websocket
 │   ├── database/        # SQLAlchemy models, Redis manager, DB connection
-│   ├── services/        # Business logic: key load balancer, capacity, semantic cache, PII, prompt filter
+│   ├── services/        # Business logic: capacity, cache, circuit breaker, key service, email
 │   ├── workers/         # Background tasks: expiration monitor, spending monitor, cost protection
 │   ├── config.py        # Pydantic settings (reads .env)
 │   └── main.py          # App entry point, router mounts, DB migrations
@@ -54,7 +54,7 @@ API_on_rent/
 ├── scripts/                     # Admin/seed helper scripts
 ├── docker-compose.yml           # PostgreSQL + Redis + Backend + Frontend
 ├── .env.example                 # Environment variable template
-└── CLAUDE.md                    # Architecture reference for AI agents
+└── .claude/CLAUDE.md            # Architecture reference for Claude Code
 ```
 
 ---
@@ -254,20 +254,19 @@ for chunk in stream:
 
 ```
 POST /v1/chat/completions  (Bearer vk_xxx)
-  1.  Validate virtual key        Redis -> 402 if expired/invalid
-  2.  Provider validation         key must match rented provider -> 403
-  3.  Per-user rate limit         RPM cap -> 429
-  4.  Global rate limit           500 RPM platform cap -> 503
-  5.  IP pinning                  locks to first-use IP -> 403 on mismatch
-  6.  PII filter                  auto-redacts emails, phones, SSNs, cards
-  7.  AI safety pre-scan          Gemini Flash - blocks jailbreaks/abuse
-  8.  Semantic cache              95% cosine similarity -> return cached, skip provider
-  9.  Load-balanced key select    picks provider key with most remaining token budget
-  10. Circuit breaker + fallback  auto-failover across provider keys/models
-  11. Forward via LiteLLM
-  12. Deduct tokens (rental balance + provider key budget)
-  13. Log to UsageLog
-  14. Cache response for future hits
+  1.  Validate virtual key        Redis -> 402 if expired/invalid; 403 if the user is suspended
+  2.  Validate request            JSON body, messages, max_tokens -> 400; model must be in the catalogue
+  3.  Enforce what was bought     admin-disabled model -> 403, plan model / rented provider -> 403
+  4.  Per-user rate limit         RPM cap (fixed 60s window) -> 429
+  5.  Global rate limit           500 RPM platform cap -> 503
+  6.  IP pinning                  locks to first-use IP -> 403 on mismatch
+  7.  Guardrails                  balance check in credits -> 402, PII redaction, prompt-injection block
+  8.  Cache                       temperature=0 requests only; a hit skips the provider
+  9.  Route + circuit breaker     key pool by least-recently-used; fallback chain across models
+  10. Forward via LiteLLM         provider rejections (400/413/422) go back as 400 and don't trip the breaker
+  11. Deduct credits              tokens x drain rate of the model that answered
+  12. Log usage + real cost       UsageLog, rental counters, platform spend tracker
+  13. Cache response for future hits
 ```
 
 ---
@@ -312,7 +311,7 @@ TEST_OPENAI_KEY=sk-... python tests/test_core_flow.py
 
 ## Production Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions:
+See [DEPLOYMENT.md](.claude/DEPLOYMENT.md) for full instructions:
 - SQLite -> PostgreSQL
 - Real Redis instance
 - `CASHFREE_ENVIRONMENT=production`
@@ -326,4 +325,4 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for full instructions:
 - [docs/system_architecture.md](docs/system_architecture.md) - full architecture, data models, proxy pipeline, design decisions
 - [docs/user_guide.md](docs/user_guide.md) - end-user guide
 - [docs/security_checklist.md](docs/security_checklist.md) - security hardening checklist
-- [DEPLOYMENT.md](DEPLOYMENT.md) - production deployment guide
+- [DEPLOYMENT.md](.claude/DEPLOYMENT.md) - production deployment guide

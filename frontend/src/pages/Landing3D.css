@@ -1,0 +1,281 @@
+.l3d {
+  --bg: #f7f2e8;
+  --ink: #123a2c;
+  --muted: rgba(18, 58, 44, 0.7);
+  --lime: #bfe23a;
+  --olive: #566f08;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.l3d-wrap { height: 340vh; }
+
+.l3d-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  --b1: 1;
+  --b2: 0;
+  --b3: 0;
+}
+
+/* Soft lime glow and a faint giant countdown sit behind the key */
+.l3d-halo {
+  position: absolute;
+  left: 70%;
+  top: 50%;
+  width: min(80vh, 60vw);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(221, 235, 154, 0.7) 0%, rgba(247, 242, 232, 0) 65%);
+  pointer-events: none;
+}
+.l3d-num {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 36%;
+  right: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(140px, 24vw, 420px);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: rgba(18, 58, 44, 0.06);
+  user-select: none;
+  transition: color 0.5s;
+  pointer-events: none;
+}
+.l3d-num.expired { color: rgba(18, 58, 44, 0.12); }
+
+.l3d-canvas { position: absolute; inset: 0; }
+
+/* Nav. index.css blurs every nav/header globally, which smeared the ring. */
+.l3d-nav,
+.l3d-nav nav {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: none;
+}
+.l3d-nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 24px clamp(20px, 4vw, 56px);
+  z-index: 3;
+}
+.l3d-mark {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.l3d-nav nav { display: flex; gap: clamp(18px, 3vw, 40px); }
+.l3d-nav nav a {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+.l3d-nav nav a:hover { color: var(--olive); }
+.l3d-nav .l3d-pill { justify-self: end; }
+
+/* Pills */
+.l3d-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 26px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.l3d-pill-solid { background: var(--ink); color: var(--bg); border: 1.5px solid var(--ink); }
+.l3d-pill-solid:hover { background: #0b2a1f; }
+.l3d-pill-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+.l3d-pill-ghost:hover { background: var(--ink); color: var(--bg); }
+
+/* Beats. Text never blocks the key; only links take clicks. */
+.l3d-beat {
+  position: absolute;
+  left: clamp(20px, 4vw, 56px);
+  right: clamp(20px, 4vw, 56px);
+  bottom: clamp(24px, 5vh, 56px);
+  z-index: 2;
+  pointer-events: none;
+}
+.l3d-b1 {
+  opacity: var(--b1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+}
+.l3d-stage.hero .l3d-b1 a { pointer-events: auto; }
+.l3d-b2,
+.l3d-b3 {
+  top: 0;
+  padding-top: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.l3d-b2 { opacity: var(--b2); max-width: 440px; right: auto; }
+.l3d-b3 {
+  opacity: var(--b3);
+  transform: translateY(calc((1 - var(--b3)) * 24px));
+  max-width: min(680px, 52vw);
+  right: auto;
+}
+
+/* Supporting lists: forest text on off-white, olive for the numbers and prices */
+.l3d-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: min(420px, 100%);
+  border-top: 1.5px solid var(--ink);
+}
+.l3d-list li {
+  display: grid;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(18, 58, 44, 0.22);
+}
+.l3d-steps li {
+  grid-template-columns: 36px 1fr;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 26px;
+  line-height: 1.1;
+}
+.l3d-steps li span {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--olive);
+}
+.l3d-tiers li { grid-template-columns: 1fr auto auto; }
+.l3d-tier-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 30px;
+  line-height: 1;
+}
+.l3d-tier-tokens {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.l3d-tier-price {
+  min-width: 90px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+@media (max-height: 700px) {
+  .l3d-list { display: none; }
+}
+.l3d-stage.cta .l3d-b3 a { pointer-events: auto; }
+
+.l3d-copy { max-width: min(680px, 52vw); }
+.l3d-kicker {
+  margin: 0 0 18px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+.l3d-h1 {
+  margin: 0 0 22px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(48px, min(7.4vw, 12.4vh), 112px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.l3d-h1 em, .l3d-h2 em { color: var(--olive); }
+.l3d-lede { margin: 0 0 26px; max-width: 400px; font-size: 14px; line-height: 1.6; color: var(--muted); }
+.l3d-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+
+.l3d-plate {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 24px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 200px;
+}
+.l3d-plate dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.l3d-plate dd.l3d-hot { color: var(--olive); font-weight: 500; }
+
+.l3d-h2 {
+  margin: 0 0 18px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(28px, 3.2vw, 44px);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.l3d-h2-lg { font-size: clamp(48px, 7vw, 104px); line-height: 0.92; letter-spacing: -0.02em; }
+
+.l3d-code {
+  margin: 0;
+  padding: 14px 18px;
+  background: #111111;
+  color: var(--bg);
+  border-radius: 14px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.l3d a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+@media (max-width: 900px) {
+  .l3d-halo { left: 50%; }
+  .l3d-num { left: 0; }
+  .l3d-nav { grid-template-columns: auto auto; justify-content: space-between; }
+  .l3d-nav nav { display: none; }
+  .l3d-b1 { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .l3d-copy { max-width: none; }
+  .l3d-plate { display: none; }
+  .l3d-b2 { max-width: none; right: clamp(20px, 4vw, 56px); }
+  .l3d-b3 { max-width: none; right: clamp(20px, 4vw, 56px); }
+  .l3d-list { display: none; }
+  .l3d-code { font-size: 11px; }
+}
+
+/* Portrait phones: the 3D ring is lifted into the top half (see KeyScene.jsx), so the halo
+   and the ghost countdown follow it instead of staying behind the headline. */
+@media (max-width: 900px) and (max-aspect-ratio: 17/20) {
+  .l3d-halo { top: 33%; }
+  .l3d-num { bottom: 34%; }
+  /* Copy goes under the ring, not over the key as on wide screens */
+  .l3d-b2,
+  .l3d-b3 { top: auto; padding-top: 0; justify-content: flex-end; gap: 18px; }
+}

@@ -106,8 +106,8 @@ def rental(db):
 def mocks(monkeypatch):
     redis_mgr = MagicMock()
     redis_mgr.check_rate_limit = AsyncMock(return_value=True)
-    redis_mgr.get_pinned_ip = AsyncMock(return_value=None)
-    redis_mgr.set_pinned_ip = AsyncMock()
+    redis_mgr.pin_ip = AsyncMock(side_effect=lambda _rental_id, ip: ip)
+    redis_mgr.get_disabled_models = AsyncMock(return_value=set())
     redis_mgr.deduct_tokens = AsyncMock()
 
     breaker = MagicMock()
@@ -242,13 +242,13 @@ def test_fallback_chain_unchanged(client, db, mocks):
     assert db.query(UsageLog).one().model == "gpt-4o-mini"
 
 
-def test_all_providers_fail_returns_503_with_last_error(client, mocks):
+def test_all_providers_fail_returns_503_without_leaking_provider_error(client, mocks):
     mocks["acompletion"].side_effect = Exception("upstream exploded")
 
     resp = _chat(client, "gemini-1.5-flash")
 
     assert resp.status_code == 503
-    assert "upstream exploded" in resp.json()["detail"]
+    assert "upstream exploded" not in resp.json()["detail"]   # raw provider errors can carry key fragments
 
 
 # -- Streaming -----------------------------------------------------------------

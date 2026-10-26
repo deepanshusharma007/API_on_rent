@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { adminAPI } from '../api/client';
 import Navbar from '../components/Navbar';
-import { fadeUp, staggerContainer, scaleIn, viewport } from '../lib/motion';
+import { fadeUp, staggerContainer, scaleIn } from '../lib/motion';
 
 const TABS = [
   { id: 'overview',   label: 'Overview',   icon: BarChart3 },
@@ -24,10 +24,10 @@ const TABS = [
 
 // Colour sets for stat cards — emerald is primary, others are semantic
 const STAT_COLORS = {
-  emerald: { bg: 'rgba(16,185,129,0.08)', icon: '#10b981', val: '#34d399' },
-  sky:     { bg: 'rgba(56,189,248,0.08)', icon: '#38bdf8', val: '#7dd3fc' },
-  amber:   { bg: 'rgba(251,191,36,0.08)', icon: '#fbbf24', val: '#fde68a' },
-  rose:    { bg: 'rgba(251,113,133,0.08)', icon: '#fb7185', val: '#fda4af' },
+  emerald: { bg: 'rgba(86,111,8,0.08)', icon: 'var(--secondary)', val: 'var(--secondary)' },
+  sky:     { bg: 'rgba(45,106,84,0.08)', icon: '#1e6f8a', val: '#1e6f8a' },
+  amber:   { bg: 'rgba(168,100,0,0.08)', icon: 'var(--warn)', val: '#a86400' },
+  rose:    { bg: 'rgba(179,38,30,0.08)', icon: 'var(--error)', val: '#b3261e' },
 };
 
 function StatCard({ icon: Icon, label, value, color = 'emerald', sub }) {
@@ -106,9 +106,9 @@ export default function AdminPanel() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Revenue',       val: `₹${analytics.revenue_usd?.toFixed(2)}`,       color: '#10b981' },
-              { label: 'Provider Cost', val: `₹${analytics.provider_cost_usd?.toFixed(2)}`, color: '#fb7185' },
-              { label: 'Profit',        val: `₹${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? '#10b981' : '#fb7185' },
+              { label: 'Revenue',       val: `₹${analytics.revenue_usd?.toFixed(2)}`,       color: 'var(--secondary)' },
+              { label: 'Provider Cost', val: `₹${analytics.provider_cost_usd?.toFixed(2)}`, color: 'var(--error)' },
+              { label: 'Profit',        val: `₹${analytics.profit_usd?.toFixed(2)}`,         color: analytics.profit_usd >= 0 ? 'var(--secondary)' : 'var(--error)' },
               { label: 'Cache Hit',     val: `${analytics.cache_hit_rate?.toFixed(1)}%`,     color: 'var(--c-accent)' },
             ].map(({ label, val, color }) => (
               <div key={label} style={{ padding: '16px', borderRadius: '8px', background: 'var(--c-raised)', border: '1px solid var(--c-border)' }}>
@@ -203,23 +203,23 @@ export default function AdminPanel() {
                   <td style={{ ...tdStyle, fontFamily: 'monospace', color: 'var(--c-text-3)', fontSize: '0.75rem' }}># {user.id}</td>
                   <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{user.email}</td>
                   <td style={tdStyle}>
-                    <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', border: '1px solid', background: user.role === 'admin' ? 'var(--c-accent-bg)' : 'rgba(56,189,248,0.08)', borderColor: user.role === 'admin' ? 'var(--c-accent-border)' : 'rgba(56,189,248,0.25)', color: user.role === 'admin' ? 'var(--c-accent-hi)' : '#7dd3fc' }}>{user.role}</span>
+                    <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', border: '1px solid', background: user.role === 'admin' ? 'var(--c-accent-bg)' : 'rgba(45,106,84,0.08)', borderColor: user.role === 'admin' ? 'var(--c-accent-border)' : 'rgba(45,106,84,0.25)', color: user.role === 'admin' ? 'var(--c-accent-hi)' : '#1e6f8a' }}>{user.role}</span>
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: user.is_active ? '#10b981' : '#fb7185' }} />
-                      <span style={{ fontSize: '0.775rem', color: user.is_active ? '#10b981' : '#fb7185' }}>{user.is_active ? 'Active' : 'Suspended'}</span>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: user.is_active ? 'var(--secondary)' : 'var(--error)' }} />
+                      <span style={{ fontSize: '0.775rem', color: user.is_active ? 'var(--secondary)' : 'var(--error)' }}>{user.is_active ? 'Active' : 'Suspended'}</span>
                     </div>
                   </td>
                   <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{user.rental_count}</td>
                   <td style={{ ...tdStyle, display: 'flex', gap: '6px' }}>
                     {user.role !== 'admin' && (
                       user.is_active
-                        ? <button onClick={() => act(user.id, 'suspend')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', cursor: 'pointer' }}>Suspend</button>
+                        ? <button onClick={() => act(user.id, 'suspend')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(179,38,30,0.08)', border: '1px solid rgba(179,38,30,0.25)', color: 'var(--error)', cursor: 'pointer' }}>Suspend</button>
                         : <button onClick={() => act(user.id, 'activate')} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'var(--c-accent-bg)', border: '1px solid var(--c-accent-border)', color: 'var(--c-accent-hi)', cursor: 'pointer' }}>Activate</button>
                     )}
                     {user.role !== 'admin' && (
-                      <button onClick={() => openUser(user)} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)', color: '#a78bfa', cursor: 'pointer' }}>
+                      <button onClick={() => openUser(user)} style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '6px', background: 'rgba(18,58,44,0.08)', border: '1px solid rgba(18,58,44,0.25)', color: 'var(--primary-dim)', cursor: 'pointer' }}>
                         {selectedUser?.id === user.id ? 'Editing' : 'Manage'}
                       </button>
                     )}
@@ -232,7 +232,7 @@ export default function AdminPanel() {
 
         {/* User config panel */}
         {selectedUser && (
-          <div style={{ width: '340px', flexShrink: 0, background: 'var(--c-surface)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: '12px', padding: '20px' }}>
+          <div style={{ width: '340px', flexShrink: 0, background: 'var(--c-surface)', border: '1px solid rgba(18,58,44,0.3)', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Access Config</div>
@@ -243,14 +243,14 @@ export default function AdminPanel() {
 
             {/* Allowed models */}
             <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Allowed Models <span style={{ color: '#34d399' }}>(none = all)</span></div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Allowed Models <span style={{ color: 'var(--secondary)' }}>(none = all)</span></div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                 {gatewayModels.map(m => (
                   <button key={m.id} onClick={() => toggleModel(m.id)}
-                    style={{ padding: '3px 9px', borderRadius: '20px', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                      background: configForm.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.15)' : 'var(--c-bg)',
-                      border: `1px solid ${configForm.allowed_models.includes(m.id) ? 'rgba(167,139,250,0.4)' : 'var(--c-border)'}`,
-                      color: configForm.allowed_models.includes(m.id) ? '#a78bfa' : 'var(--c-text-3)' }}>
+                    style={{ padding: '3px 9px', borderRadius: '20px', fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                      background: configForm.allowed_models.includes(m.id) ? 'rgba(18,58,44,0.15)' : 'var(--c-bg)',
+                      border: `1px solid ${configForm.allowed_models.includes(m.id) ? 'rgba(18,58,44,0.4)' : 'var(--c-border)'}`,
+                      color: configForm.allowed_models.includes(m.id) ? 'var(--primary-dim)' : 'var(--c-text-3)' }}>
                     {m.id}
                   </button>
                 ))}
@@ -269,7 +269,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <button onClick={saveConfig} disabled={savingConfig} style={{ width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer', marginBottom: '16px' }}>
+            <button onClick={saveConfig} disabled={savingConfig} style={{ width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(18,58,44,0.12)', border: '1px solid rgba(18,58,44,0.3)', color: 'var(--primary-dim)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer', marginBottom: '16px' }}>
               {savingConfig ? 'Saving...' : 'Save Config'}
             </button>
 
@@ -279,20 +279,20 @@ export default function AdminPanel() {
               {userDetail?.keys?.map(k => (
                 <div key={k.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--c-border)' }}>
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--c-text-3)' }}>{k.virtual_key.slice(0, 18)}...
+                    <div style={{ fontFamily: 'var(--font-code)', fontSize: '0.7rem', color: 'var(--c-text-3)' }}>{k.virtual_key.slice(0, 18)}...
                       <button onClick={() => copyKey(k.virtual_key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)', marginLeft: '4px', fontSize: '0.7rem' }}>copy</button>
                     </div>
-                    {k.label && <div style={{ fontSize: '0.68rem', color: 'var(--c-text-3)' }}>{k.label}</div>}
+                    {k.label && <div style={{ fontSize: '0.6875rem', color: 'var(--c-text-3)' }}>{k.label}</div>}
                   </div>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.68rem', color: k.is_active ? '#34d399' : '#fb7185' }}>{k.is_active ? 'Active' : 'Revoked'}</span>
-                    {k.is_active && <button onClick={() => revokeKey(k.id)} style={{ background: 'none', border: 'none', color: '#fb7185', cursor: 'pointer', fontSize: '0.72rem' }}>Revoke</button>}
+                    <span style={{ fontSize: '0.6875rem', color: k.is_active ? 'var(--secondary)' : 'var(--error)' }}>{k.is_active ? 'Active' : 'Revoked'}</span>
+                    {k.is_active && <button onClick={() => revokeKey(k.id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.72rem' }}>Revoke</button>}
                   </div>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
                 <input style={{ ...inputS, flex: 1 }} placeholder="Label (optional)" value={keyLabel} onChange={e => setKeyLabel(e.target.value)} />
-                <button onClick={issueKey} style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Issue Key</button>
+                <button onClick={issueKey} style={{ padding: '7px 14px', borderRadius: '8px', background: 'rgba(86,111,8,0.1)', border: '1px solid rgba(86,111,8,0.25)', color: 'var(--secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Issue Key</button>
               </div>
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function AdminPanel() {
                     { key: 'rpm_limit', label: 'RPM Limit',   type: 'number' },
                   ].map(f => (
                     <div key={f.key} className={f.key === 'name' ? 'col-span-2' : ''}>
-                      <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>{f.label}</label>
+                      <label style={{ display: 'block', fontSize: '0.6875rem', color: 'var(--c-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>{f.label}</label>
                       <input type={f.type} step={f.step} value={form[f.key]}
                         onChange={e => setForm({ ...form, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value })}
                         style={inputStyle}
@@ -452,13 +452,13 @@ export default function AdminPanel() {
                     <td style={{ ...tdStyle, color: 'var(--c-text-3)', fontSize: '0.775rem' }}>{plan.rpm_limit}</td>
                     <td style={tdStyle}>
                       {plan.is_active
-                        ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', fontSize: '0.775rem' }}><CheckCircle size={12} />Active</span>
-                        : <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fb7185', fontSize: '0.775rem' }}><XCircle size={12} />Off</span>}
+                        ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--secondary)', fontSize: '0.775rem' }}><CheckCircle size={12} />Active</span>
+                        : <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--error)', fontSize: '0.775rem' }}><XCircle size={12} />Off</span>}
                     </td>
                     <td style={tdStyle}>
                       {plan.is_active && (
                         <button onClick={() => handleDelete(plan.id)} style={{ padding: '4px', color: 'var(--c-text-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#fb7185'}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--error)'}
                           onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}>
                           <Trash2 size={14} />
                         </button>
@@ -483,9 +483,9 @@ export default function AdminPanel() {
     const [editForm, setEditForm] = useState({ provider: '', is_active: true });
 
     const PROVIDERS = [
-      { id: 'openai',    label: 'OpenAI',    models: ['GPT-4o', 'GPT-4o Mini'],              accent: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
-      { id: 'gemini',    label: 'Google',    models: ['Gemini 1.5 Pro', 'Gemini 1.5 Flash'], accent: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  border: 'rgba(56,189,248,0.3)' },
-      { id: 'anthropic', label: 'Anthropic', models: ['Claude 3.5 Sonnet'],                  accent: '#fb923c', bg: 'rgba(251,146,60,0.08)',   border: 'rgba(251,146,60,0.3)' },
+      { id: 'openai',    label: 'OpenAI',    models: ['GPT-4o', 'GPT-4o Mini'],              accent: 'var(--secondary)', bg: 'rgba(86,111,8,0.08)', border: 'rgba(86,111,8,0.3)' },
+      { id: 'gemini',    label: 'Google',    models: ['Gemini 1.5 Pro', 'Gemini 1.5 Flash'], accent: '#1e6f8a', bg: 'rgba(45,106,84,0.08)',  border: 'rgba(45,106,84,0.3)' },
+      { id: 'anthropic', label: 'Anthropic', models: ['Claude 3.5 Sonnet'],                  accent: '#c2410c', bg: 'rgba(194,65,12,0.08)',   border: 'rgba(194,65,12,0.3)' },
     ];
 
     const loadKeys = () => adminFetch('/provider-keys').then(d => setKeys(d.keys || [])).catch(() => {});
@@ -531,16 +531,16 @@ export default function AdminPanel() {
               return (
                 <motion.div key={p.id} variants={scaleIn} style={{
                   borderRadius: '10px', padding: '16px',
-                  background: isLive ? p.bg : 'rgba(251,113,133,0.06)',
-                  border: `1px solid ${isLive ? p.border : 'rgba(251,113,133,0.25)'}`,
+                  background: isLive ? p.bg : 'rgba(179,38,30,0.06)',
+                  border: `1px solid ${isLive ? p.border : 'rgba(179,38,30,0.25)'}`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: isLive ? p.accent : '#fb7185' }}>{p.label}</span>
+                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: isLive ? p.accent : 'var(--error)' }}>{p.label}</span>
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
-                      background: isLive ? p.bg : 'rgba(251,113,133,0.08)',
-                      border: `1px solid ${isLive ? p.border : 'rgba(251,113,133,0.25)'}`,
-                      color: isLive ? p.accent : '#fb7185',
+                      background: isLive ? p.bg : 'rgba(179,38,30,0.08)',
+                      border: `1px solid ${isLive ? p.border : 'rgba(179,38,30,0.25)'}`,
+                      color: isLive ? p.accent : 'var(--error)',
                     }}>
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor', animation: isLive ? 'pulse 2s infinite' : 'none' }} />
                       {isLive ? `${active} key${active > 1 ? 's' : ''} active` : 'No keys — hidden'}
@@ -664,17 +664,17 @@ export default function AdminPanel() {
                           <button onClick={() => setEditForm({ ...editForm, is_active: !editForm.is_active })}
                             style={{
                               display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
-                              background: editForm.is_active ? 'rgba(16,185,129,0.08)' : 'rgba(251,113,133,0.08)',
-                              border: `1px solid ${editForm.is_active ? 'rgba(16,185,129,0.3)' : 'rgba(251,113,133,0.3)'}`,
-                              color: editForm.is_active ? '#10b981' : '#fb7185',
+                              background: editForm.is_active ? 'rgba(86,111,8,0.08)' : 'rgba(179,38,30,0.08)',
+                              border: `1px solid ${editForm.is_active ? 'rgba(86,111,8,0.3)' : 'rgba(179,38,30,0.3)'}`,
+                              color: editForm.is_active ? 'var(--secondary)' : 'var(--error)',
                             }}>
                             {editForm.is_active ? <CheckCircle size={11} /> : <XCircle size={11} />}
                             {editForm.is_active ? 'Active' : 'Inactive'}
                           </button>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            {k.is_active ? <CheckCircle size={13} style={{ color: '#10b981' }} /> : <XCircle size={13} style={{ color: '#fb7185' }} />}
-                            <span style={{ fontSize: '0.775rem', color: k.is_active ? '#10b981' : '#fb7185' }}>
+                            {k.is_active ? <CheckCircle size={13} style={{ color: 'var(--secondary)' }} /> : <XCircle size={13} style={{ color: 'var(--error)' }} />}
+                            <span style={{ fontSize: '0.775rem', color: k.is_active ? 'var(--secondary)' : 'var(--error)' }}>
                               {k.is_active ? 'Active' : 'Inactive'}
                             </span>
                           </div>
@@ -685,7 +685,7 @@ export default function AdminPanel() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {isEditing ? (
                             <>
-                              <button onClick={() => handleSaveEdit(k.id)} style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#10b981' }}><Save size={14} /></button>
+                              <button onClick={() => handleSaveEdit(k.id)} style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--secondary)' }}><Save size={14} /></button>
                               <button onClick={() => setEditingId(null)}    style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)' }}><XIcon size={14} /></button>
                             </>
                           ) : (
@@ -696,7 +696,7 @@ export default function AdminPanel() {
                                 onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}><Pencil size={13} /></button>
                               <button onClick={() => handleDelete(k.id, pMeta?.label || k.provider)}
                                 style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text-3)' }}
-                                onMouseEnter={e => e.currentTarget.style.color = '#fb7185'}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--error)'}
                                 onMouseLeave={e => e.currentTarget.style.color = 'var(--c-text-3)'}><Trash2 size={13} /></button>
                             </>
                           )}
@@ -792,14 +792,14 @@ export default function AdminPanel() {
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--c-raised)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <td style={{ ...tdStyle, color: 'var(--c-text)' }}>{alert.user_email}</td>
-                <td style={{ ...tdStyle, color: '#fb7185', fontWeight: 700 }}>₹{alert.amount_usd.toFixed(2)}</td>
+                <td style={{ ...tdStyle, color: 'var(--error)', fontWeight: 700 }}>₹{alert.amount_usd.toFixed(2)}</td>
                 <td style={{ ...tdStyle, color: 'var(--c-text-3)' }}>{alert.window_minutes} min</td>
                 <td style={tdStyle}>
                   <span style={{
                     padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', border: '1px solid',
-                    background: alert.was_suspended ? 'rgba(251,113,133,0.08)' : 'rgba(251,191,36,0.08)',
-                    borderColor: alert.was_suspended ? 'rgba(251,113,133,0.25)' : 'rgba(251,191,36,0.25)',
-                    color: alert.was_suspended ? '#fb7185' : '#fbbf24',
+                    background: alert.was_suspended ? 'rgba(179,38,30,0.08)' : 'rgba(168,100,0,0.08)',
+                    borderColor: alert.was_suspended ? 'rgba(179,38,30,0.25)' : 'rgba(168,100,0,0.25)',
+                    color: alert.was_suspended ? 'var(--error)' : 'var(--warn)',
                   }}>
                     {alert.was_suspended ? 'Suspended' : 'Warned'}
                   </span>
@@ -850,9 +850,9 @@ export default function AdminPanel() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Database size={16} style={{ color: 'var(--c-accent)' }} />
-              <span style={{ fontWeight: 600 }}>Semantic Cache</span>
+              <span style={{ fontWeight: 600 }}>Response Cache</span>
             </div>
-            <button onClick={flushCache} disabled={flushing} style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(251,113,133,0.1)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185', fontSize: '0.8rem', cursor: 'pointer' }}>
+            <button onClick={flushCache} disabled={flushing} style={{ padding: '6px 14px', borderRadius: '8px', background: 'rgba(179,38,30,0.1)', border: '1px solid rgba(179,38,30,0.25)', color: 'var(--error)', fontSize: '0.8rem', cursor: 'pointer' }}>
               {flushing ? 'Flushing...' : 'Flush Cache'}
             </button>
           </div>
@@ -878,7 +878,7 @@ export default function AdminPanel() {
             {guardrails ? Object.entries(guardrails).map(([key, val]) => (
               <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', borderRadius: '8px', background: 'var(--c-bg)' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--c-text-2)', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: val ? '#34d399' : '#fb7185' }}>{val ? 'ON' : 'OFF'}</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: val ? 'var(--secondary)' : 'var(--error)' }}>{val ? 'ON' : 'OFF'}</span>
               </div>
             )) : <span style={{ color: 'var(--c-text-3)', fontSize: '0.85rem' }}>Loading...</span>}
           </div>
@@ -895,21 +895,21 @@ export default function AdminPanel() {
             {models.length === 0 ? (
               <span style={{ color: 'var(--c-text-3)', fontSize: '0.85rem' }}>Loading...</span>
             ) : models.map(m => (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: '8px', background: 'var(--c-bg)', border: `1px solid ${m.enabled ? 'rgba(52,211,153,0.15)' : 'rgba(251,113,133,0.1)'}` }}>
+              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: '8px', background: 'var(--c-bg)', border: `1px solid ${m.enabled ? 'rgba(86,111,8,0.15)' : 'rgba(179,38,30,0.1)'}` }}>
                 <div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--c-text-2)' }}>{m.id}</div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--c-text-3)', marginTop: '2px' }}>
                     {m.provider} &middot; {m.speed} &middot; {m.best_for}
-                    {!m.available && <span style={{ marginLeft: '6px', color: '#fbbf24' }}>no provider key</span>}
+                    {!m.available && <span style={{ marginLeft: '6px', color: 'var(--warn)' }}>no provider key</span>}
                   </div>
                 </div>
                 <button
                   onClick={() => toggleModel(m)}
                   disabled={togglingId === m.id}
                   style={{ padding: '5px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, cursor: togglingId === m.id ? 'wait' : 'pointer', border: '1px solid', transition: 'all 0.15s',
-                    background: m.enabled ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.08)',
-                    borderColor: m.enabled ? 'rgba(52,211,153,0.3)' : 'rgba(251,113,133,0.25)',
-                    color: m.enabled ? '#34d399' : '#fb7185' }}
+                    background: m.enabled ? 'rgba(86,111,8,0.1)' : 'rgba(179,38,30,0.08)',
+                    borderColor: m.enabled ? 'rgba(86,111,8,0.3)' : 'rgba(179,38,30,0.25)',
+                    color: m.enabled ? 'var(--secondary)' : 'var(--error)' }}
                 >
                   {togglingId === m.id ? '...' : m.enabled ? 'Enabled' : 'Disabled'}
                 </button>

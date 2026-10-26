@@ -30,7 +30,7 @@ uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 5. **Run Tests**
 ```powershell
-python scripts/test_backend.py
+python -m pytest tests backend/tests --ignore=backend/tests/load_test.py
 ```
 
 ## 📋 Sample Plans Created

@@ -45,9 +45,9 @@ const FAQ_DATA = [
 function AccordionItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)' }}>
       <button onClick={() => setOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', padding: '20px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.9375rem', color: open ? '#e8edf8' : 'var(--on-surface-2)', letterSpacing: '-0.01em', lineHeight: 1.45, transition: 'color 120ms' }}>{q}</span>
+        <span style={{ fontFamily: 'var(--font-head)', fontWeight: 600, fontSize: '0.9375rem', color: open ? 'var(--on-surface)' : 'var(--on-surface-2)', letterSpacing: '-0.01em', lineHeight: 1.45, transition: 'color 120ms' }}>{q}</span>
         <ChevronDown size={15} color={open ? 'var(--primary)' : 'var(--on-surface-3)'} style={{ flexShrink: 0, marginTop: '3px', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 200ms ease, color 120ms' }} />
       </button>
       <AnimatePresence initial={false}>
@@ -73,7 +73,7 @@ export default function FAQ() {
     .filter(cat => cat.items.length > 0);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0d14' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <Helmet>
         <title>FAQ - AIRent | Common Questions About AI API Rental</title>
         <meta name="description" content="Answers to common questions about renting AI APIs - how it works, pricing, supported models, refunds, and security." />
@@ -84,14 +84,14 @@ export default function FAQ() {
       <main style={{ flex: 1, paddingTop: 'var(--header-h, 60px)' }}>
 
         {/* Hero */}
-        <section style={{ padding: 'clamp(64px,9vw,104px) clamp(20px,5vw,56px) clamp(40px,5vw,60px)', background: '#0d1017' }}>
+        <section style={{ padding: 'clamp(64px,9vw,104px) clamp(20px,5vw,56px) clamp(40px,5vw,60px)', background: 'var(--bg-alt)' }}>
           <div style={{ maxWidth: '760px', margin: '0 auto' }}>
             <motion.div initial="hidden" animate="show" variants={fadeUp(0)}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '999px', border: '1px solid rgba(192,193,255,0.2)', background: 'rgba(192,193,255,0.05)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '24px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '999px', border: '1px solid rgba(18,58,44,0.2)', background: 'rgba(18,58,44,0.05)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '24px' }}>
                 HELP CENTER
               </div>
             </motion.div>
-            <motion.h1 initial="hidden" animate="show" variants={fadeUp(0.06)} style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '-0.03em', color: '#e8edf8', marginBottom: '16px' }}>
+            <motion.h1 initial="hidden" animate="show" variants={fadeUp(0.06)} style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 'clamp(2rem,5vw,3rem)', letterSpacing: '-0.03em', color: 'var(--on-surface)', marginBottom: '16px' }}>
               Frequently Asked<br />Questions
             </motion.h1>
             <motion.p initial="hidden" animate="show" variants={fadeUp(0.12)} style={{ fontFamily: 'var(--font-body)', fontSize: '0.9375rem', color: 'var(--on-surface-2)', lineHeight: 1.7, marginBottom: '32px' }}>
@@ -104,31 +104,31 @@ export default function FAQ() {
               <input
                 type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search questions..."
-                style={{ width: '100%', padding: '13px 16px 13px 40px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#e8edf8', boxSizing: 'border-box', transition: 'border-color 150ms' }}
-                onFocus={e => e.target.style.borderColor = 'rgba(192,193,255,0.35)'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                style={{ width: '100%', padding: '13px 16px 13px 40px', background: 'rgba(18,58,44,0.05)', border: '1px solid rgba(18,58,44,0.18)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: 'var(--on-surface)', boxSizing: 'border-box', transition: 'border-color 150ms' }}
+                onFocus={e => e.target.style.borderColor = 'rgba(18,58,44,0.35)'}
+                onBlur={e => e.target.style.borderColor = 'rgba(18,58,44,0.18)'}
               />
             </motion.div>
           </div>
         </section>
 
         {/* Content */}
-        <section style={{ padding: 'clamp(40px,5vw,64px) clamp(20px,5vw,56px) clamp(64px,8vw,96px)', background: '#0a0d14' }}>
+        <section style={{ padding: 'clamp(40px,5vw,64px) clamp(20px,5vw,56px) clamp(64px,8vw,96px)', background: 'var(--bg)' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: '200px 1fr', gap: '48px', alignItems: 'start' }} className="faq-grid">
 
             {/* Sidebar categories */}
             <div className="faq-category-nav" style={{ position: 'sticky', top: '80px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>CATEGORIES</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--on-surface-3)', marginBottom: '12px' }}>CATEGORIES</div>
               <div className="faq-category-list" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => setCategory(cat)} style={{
                     padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left',
-                    background: category === cat ? 'rgba(192,193,255,0.1)' : 'transparent',
+                    background: category === cat ? 'rgba(18,58,44,0.1)' : 'transparent',
                     color: category === cat ? 'var(--primary)' : 'var(--on-surface-2)',
                     fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: category === cat ? 600 : 400,
                     transition: 'background 120ms, color 120ms',
                   }}
-                    onMouseEnter={e => { if (category !== cat) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#e8edf8'; } }}
+                    onMouseEnter={e => { if (category !== cat) { e.currentTarget.style.background = 'rgba(18,58,44,0.07)'; e.currentTarget.style.color = 'var(--on-surface)'; } }}
                     onMouseLeave={e => { if (category !== cat) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-2)'; } }}
                   >{cat}</button>
                 ))}
@@ -141,16 +141,16 @@ export default function FAQ() {
                 <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--on-surface-3)', fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>No results for "{search}"</div>
               ) : filtered.map((cat, ci) => (
                 <motion.div key={cat.category} initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(ci * 0.05)} style={{ marginBottom: '48px' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--primary)', marginBottom: '4px' }}>{cat.category.toUpperCase()}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--primary)', marginBottom: '4px' }}>{cat.category.toUpperCase()}</div>
                   {cat.items.map((item, i) => <AccordionItem key={i} q={item.q} a={item.a} />)}
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+                  <div style={{ borderTop: '1px solid rgba(18,58,44,0.09)' }} />
                 </motion.div>
               ))}
 
               {/* CTA */}
-              <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ padding: '28px', borderRadius: '14px', background: 'rgba(192,193,255,0.04)', border: '1px solid rgba(192,193,255,0.12)', textAlign: 'center' }}>
+              <motion.div initial="hidden" whileInView="show" viewport={VP} variants={fadeUp(0)} style={{ padding: '28px', borderRadius: '14px', background: 'rgba(18,58,44,0.04)', border: '1px solid rgba(18,58,44,0.12)', textAlign: 'center' }}>
                 <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.9375rem', color: 'var(--on-surface-2)', marginBottom: '16px' }}>Still have questions?</p>
-                <a href="mailto:deepanshu2210sharma@gmail.com" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, background: 'var(--primary)', color: 'var(--on-primary)', transition: 'filter 120ms' }}
+                <a href="mailto:deepanshu2210sharma@gmail.com" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '10px 20px', borderRadius: '999px', textDecoration: 'none', fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 600, background: 'var(--primary)', color: 'var(--on-primary)', transition: 'filter 120ms' }}
                   onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.08)'}
                   onMouseLeave={e => e.currentTarget.style.filter = 'none'}
                 >
@@ -166,12 +166,12 @@ export default function FAQ() {
       <Footer />
       <style>{`
         @media (max-width: 720px) {
-          .faq-grid { grid-template-columns: 1fr !important; }
-          .faq-category-nav { position: static !important; }
+          .faq-grid { grid-template-columns: minmax(0, 1fr) !important; }
+          .faq-category-nav { position: static !important; min-width: 0; }
           .faq-category-list { flex-direction: row !important; overflow-x: auto; gap: 8px !important; padding-bottom: 4px; }
           .faq-category-list button { flex: 0 0 auto; white-space: nowrap; min-height: 44px; }
         }
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        input::placeholder { color: rgba(18,58,44,0.3); }
       `}</style>
     </div>
   );

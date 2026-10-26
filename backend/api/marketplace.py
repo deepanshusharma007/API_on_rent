@@ -3,14 +3,14 @@ import asyncio
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from pydantic import BaseModel, EmailStr
-from datetime import datetime, timedelta
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
 
 from backend.database.connection import get_db
 from backend.database.models import Plan, Rental, User, UsageLog, RentalStatus, Transaction, ProviderKey
 from backend.database.redis_manager import get_redis_manager, RedisManager
 from backend.api.schemas import PlanResponse, RentalPurchase, RentalResponse, UsageStats
-from backend.api.dependencies import get_current_user, get_current_admin
+from backend.api.dependencies import get_current_user, get_current_admin, rate_limit
 from backend.services.virtual_key_service import create_rental, get_rental_ttl
 from backend.services.capacity_manager import CapacityManager
 
@@ -140,13 +140,16 @@ async def get_active_rentals(
             delta = r.expires_at - datetime.utcnow()
             ttl = max(0, int(delta.total_seconds()))
 
+        # Live credit balance from Redis; the DB column is kept in step by the proxy but
+        # is only the fallback if Redis lost the balance
+        balance = await redis_manager.get_live_balance(r.id, r.tokens_remaining)
         response_data.append({
             "id": r.id,
             "plan_id": r.plan_id,
             "virtual_key": r.virtual_key,
             "status": r.status.value,
             "tokens_used": r.tokens_used,
-            "tokens_remaining": r.tokens_remaining,
+            "tokens_remaining": max(balance, 0),
             "requests_made": r.requests_made,
             "started_at": r.started_at.isoformat(),
             "expires_at": r.expires_at.isoformat(),
@@ -234,14 +237,15 @@ async def get_usage_stats(
 # ==================== Contact Form ====================
 
 class ContactFormRequest(BaseModel):
-    name: str
-    email: str
-    subject: Optional[str] = ""
-    message: str
+    name: str = Field(max_length=100)
+    email: EmailStr
+    subject: Optional[str] = Field(default="", max_length=150)
+    message: str = Field(max_length=5000)
 
 
 @router.post("/contact", summary="Contact form", description="Public endpoint — submits the contact form and emails the site owner.")
-async def submit_contact_form(payload: ContactFormRequest):
+async def submit_contact_form(payload: ContactFormRequest,
+                              _limit=Depends(rate_limit("contact", 5, 600))):
     """Accept a contact form submission and email it to the site owner."""
     # Basic validation
     if not payload.name.strip() or not payload.email.strip() or not payload.message.strip():
@@ -258,7 +262,7 @@ async def submit_contact_form(payload: ContactFormRequest):
             None,
             lambda: email_service.send_contact_form(
                 sender_name=payload.name.strip(),
-                sender_email=payload.email.strip(),
+                sender_email=str(payload.email),
                 subject=payload.subject.strip() if payload.subject else "",
                 message=payload.message.strip(),
                 owner_email=owner_email,

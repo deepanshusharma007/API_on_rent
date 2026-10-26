@@ -19,8 +19,8 @@
 | 8 | Virtual keys don't expose real API keys | ✅ Done | Users only see `vk_*` keys |
 | 9 | Rate limiting (per-user) | ✅ Done | Redis-based RPM counter per rental |
 | 10 | Rate limiting (global) | ✅ Done | Global RPM cap to protect master keys |
-| 11 | Prompt injection filtering | ✅ Done | Regex-based filter in `prompt_filter.py` |
-| 12 | PII masking in prompts | ✅ Done | Email, phone, SSN redaction in `pii_masker.py` |
+| 11 | Prompt injection filtering | ✅ Done | Regex patterns in `middleware/guardrails/injection_detector.py` (list-form content is scanned too) |
+| 12 | PII masking in prompts | ✅ Done | Email, phone, SSN, Luhn-valid card and IP redaction in `middleware/guardrails/pii_detector.py` |
 | 13 | Request size limits | ⚠️ Partial | `max_tokens` capped at 4000 — no request body size limit |
 | 14 | Expired keys return 402 | ✅ Done | `verify_virtual_key` returns 402 Payment Required |
 | 15 | Stripe webhook signature verification | ✅ Done | `stripe.Webhook.construct_event()` in `payment.py` |

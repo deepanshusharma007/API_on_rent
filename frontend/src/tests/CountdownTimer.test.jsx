@@ -23,9 +23,9 @@ describe('CountdownTimer', () => {
         expect(screen.getByText('02:00:00')).toBeInTheDocument();
     });
 
-    it('applies green color for time > 5 min', () => {
+    it('applies the olive color for time > 5 min', () => {
         const { container } = render(<CountdownTimer ttlSeconds={600} />);
-        const timeText = container.querySelector('.text-green-400');
+        const timeText = container.querySelector('[class*="566f08"]');
         expect(timeText).toBeInTheDocument();
     });
 
