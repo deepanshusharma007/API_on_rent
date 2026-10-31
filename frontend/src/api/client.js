@@ -45,7 +45,8 @@ apiClient.interceptors.response.use(
         // A 401 from a sign-in/sign-up request means wrong credentials, not an expired
         // session: let the page show the error instead of reloading /login.
         const isAuthAttempt = /\/auth\/(login|google|register|signup\/|password\/)/.test(error.config?.url || '');
-        if (error.response?.status === 401 && !isAuthAttempt) {
+        const alreadyOnLogin = window.location.pathname === '/login';
+        if (error.response?.status === 401 && !isAuthAttempt && !alreadyOnLogin) {
             const detail = error.response?.data?.detail || '';
             localStorage.removeItem('auth_token');
             // Show kicked-out message if it was a session conflict
