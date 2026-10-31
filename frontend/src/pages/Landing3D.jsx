@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { marketplaceAPI } from '../api/client';
+import useAuthStore from '../store/authStore';
 import './Landing3D.css';
 
 const KeyScene = lazy(() => import('../components/three/KeyScene'));
@@ -34,6 +35,7 @@ function hasWebGL() {
 }
 
 export default function Landing3D() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const wrap = useRef(null);
   const stage = useRef(null);
   const numerals = useRef(null);
@@ -112,7 +114,11 @@ export default function Landing3D() {
               <Link to="/pricing">Pricing</Link>
               <Link to="/docs">Docs</Link>
               <Link to="/status">Status</Link>
-              <Link to="/login">Sign in</Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">Dashboard</Link>
+              ) : (
+                <Link to="/login">Sign in</Link>
+              )}
             </nav>
             <Link to="/marketplace" className="l3d-pill l3d-pill-solid">Rent a key</Link>
           </header>
