@@ -49,7 +49,7 @@ export default function Landing3D() {
     marketplaceAPI
       .getPlans()
       .then((res) => alive && Array.isArray(res.data) && setPlans(res.data))
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       alive = false;
     };
@@ -121,7 +121,7 @@ export default function Landing3D() {
             <div className="l3d-copy">
               <p className="l3d-kicker">vk_7f3a9c &middot; gpt-4o &middot; 20K tokens</p>
               <h1 className="l3d-h1">
-                Rent a GPT-4o key. <em>15 minutes.</em> Then it&rsquo;s gone.
+                Rent API keys. <em>On Time basis.</em> Then it&rsquo;s gone.
               </h1>
               <p className="l3d-lede">
                 OpenAI, Claude and Gemini through one OpenAI-compatible endpoint. No subscription. The key expires on its own.

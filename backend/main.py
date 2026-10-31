@@ -87,6 +87,7 @@ async def lifespan(app: FastAPI):
                 conn.execute(text(ddl))
                 conn.commit()
             except Exception as e:
+                conn.rollback()
                 logger.warning(f"Index {name} not created: {e}")
     
     # Seed admin user (idempotent — skips if already exists)

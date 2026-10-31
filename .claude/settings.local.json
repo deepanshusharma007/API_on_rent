@@ -49,7 +49,13 @@
       "Bash(node -e \"require\\('./frontend/src/pages/LandingPage.jsx'\\)\")",
       "Bash(npx --prefix frontend vite build --mode development)",
       "Bash(python3 -c ' *)",
-      "mcp__lean-ctx__ctx_edit"
+      "mcp__lean-ctx__ctx_edit",
+      "Bash(git pull *)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\deepa\\\\OneDrive\\\\Desktop\\\\All_Folders\\\\projects\\\\API_on_rent\\\\backend\\\\api\\\\marketplace.py\" -Pattern \"provider\" | Select-Object -First 20 | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line\\)\" })",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\deepa\\\\OneDrive\\\\Desktop\\\\All_Folders\\\\projects\\\\API_on_rent\\\\backend\\\\api\\\\payment.py\" -Pattern \"provider|gateway|must be one\" | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line\\)\" })",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\deepa\\\\OneDrive\\\\Desktop\\\\All_Folders\\\\projects\\\\API_on_rent\\\\backend\\\\services\\\\virtual_key_service.py\" -Pattern \"provider\" | Select-Object -First 20 | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line\\)\" })",
+      "Bash(git commit -m 'fix: allow '\\\\''gateway'\\\\'' as valid provider in checkout session *)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\deepa\\\\OneDrive\\\\Desktop\\\\All_Folders\\\\projects\\\\API_on_rent\\\\backend\\\\main.py\" -Pattern \"uq_transactions|cashfree_order_id|ix_rentals|ix_usage\" | ForEach-Object { \"$\\($_.LineNumber\\): $\\($_.Line\\)\" })"
     ]
   }
 }
