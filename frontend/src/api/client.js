@@ -251,4 +251,14 @@ export const statusAPI = {
         publicClient.get('/status/'),
 };
 
+// Chat API
+export const chatAPI = {
+    getMessages:  ()              => apiClient.get('/chat/messages'),
+    sendMessage:  (content)       => apiClient.post('/chat/messages', { content }),
+    getUnreadCount: ()            => apiClient.get('/chat/unread-count'),
+    listThreads:  ()              => apiClient.get('/admin/threads'),
+    getThread:    (userId)        => apiClient.get(`/admin/threads/${userId}`),
+    adminReply:   (userId, content) => apiClient.post(`/admin/threads/${userId}/reply`, { content }),
+};
+
 export default apiClient;

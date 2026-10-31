@@ -49,6 +49,7 @@ class User(Base):
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     spending_alerts = relationship("SpendingAlert", back_populates="user", cascade="all, delete-orphan")
     internal_keys = relationship("InternalKey", back_populates="user", cascade="all, delete-orphan")
+    chat_messages = relationship("ChatMessage", back_populates="user", cascade="all, delete-orphan")
 
 
 class Plan(Base):
@@ -175,5 +176,18 @@ class InternalKey(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="internal_keys")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    sender     = Column(String(10), nullable=False)   # "user" | "admin"
+    content    = Column(String(4000), nullable=False)
+    is_read    = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="chat_messages")
 
 

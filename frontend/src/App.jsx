@@ -27,6 +27,7 @@ import ApiDocs from './pages/ApiDocs';
 
 import useAuthStore from './store/authStore';
 import AnnouncementBanner from './components/AnnouncementBanner';
+import ChatWidget from './components/ChatWidget';
 
 // Same base URL the axios client uses, so local dev never talks to production
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -71,6 +72,7 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen" style={{ background: 'var(--c-bg)' }}>
         <AnnouncementBanner />
+        <ChatWidget />
         <Toaster
           position="top-right"
           toastOptions={{

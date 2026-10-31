@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Key, BarChart3, AlertTriangle, Package,
   Plus, Trash2, RefreshCw, DollarSign, Zap, TrendingUp,
   Shield, Download, Loader2, Activity, CheckCircle, XCircle,
   Pencil, Save, X as XIcon,
-  Route, Database,
+  Route, Database, MessageCircle, Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminAPI } from '../api/client';
+import { adminAPI, chatAPI } from '../api/client';
 import Navbar from '../components/Navbar';
 import { fadeUp, staggerContainer, scaleIn } from '../lib/motion';
+
+const WS_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
 
 const TABS = [
   { id: 'overview',   label: 'Overview',   icon: BarChart3 },
@@ -20,6 +22,7 @@ const TABS = [
   { id: 'analytics',  label: 'Analytics',  icon: TrendingUp },
   { id: 'alerts',     label: 'Alerts',     icon: AlertTriangle },
   { id: 'gateway',   label: 'Gateway',    icon: Route },
+  { id: 'chat',      label: 'Chat',       icon: MessageCircle },
 ];
 
 // Colour sets for stat cards — emerald is primary, others are semantic
@@ -921,7 +924,149 @@ export default function AdminPanel() {
     );
   };
 
-  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab, gateway: GatewayTab };
+  // ── Chat Tab ──────────────────────────────────────────────────────────────
+  const ChatTab = () => {
+    const [threads, setThreads]       = useState([]);
+    const [selected, setSelected]     = useState(null);
+    const [messages, setMessages]     = useState([]);
+    const [reply, setReply]           = useState('');
+    const [sending, setSending]       = useState(false);
+    const wsRef    = useRef(null);
+    const bottomRef = useRef(null);
+
+    useEffect(() => {
+      chatAPI.listThreads().then(r => setThreads(r.data)).catch(() => {});
+
+      const ws = new WebSocket(`${WS_BASE}/ws/chat/admin`);
+      wsRef.current = ws;
+      ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'new_message') {
+          setThreads(prev => {
+            const exists = prev.find(t => t.user_id === data.user_id);
+            if (exists) {
+              return prev.map(t => t.user_id === data.user_id
+                ? { ...t, unread: t.unread + 1, last_message: data.message }
+                : t
+              ).sort((a, b) => (b.last_message?.created_at || '') > (a.last_message?.created_at || '') ? 1 : -1);
+            }
+            return [{ user_id: data.user_id, email: data.user_email, unread: 1, last_message: data.message }, ...prev];
+          });
+          setSelected(sel => {
+            if (sel === data.user_id) setMessages(prev => [...prev, data.message]);
+            return sel;
+          });
+        }
+      };
+      return () => ws.close();
+    }, []);
+
+    useEffect(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const openThread = useCallback(async (userId) => {
+      setSelected(userId);
+      try {
+        const r = await chatAPI.getThread(userId);
+        setMessages(r.data.messages);
+        setThreads(prev => prev.map(t => t.user_id === userId ? { ...t, unread: 0 } : t));
+      } catch {}
+    }, []);
+
+    const handleReply = useCallback(async () => {
+      const content = reply.trim();
+      if (!content || sending || !selected) return;
+      setReply('');
+      setSending(true);
+      try {
+        const r = await chatAPI.adminReply(selected, content);
+        setMessages(prev => [...prev, r.data]);
+      } catch { setReply(content); }
+      finally { setSending(false); }
+    }, [reply, sending, selected]);
+
+    const s = { fontFamily: 'var(--font-body)' };
+
+    return (
+      <div style={{ display: 'flex', height: 'calc(100vh - 180px)', gap: '0', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
+        {/* Thread list */}
+        <div style={{ width: '260px', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.07)', overflowY: 'auto', background: 'rgba(255,255,255,0.02)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: '0.75rem', color: 'var(--on-surface-3)', fontWeight: 600, letterSpacing: '0.08em' }}>CONVERSATIONS</div>
+          {threads.length === 0 && <div style={{ padding: '24px 16px', color: 'var(--on-surface-3)', fontSize: '0.8rem', textAlign: 'center' }}>No messages yet</div>}
+          {threads.map(t => (
+            <button key={t.user_id} onClick={() => openThread(t.user_id)} style={{
+              width: '100%', padding: '12px 16px', textAlign: 'left', border: 'none', cursor: 'pointer',
+              background: selected === t.user_id ? 'rgba(124,58,237,0.12)' : 'transparent',
+              borderLeft: selected === t.user_id ? '2px solid var(--primary)' : '2px solid transparent',
+              transition: 'background 120ms',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                <span style={{ ...s, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{t.email}</span>
+                {t.unread > 0 && <span style={{ background: 'var(--primary)', color: '#fff', borderRadius: '999px', fontSize: '0.6rem', fontWeight: 700, padding: '1px 6px', flexShrink: 0 }}>{t.unread}</span>}
+              </div>
+              {t.last_message && <div style={{ ...s, fontSize: '0.75rem', color: 'var(--on-surface-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.last_message.content}</div>}
+            </button>
+          ))}
+        </div>
+
+        {/* Message pane */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {!selected ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-3)', flexDirection: 'column', gap: '8px' }}>
+              <MessageCircle size={32} style={{ opacity: 0.3 }} />
+              <span style={{ ...s, fontSize: '0.875rem' }}>Select a conversation</span>
+            </div>
+          ) : (
+            <>
+              {/* Header */}
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', ...s, fontSize: '0.875rem', fontWeight: 600, color: 'var(--on-surface)' }}>
+                {threads.find(t => t.user_id === selected)?.email}
+              </div>
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {messages.map(m => (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'admin' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      maxWidth: '70%', padding: '8px 12px', borderRadius: m.sender === 'admin' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                      background: m.sender === 'admin' ? 'var(--primary)' : 'rgba(255,255,255,0.07)',
+                      color: m.sender === 'admin' ? '#fff' : 'var(--on-surface)',
+                      ...s, fontSize: '0.8125rem', lineHeight: 1.5,
+                    }}>
+                      {m.sender === 'user' && <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '2px' }}>User</div>}
+                      {m.content}
+                      <div style={{ fontSize: '0.6rem', opacity: 0.5, marginTop: '4px', textAlign: 'right' }}>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+              {/* Reply box */}
+              <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                <textarea
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
+                  placeholder="Type a reply... (Enter to send)"
+                  rows={1}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--on-surface)', fontSize: '0.8125rem', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, maxHeight: '80px' }}
+                />
+                <button
+                  onClick={handleReply}
+                  disabled={sending || !reply.trim()}
+                  style={{ width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: sending || !reply.trim() ? 'rgba(255,255,255,0.08)' : 'var(--primary)', cursor: sending || !reply.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <Send size={14} color={sending || !reply.trim() ? '#6b7280' : '#fff'} />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const TAB_MAP = { overview: OverviewTab, users: UsersTab, plans: PlansTab, keys: KeysTab, analytics: AnalyticsTab, alerts: AlertsTab, gateway: GatewayTab, chat: ChatTab };
   const ActiveTab = TAB_MAP[activeTab];
 
   if (loading) return (

@@ -8,7 +8,7 @@ import logging
 from backend.database.connection import engine, Base, SessionLocal
 from backend.config import settings
 from backend.database.redis_manager import init_redis, close_redis
-from backend.api import auth, marketplace, admin, proxy, status, payment, websocket
+from backend.api import auth, marketplace, admin, proxy, status, payment, websocket, chat
 from backend.workers.spending_monitor import start_spending_monitor, stop_spending_monitor
 from backend.workers.expiration_monitor import expiration_monitor
 from backend.workers.capacity_reconciler import capacity_reconciler
@@ -210,6 +210,7 @@ app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(proxy.router, prefix="/v1", tags=["Proxy"])
 app.include_router(status.router, prefix="/status", tags=["Status"])
 app.include_router(websocket.router, tags=["WebSocket"])
+app.include_router(chat.router, tags=["Chat"])
 
 
 @app.get("/")
