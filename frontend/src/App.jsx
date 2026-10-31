@@ -35,7 +35,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  return (
+    <>
+      {children}
+      <ChatWidget />
+    </>
+  );
 };
 
 function App() {
@@ -72,7 +78,6 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen" style={{ background: 'var(--c-bg)' }}>
         <AnnouncementBanner />
-        <ChatWidget />
         <Toaster
           position="top-right"
           toastOptions={{
