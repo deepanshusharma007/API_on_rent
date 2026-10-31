@@ -1,4 +1,4 @@
-"""Cashfree payment integration endpoints."""
+﻿"""Cashfree payment integration endpoints."""
 import asyncio
 import hmac
 import hashlib
@@ -28,7 +28,7 @@ CASHFREE_API_VERSION = "2023-08-01"
 WEBHOOK_LOCK_SECONDS = 120  # upper bound for processing one webhook delivery
 CHECKOUT_LOCK_SECONDS = 60  # blocks a double-click, not a retry after a cancelled payment
 ORDER_AMOUNT_TTL_SECONDS = 3 * 86400
-PROVIDERS = ("openai", "anthropic", "gemini")
+PROVIDERS = ("openai", "anthropic", "gemini", "gateway")
 
 
 def _order_amount_key(order_id: str) -> str:
